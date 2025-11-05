@@ -4,8 +4,7 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>My Space • I Miss My Loved One</title>
-  <!-- Load emoji picker -->
-  <script type="module" src="https://cdn.jsdelivr.net/npm/@google/emoji-picker@0.2.0/dist/emoji-picker.js"></script>
+  <script type="module" src="https://cdn.jsdelivr.net/npm/emoji-picker-element@^1/dist/emoji-picker-element.js"></script>
   <style>
     :root {
       --primary: #5a67d8;
@@ -55,7 +54,6 @@
     }
     .form-group {
       margin: 20px 0;
-      position: relative;
     }
     input, textarea {
       width: 100%;
@@ -63,42 +61,8 @@
       border: 1px solid var(--border);
       border-radius: 8px;
       font-size: 16px;
-      box-sizing: border-box;
     }
     textarea { min-height: 120px; resize: vertical; }
-    #emoji-btn {
-      position: absolute;
-      right: 10px;
-      bottom: 10px;
-      background: none;
-      border: none;
-      font-size: 20px;
-      cursor: pointer;
-      color: #718096;
-      z-index: 5;
-    }
-    #emoji-picker {
-      position: absolute;
-      bottom: -320px;
-      left: 0;
-      z-index: 10;
-      display: none;
-      width: 300px;
-      background: white;
-      border: 1px solid var(--border);
-      border-radius: 12px;
-      box-shadow: 0 4px 12px rgba(0,0,0,0.1);
-      max-height: 300px;
-      overflow-y: auto;
-      transform: translateY(10px);
-      opacity: 0;
-      transition: all 0.2s ease;
-    }
-    #emoji-picker.visible {
-      display: block;
-      transform: translateY(0);
-      opacity: 1;
-    }
     button[type="submit"] {
       background: var(--primary);
       color: white;
@@ -118,7 +82,7 @@
       box-shadow: 0 1px 3px rgba(0,0,0,0.05);
     }
     .memory-title { font-weight: 600; margin: 0 0 8px; }
-    .memory-body { margin: 0; color: #4a5568; white-space: pre-line; }
+    .memory-body { margin: 0; color: #4a5568; }
     .logout {
       display: block;
       margin-top: 30px;
@@ -128,6 +92,30 @@
       cursor: pointer;
     }
     .hidden { display: none; }
+
+    /* Emoji picker toggle button */
+    .emoji-toggle {
+      background: #edf2f7;
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      padding: 6px 10px;
+      cursor: pointer;
+      font-size: 18px;
+      align-self: flex-start;
+      margin-top: 4px;
+    }
+    .emoji-toggle:hover {
+      background: #e2e8f0;
+    }
+
+    /* Emoji picker container */
+    .emoji-picker-container {
+      margin-top: 8px;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      overflow: hidden;
+      display: none;
+    }
   </style>
 </head>
 <body>
@@ -150,11 +138,15 @@
 
     <form id="memory-form" class="form-group">
       <input type="text" id="memory-title" placeholder="Title (e.g., 'I still hear your laugh')" required />
-      <div style="position: relative;">
+      
+      <div style="position: relative; display: flex; flex-direction: column;">
         <textarea id="memory-body" placeholder="Share a memory, a letter, or just 'I miss you today...'." required></textarea>
-        <button type="button" id="emoji-btn">🙂</button>
-        <emoji-picker id="emoji-picker"></emoji-picker>
+        <button type="button" class="emoji-toggle" id="emoji-btn">😊</button>
+        <div class="emoji-picker-container" id="emoji-picker-container">
+          <emoji-picker></emoji-picker>
+        </div>
       </div>
+
       <button type="submit">Post Memory</button>
     </form>
 
@@ -167,13 +159,13 @@
   </div>
 
   <script type="module">
-    // 🔑 YOUR KEYS (same as in login)
+    // 🔑 Supabase config
     const SUPABASE_URL = 'https://ccetnqdqfrsitooestbh.supabase.co';
     const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImNjZXRucWRxZnJzaXRvb2VzdGJoIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjIzMTE4MjksImV4cCI6MjA3Nzg4NzgyOX0.1NjRZZrgsPOg-2z_r2kRELWn9IVXNEQNpSxK6CktJRY';
-
     import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.39.7/+esm';
-    const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+    const supabase = createClient(SUPABASE_URL.trim(), SUPABASE_ANON_KEY.trim());
 
+    // DOM elements
     const authCheck = document.getElementById('auth-check');
     const appEl = document.getElementById('app');
     const displayNameEl = document.getElementById('display-name');
@@ -182,44 +174,44 @@
     const memoriesList = document.getElementById('memories-list');
     const logoutBtn = document.getElementById('logout-btn');
     const emojiBtn = document.getElementById('emoji-btn');
-    const emojiPicker = document.getElementById('emoji-picker');
+    const emojiPickerContainer = document.getElementById('emoji-picker-container');
     const memoryBody = document.getElementById('memory-body');
 
-    // Setup emoji picker
-    let isPickerVisible = false;
-
+    // Toggle emoji picker
     emojiBtn.addEventListener('click', () => {
-      isPickerVisible = !isPickerVisible;
-      if (isPickerVisible) {
-        emojiPicker.classList.add('visible');
-        // Focus textarea to keep cursor position
-        memoryBody.focus();
-      } else {
-        emojiPicker.classList.remove('visible');
-      }
+      emojiPickerContainer.style.display = 
+        emojiPickerContainer.style.display === 'block' ? 'none' : 'block';
     });
 
+    // Insert emoji at cursor position
+    const emojiPicker = document.querySelector('emoji-picker');
     emojiPicker.addEventListener('emoji-click', (event) => {
-      const { emoji } = event.detail;
-      const start = memoryBody.selectionStart;
-      const end = memoryBody.selectionEnd;
-      const value = memoryBody.value;
-      memoryBody.value = value.slice(0, start) + emoji + value.slice(end);
-      memoryBody.focus();
-      memoryBody.setSelectionRange(start + emoji.length, start + emoji.length);
+      const emoji = event.detail.unicode;
+      const textarea = memoryBody;
+      const start = textarea.selectionStart;
+      const end = textarea.selectionEnd;
+      const text = textarea.value;
+      const before = text.substring(0, start);
+      const after = text.substring(end);
+      textarea.value = before + emoji + after;
+      // Move cursor after inserted emoji
+      const newCursorPos = start + emoji.length;
+      textarea.setSelectionRange(newCursorPos, newCursorPos);
+      textarea.focus();
+      // Hide picker after selection (optional)
+      emojiPickerContainer.style.display = 'none';
     });
 
-    // Close picker when clicking outside
+    // Close picker if clicking outside
     document.addEventListener('click', (e) => {
-      if (!emojiPicker.contains(e.target) && e.target !== emojiBtn) {
-        emojiPicker.classList.remove('visible');
-        isPickerVisible = false;
+      if (!emojiBtn.contains(e.target) && !emojiPickerContainer.contains(e.target)) {
+        emojiPickerContainer.style.display = 'none';
       }
     });
 
-    // Check if user is logged in
+    // Rest of your existing logic
     async function checkUser() {
-      const {  { user } } = await supabase.auth.getUser();
+      const { data: { user } } = await supabase.auth.getUser();
       if (!user) {
         authCheck.innerHTML = `<p>You are not signed in. <a href="/login">Go to login</a></p>`;
         return;
@@ -228,22 +220,19 @@
       authCheck.classList.add('hidden');
       appEl.classList.remove('hidden');
 
-      // Ensure user exists in public.users
-      const { data: profile, error } = await supabase
+      const { data: profile } = await supabase
         .from('users')
         .select('display_name')
         .eq('id', user.id)
         .single();
 
-      if (error || !profile?.display_name) {
+      if (!profile?.display_name) {
         const name = prompt("Welcome. What name would you like others to see?");
+        const displayName = name?.trim() || "Anonymous";
         await supabase
           .from('users')
-          .upsert({
-            id: user.id,
-            display_name: name?.trim() || "Anonymous"
-          }, { onConflict: 'id' });
-        displayNameEl.textContent = name?.trim() || "Anonymous";
+          .upsert({ id: user.id, display_name: displayName }, { onConflict: 'id' });
+        displayNameEl.textContent = displayName;
       } else {
         displayNameEl.textContent = profile.display_name;
       }
@@ -291,7 +280,7 @@
         .order('created_at', { ascending: false });
 
       if (error) {
-        memoriesList.innerHTML = `<p>Could not load memories.</p>`;
+        memoriesList.innerHTML = `<p class="error">Could not load memories.</p>`;
         return;
       }
 
@@ -300,23 +289,12 @@
         return;
       }
 
-      // Safely render emojis & line breaks
-      memoriesList.innerHTML = data.map(m => {
-        const escapeHtml = (str) => str
-          .replace(/&/g, '&amp;')
-          .replace(/</g, '<')
-          .replace(/>/g, '>');
-        
-        const safeTitle = escapeHtml(m.title);
-        const safeBody = escapeHtml(m.body);
-
-        return `
-          <div class="memory">
-            <h3 class="memory-title">${safeTitle}</h3>
-            <p class="memory-body">${safeBody}</p>
-          </div>
-        `;
-      }).join('');
+      memoriesList.innerHTML = data.map(m => `
+        <div class="memory">
+          <h3 class="memory-title">${m.title}</h3>
+          <p class="memory-body">${m.body.replace(/\n/g, '<br>')}</p>
+        </div>
+      `).join('');
     }
 
     memoryForm.addEventListener('submit', async (e) => {
@@ -324,7 +302,7 @@
       const title = document.getElementById('memory-title').value;
       const body = document.getElementById('memory-body').value;
 
-      const {  { user } } = await supabase.auth.getUser();
+      const { data: { user } } = await supabase.auth.getUser();
       if (!user) return;
 
       const { error } = await supabase.from('memories').insert({
@@ -339,6 +317,7 @@
       } else {
         memoryForm.reset();
         loadMemories();
+        emojiPickerContainer.style.display = 'none';
       }
     });
 
