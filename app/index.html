@@ -5,9 +5,9 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>My Space • I Miss My Loved One</title>
 
-  <!-- ✅ FIXED: Emoji picker CSS AND JS (no extra spaces!) -->
-  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/emoji-picker-element@^1/index.css" />
-  <script type="module" src="https://cdn.jsdelivr.net/npm/emoji-picker-element@^1/dist/emoji-picker-element.js"></script>
+  <!-- Emoji Picker -->
+  <script type="module" src="https://cdn.jsdelivr.net/npm/emoji-picker-element@^1/index.js"></script>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/emoji-picker-element@^1/index.min.css" />
 
   <style>
     :root {
@@ -56,8 +56,11 @@
     .lifeline-btn.online {
       background: var(--success);
     }
+
+    /* Form styling */
     .form-group {
       margin: 20px 0;
+      position: relative;
     }
     input, textarea {
       width: 100%;
@@ -65,8 +68,60 @@
       border: 1px solid var(--border);
       border-radius: 8px;
       font-size: 16px;
+      outline: none;
     }
-    textarea { min-height: 120px; resize: vertical; }
+    input:focus, textarea:focus {
+      border-color: var(--primary);
+      box-shadow: 0 0 0 2px rgba(90, 103, 216, 0.2);
+    }
+    textarea { 
+      min-height: 120px; 
+      resize: vertical; 
+      padding-right: 48px; /* make room for emoji button */
+    }
+
+    /* Emoji button & picker */
+    #emojiButton {
+      position: absolute;
+      bottom: 12px;
+      right: 12px;
+      background: transparent;
+      border: none;
+      font-size: 1.3rem;
+      cursor: pointer;
+      color: #718096;
+      padding: 4px;
+      border-radius: 4px;
+      z-index: 10;
+    }
+    #emojiButton:hover {
+      color: var(--primary);
+      background: #f0f4ff;
+    }
+
+    #emojiPicker {
+      position: absolute;
+      right: 0;
+      z-index: 1000;
+      box-shadow: 0 6px 16px rgba(0,0,0,0.15);
+      border-radius: 12px;
+      overflow: hidden;
+      transform: translateY(8px);
+      opacity: 0;
+      visibility: hidden;
+      pointer-events: none;
+      transition: opacity 0.2s, transform 0.2s, visibility 0.2s;
+      width: 320px;
+      max-width: 100%;
+    }
+
+    #emojiPicker.show {
+      opacity: 1;
+      visibility: visible;
+      pointer-events: auto;
+      transform: translateY(0);
+    }
+
     button[type="submit"] {
       background: var(--primary);
       color: white;
@@ -76,7 +131,9 @@
       font-size: 16px;
       cursor: pointer;
       width: 100%;
+      margin-top: 10px;
     }
+
     .memory {
       background: var(--card);
       border: 1px solid var(--border);
@@ -97,28 +154,10 @@
     }
     .hidden { display: none; }
 
-    /* Emoji toggle button */
-    .emoji-toggle {
-      background: #edf2f7;
-      border: 1px solid var(--border);
-      border-radius: 6px;
-      padding: 6px 10px;
-      cursor: pointer;
-      font-size: 18px;
-      align-self: flex-start;
-      margin-top: 4px;
-      width: fit-content;
-    }
-    .emoji-toggle:hover {
-      background: #e2e8f0;
-    }
-
-    /* Emoji picker container */
-    .emoji-picker-container {
-      margin-top: 8px;
-      display: none;
-      z-index: 10;
-      position: relative;
+    @media (max-width: 640px) {
+      textarea {
+        padding-right: 42px;
+      }
     }
   </style>
 </head>
@@ -142,15 +181,11 @@
 
     <form id="memory-form" class="form-group">
       <input type="text" id="memory-title" placeholder="Title (e.g., 'I still hear your laugh')" required />
-      
-      <div style="position: relative; display: flex; flex-direction: column;">
-        <textarea id="memory-body" placeholder="Share a memory, a letter, or just 'I miss you today...'." required></textarea>
-        <button type="button" class="emoji-toggle" id="emoji-btn">😊</button>
-        <div class="emoji-picker-container" id="emoji-picker-container">
-          <emoji-picker></emoji-picker>
-        </div>
+      <div class="form-group" style="position: relative;">
+        <textarea id="memory-body" placeholder="Share your memory... (click 😊 to add emojis)"></textarea>
+        <button type="button" id="emojiButton" aria-label="Insert emoji">😊</button>
+        <emoji-picker id="emojiPicker" data-emoji-size="20"></emoji-picker>
       </div>
-
       <button type="submit">Post Memory</button>
     </form>
 
@@ -177,39 +212,82 @@
     const memoryForm = document.getElementById('memory-form');
     const memoriesList = document.getElementById('memories-list');
     const logoutBtn = document.getElementById('logout-btn');
-    const emojiBtn = document.getElementById('emoji-btn');
-    const emojiPickerContainer = document.getElementById('emoji-picker-container');
+
+    // Emoji elements
     const memoryBody = document.getElementById('memory-body');
+    const emojiButton = document.getElementById('emojiButton');
+    const emojiPicker = document.getElementById('emojiPicker');
+
+    // Auto-resize textarea
+    const autoResize = () => {
+      memoryBody.style.height = 'auto';
+      memoryBody.style.height = Math.min(memoryBody.scrollHeight, 300) + 'px';
+    };
+    memoryBody.addEventListener('input', autoResize);
+    autoResize(); // initial
 
     // Toggle emoji picker
-    emojiBtn.addEventListener('click', (e) => {
+    const toggleEmojiPicker = (e) => {
       e.stopPropagation();
-      emojiPickerContainer.style.display = 
-        emojiPickerContainer.style.display === 'block' ? 'none' : 'block';
-    });
+      const isShowing = emojiPicker.classList.contains('show');
+      emojiPicker.classList.remove('show');
+
+      if (isShowing) return;
+
+      const wrapper = emojiButton.closest('.form-group');
+      const wrapperRect = wrapper.getBoundingClientRect();
+      const pickerHeight = 380;
+      const spaceBelow = window.innerHeight - wrapperRect.bottom;
+      const spaceAbove = wrapperRect.top;
+
+      emojiPicker.style.top = 'auto';
+      emojiPicker.style.bottom = 'auto';
+      emojiPicker.style.left = 'auto';
+      emojiPicker.style.right = '0';
+
+      if (spaceBelow >= pickerHeight) {
+        emojiPicker.style.top = (wrapperRect.height + 8) + 'px';
+      } else if (spaceAbove >= pickerHeight) {
+        emojiPicker.style.bottom = (wrapperRect.height + 8) + 'px';
+        emojiPicker.style.top = 'auto';
+      } else {
+        emojiPicker.style.top = (wrapperRect.height + 8) + 'px';
+      }
+
+      setTimeout(() => emojiPicker.classList.add('show'), 10);
+    };
+
+    emojiButton.addEventListener('click', toggleEmojiPicker);
 
     // Insert emoji at cursor
-    const emojiPicker = document.querySelector('emoji-picker');
-    emojiPicker.addEventListener('emoji-click', (event) => {
-      const emoji = event.detail.unicode;
+    emojiPicker.addEventListener('emoji-click', (e) => {
+      const emoji = e.detail.unicode;
       const start = memoryBody.selectionStart;
       const end = memoryBody.selectionEnd;
       const text = memoryBody.value;
+
       memoryBody.value = text.slice(0, start) + emoji + text.slice(end);
+      autoResize();
+
       const newCursorPos = start + emoji.length;
       memoryBody.setSelectionRange(newCursorPos, newCursorPos);
       memoryBody.focus();
-      emojiPickerContainer.style.display = 'none';
+
+      emojiPicker.classList.remove('show');
     });
 
     // Close picker on outside click
     document.addEventListener('click', (e) => {
-      if (!emojiBtn.contains(e.target) && !emojiPickerContainer.contains(e.target)) {
-        emojiPickerContainer.style.display = 'none';
+      if (
+        !emojiButton.contains(e.target) &&
+        !emojiPicker.contains(e.target) &&
+        !memoryBody.contains(e.target)
+      ) {
+        emojiPicker.classList.remove('show');
       }
     });
 
-    // Auth & app logic (unchanged)
+    // Auth & App logic
     async function checkUser() {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) {
@@ -292,22 +370,22 @@
       memoriesList.innerHTML = data.map(m => `
         <div class="memory">
           <h3 class="memory-title">${m.title}</h3>
-          <p class="memory-body">${m.body.replace(/\n/g, '<br>')}</p>
+          <p class="memory-body">${(m.body || '').replace(/\n/g, '<br>')}</p>
         </div>
       `).join('');
     }
 
     memoryForm.addEventListener('submit', async (e) => {
       e.preventDefault();
-      const title = document.getElementById('memory-title').value;
-      const body = document.getElementById('memory-body').value;
+      const title = document.getElementById('memory-title').value.trim();
+      const body = memoryBody.value.trim();
 
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) return;
 
       const { error } = await supabase.from('memories').insert({
         user_id: user.id,
-        title: title.trim(),
+        title: title,
         body: body,
         is_public: true
       });
@@ -316,8 +394,9 @@
         alert('Failed to post memory: ' + error.message);
       } else {
         memoryForm.reset();
+        memoryBody.style.height = 'auto';
+        autoResize();
         loadMemories();
-        emojiPickerContainer.style.display = 'none';
       }
     });
 
