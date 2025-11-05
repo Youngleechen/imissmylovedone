@@ -4,7 +4,11 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>My Space • I Miss My Loved One</title>
+
+  <!-- ✅ FIXED: Emoji picker CSS AND JS (no extra spaces!) -->
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/emoji-picker-element@^1/index.css" />
   <script type="module" src="https://cdn.jsdelivr.net/npm/emoji-picker-element@^1/dist/emoji-picker-element.js"></script>
+
   <style>
     :root {
       --primary: #5a67d8;
@@ -93,7 +97,7 @@
     }
     .hidden { display: none; }
 
-    /* Emoji picker toggle button */
+    /* Emoji toggle button */
     .emoji-toggle {
       background: #edf2f7;
       border: 1px solid var(--border);
@@ -103,6 +107,7 @@
       font-size: 18px;
       align-self: flex-start;
       margin-top: 4px;
+      width: fit-content;
     }
     .emoji-toggle:hover {
       background: #e2e8f0;
@@ -111,10 +116,9 @@
     /* Emoji picker container */
     .emoji-picker-container {
       margin-top: 8px;
-      border: 1px solid var(--border);
-      border-radius: 8px;
-      overflow: hidden;
       display: none;
+      z-index: 10;
+      position: relative;
     }
   </style>
 </head>
@@ -178,38 +182,34 @@
     const memoryBody = document.getElementById('memory-body');
 
     // Toggle emoji picker
-    emojiBtn.addEventListener('click', () => {
+    emojiBtn.addEventListener('click', (e) => {
+      e.stopPropagation();
       emojiPickerContainer.style.display = 
         emojiPickerContainer.style.display === 'block' ? 'none' : 'block';
     });
 
-    // Insert emoji at cursor position
+    // Insert emoji at cursor
     const emojiPicker = document.querySelector('emoji-picker');
     emojiPicker.addEventListener('emoji-click', (event) => {
       const emoji = event.detail.unicode;
-      const textarea = memoryBody;
-      const start = textarea.selectionStart;
-      const end = textarea.selectionEnd;
-      const text = textarea.value;
-      const before = text.substring(0, start);
-      const after = text.substring(end);
-      textarea.value = before + emoji + after;
-      // Move cursor after inserted emoji
+      const start = memoryBody.selectionStart;
+      const end = memoryBody.selectionEnd;
+      const text = memoryBody.value;
+      memoryBody.value = text.slice(0, start) + emoji + text.slice(end);
       const newCursorPos = start + emoji.length;
-      textarea.setSelectionRange(newCursorPos, newCursorPos);
-      textarea.focus();
-      // Hide picker after selection (optional)
+      memoryBody.setSelectionRange(newCursorPos, newCursorPos);
+      memoryBody.focus();
       emojiPickerContainer.style.display = 'none';
     });
 
-    // Close picker if clicking outside
+    // Close picker on outside click
     document.addEventListener('click', (e) => {
       if (!emojiBtn.contains(e.target) && !emojiPickerContainer.contains(e.target)) {
         emojiPickerContainer.style.display = 'none';
       }
     });
 
-    // Rest of your existing logic
+    // Auth & app logic (unchanged)
     async function checkUser() {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) {
