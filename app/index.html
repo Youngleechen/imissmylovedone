@@ -4,6 +4,8 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>My Space • I Miss My Loved One</title>
+  <!-- Load emoji picker -->
+  <script type="module" src="https://cdn.jsdelivr.net/npm/@google/emoji-picker@0.2.0/dist/emoji-picker.js"></script>
   <style>
     :root {
       --primary: #5a67d8;
@@ -53,6 +55,7 @@
     }
     .form-group {
       margin: 20px 0;
+      position: relative;
     }
     input, textarea {
       width: 100%;
@@ -60,8 +63,36 @@
       border: 1px solid var(--border);
       border-radius: 8px;
       font-size: 16px;
+      box-sizing: border-box;
     }
     textarea { min-height: 120px; resize: vertical; }
+    #emoji-btn {
+      position: absolute;
+      right: 10px;
+      bottom: 10px;
+      background: none;
+      border: none;
+      font-size: 20px;
+      cursor: pointer;
+      color: #718096;
+    }
+    #emoji-picker {
+      position: absolute;
+      bottom: -320px;
+      left: 0;
+      z-index: 10;
+      display: none;
+      width: 300px;
+      background: white;
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+      max-height: 300px;
+      overflow: hidden;
+    }
+    #emoji-picker.visible {
+      display: block;
+    }
     button[type="submit"] {
       background: var(--primary);
       color: white;
@@ -81,7 +112,7 @@
       box-shadow: 0 1px 3px rgba(0,0,0,0.05);
     }
     .memory-title { font-weight: 600; margin: 0 0 8px; }
-    .memory-body { margin: 0; color: #4a5568; }
+    .memory-body { margin: 0; color: #4a5568; white-space: pre-line; }
     .logout {
       display: block;
       margin-top: 30px;
@@ -113,7 +144,11 @@
 
     <form id="memory-form" class="form-group">
       <input type="text" id="memory-title" placeholder="Title (e.g., 'I still hear your laugh')" required />
-      <textarea id="memory-body" placeholder="Share a memory, a letter, or just 'I miss you today...'." required></textarea>
+      <div style="position: relative;">
+        <textarea id="memory-body" placeholder="Share a memory, a letter, or just 'I miss you today...'." required></textarea>
+        <button type="button" id="emoji-btn">🙂</button>
+        <emoji-picker id="emoji-picker"></emoji-picker>
+      </div>
       <button type="submit">Post Memory</button>
     </form>
 
@@ -126,10 +161,9 @@
   </div>
 
   <script type="module">
-    // 🔑 === YOUR KEYS (same as in login) ===
+    // 🔑 YOUR KEYS (same as in login)
     const SUPABASE_URL = 'https://ccetnqdqfrsitooestbh.supabase.co';
     const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImNjZXRucWRxZnJzaXRvb2VzdGJoIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjIzMTE4MjksImV4cCI6MjA3Nzg4NzgyOX0.1NjRZZrgsPOg-2z_r2kRELWn9IVXNEQNpSxK6CktJRY';
-    // 🔑 ===================================
 
     import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.39.7/+esm';
     const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
@@ -141,62 +175,72 @@
     const memoryForm = document.getElementById('memory-form');
     const memoriesList = document.getElementById('memories-list');
     const logoutBtn = document.getElementById('logout-btn');
+    const emojiBtn = document.getElementById('emoji-btn');
+    const emojiPicker = document.getElementById('emoji-picker');
+    const memoryBody = document.getElementById('memory-body');
+
+    // Setup emoji picker
+    emojiBtn.addEventListener('click', () => {
+      emojiPicker.classList.toggle('visible');
+    });
+
+    emojiPicker.addEventListener('emoji-click', (event) => {
+      const { emoji } = event.detail;
+      const start = memoryBody.selectionStart;
+      const end = memoryBody.selectionEnd;
+      const value = memoryBody.value;
+      memoryBody.value = value.slice(0, start) + emoji + value.slice(end);
+      memoryBody.focus();
+      memoryBody.setSelectionRange(start + emoji.length, start + emoji.length);
+    });
+
+    document.addEventListener('click', (e) => {
+      if (!emojiPicker.contains(e.target) && e.target !== emojiBtn) {
+        emojiPicker.classList.remove('visible');
+      }
+    });
 
     // Check if user is logged in
     async function checkUser() {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) {
-        authCheck.innerHTML = `
-          <p>You are not signed in. <a href="/login">Go to login</a></p>
-        `;
+        authCheck.innerHTML = `<p>You are not signed in. <a href="/login">Go to login</a></p>`;
         return;
       }
 
-      // User is logged in — show app
       authCheck.classList.add('hidden');
       appEl.classList.remove('hidden');
 
-      // Fetch or set user profile
+      // Ensure user exists in public.users
       const { data: profile, error } = await supabase
         .from('users')
         .select('display_name')
         .eq('id', user.id)
         .single();
 
-      if (error || !profile.display_name) {
-        // Prompt for display name if missing
+      if (error || !profile?.display_name) {
         const name = prompt("Welcome. What name would you like others to see?");
-        if (name) {
-          await supabase
-            .from('users')
-            .upsert({
-              id: user.id,
-              display_name: name.trim() || "Anonymous"
-            }, { onConflict: 'id' });
-          displayNameEl.textContent = name.trim() || "Anonymous";
-        } else {
-          displayNameEl.textContent = "Anonymous";
-        }
+        await supabase
+          .from('users')
+          .upsert({
+            id: user.id,
+            display_name: name?.trim() || "Anonymous"
+          }, { onConflict: 'id' });
+        displayNameEl.textContent = name?.trim() || "Anonymous";
       } else {
         displayNameEl.textContent = profile.display_name;
       }
 
-      // Load memories
       loadMemories();
-
-      // Set up Lifeline
       setupLifeline(user.id);
     }
 
     async function setupLifeline(userId) {
-      // Mark user as online when they enter
       await supabase
         .from('users')
         .update({ is_online: true, last_active: new Date().toISOString() })
         .eq('id', userId);
 
-      // Realtime: listen for online users (future: show who's available)
-      // For now, just toggle button
       lifelineBtn.addEventListener('click', async () => {
         const isOnline = lifelineBtn.classList.contains('online');
         const newState = !isOnline;
@@ -214,7 +258,6 @@
         }
       });
 
-      // Auto-mark offline on page exit (best-effort)
       window.addEventListener('beforeunload', async () => {
         await supabase
           .from('users')
@@ -231,7 +274,7 @@
         .order('created_at', { ascending: false });
 
       if (error) {
-        memoriesList.innerHTML = `<p class="error">Could not load memories.</p>`;
+        memoriesList.innerHTML = `<p>Could not load memories.</p>`;
         return;
       }
 
@@ -240,12 +283,23 @@
         return;
       }
 
-      memoriesList.innerHTML = data.map(m => `
-        <div class="memory">
-          <h3 class="memory-title">${m.title}</h3>
-          <p class="memory-body">${m.body.replace(/\n/g, '<br>')}</p>
-        </div>
-      `).join('');
+      // Safely render emojis & line breaks
+      memoriesList.innerHTML = data.map(m => {
+        const escapeHtml = (str) => str
+          .replace(/&/g, '&amp;')
+          .replace(/</g, '<')
+          .replace(/>/g, '>');
+        
+        const safeTitle = escapeHtml(m.title);
+        const safeBody = escapeHtml(m.body);
+
+        return `
+          <div class="memory">
+            <h3 class="memory-title">${safeTitle}</h3>
+            <p class="memory-body">${safeBody}</p>
+          </div>
+        `;
+      }).join('');
     }
 
     memoryForm.addEventListener('submit', async (e) => {
@@ -267,7 +321,7 @@
         alert('Failed to post memory: ' + error.message);
       } else {
         memoryForm.reset();
-        loadMemories(); // refresh list
+        loadMemories();
       }
     });
 
@@ -276,7 +330,6 @@
       window.location.href = '/';
     });
 
-    // Start the app
     checkUser();
   </script>
 </body>
