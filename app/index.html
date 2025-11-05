@@ -75,6 +75,7 @@
       font-size: 20px;
       cursor: pointer;
       color: #718096;
+      z-index: 5;
     }
     #emoji-picker {
       position: absolute;
@@ -88,10 +89,15 @@
       border-radius: 12px;
       box-shadow: 0 4px 12px rgba(0,0,0,0.1);
       max-height: 300px;
-      overflow: hidden;
+      overflow-y: auto;
+      transform: translateY(10px);
+      opacity: 0;
+      transition: all 0.2s ease;
     }
     #emoji-picker.visible {
       display: block;
+      transform: translateY(0);
+      opacity: 1;
     }
     button[type="submit"] {
       background: var(--primary);
@@ -180,8 +186,17 @@
     const memoryBody = document.getElementById('memory-body');
 
     // Setup emoji picker
+    let isPickerVisible = false;
+
     emojiBtn.addEventListener('click', () => {
-      emojiPicker.classList.toggle('visible');
+      isPickerVisible = !isPickerVisible;
+      if (isPickerVisible) {
+        emojiPicker.classList.add('visible');
+        // Focus textarea to keep cursor position
+        memoryBody.focus();
+      } else {
+        emojiPicker.classList.remove('visible');
+      }
     });
 
     emojiPicker.addEventListener('emoji-click', (event) => {
@@ -194,15 +209,17 @@
       memoryBody.setSelectionRange(start + emoji.length, start + emoji.length);
     });
 
+    // Close picker when clicking outside
     document.addEventListener('click', (e) => {
       if (!emojiPicker.contains(e.target) && e.target !== emojiBtn) {
         emojiPicker.classList.remove('visible');
+        isPickerVisible = false;
       }
     });
 
     // Check if user is logged in
     async function checkUser() {
-      const { data: { user } } = await supabase.auth.getUser();
+      const {  { user } } = await supabase.auth.getUser();
       if (!user) {
         authCheck.innerHTML = `<p>You are not signed in. <a href="/login">Go to login</a></p>`;
         return;
@@ -307,7 +324,7 @@
       const title = document.getElementById('memory-title').value;
       const body = document.getElementById('memory-body').value;
 
-      const { data: { user } } = await supabase.auth.getUser();
+      const {  { user } } = await supabase.auth.getUser();
       if (!user) return;
 
       const { error } = await supabase.from('memories').insert({
