@@ -1,1 +1,55 @@
 
+/* Shared global styles — used across all pages */
+
+:root {
+  --primary: #5a67d8;
+  --success: #38a169;
+  --warning: #dd6b20;
+  --text: #1a202c;
+  --bg: #fafafa;
+  --card: white;
+  --border: #e2e8f0;
+}
+
+body {
+  font-family: system-ui, -apple-system, sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  max-width: 700px;
+  margin: 0 auto;
+  padding: 20px;
+  line-height: 1.6;
+}
+
+h1, h2, h3 {
+  font-weight: 600;
+  margin-top: 1.5em;
+  margin-bottom: 0.5em;
+}
+
+p {
+  margin: 0 0 1em;
+}
+
+button {
+  cursor: pointer;
+  font-weight: 600;
+  border: none;
+  border-radius: 8px;
+  padding: 8px 16px;
+  transition: background 0.2s;
+}
+
+input, textarea {
+  font-size: 16px;
+  padding: 12px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  outline: none;
+  width: 100%;
+}
+
+input:focus, textarea:focus {
+  border-color: var(--primary);
+  box-shadow: 0 0 0 2px rgba(90, 103, 216, 0.2);
+}
