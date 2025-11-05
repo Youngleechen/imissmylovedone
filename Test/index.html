@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Advanced Text Input with Emoji Picker</title>
+  
+  <!-- Load emoji picker styles and script -->
+  <script type="module" src="https://cdn.jsdelivr.net/npm/emoji-picker-element@^1/index.js"></script>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/emoji-picker-element@^1/index.min.css" />
+
+  <style>
+    body {
+      font-family: system-ui, sans-serif;
+      padding: 2rem;
+      background: #f9f9fb;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+
+    .input-container {
+      width: 100%;
+      max-width: 600px;
+      position: relative;
+    }
+
+    #textInput {
+      width: 100%;
+      min-height: 120px;
+      padding: 1rem;
+      font-size: 1rem;
+      border: 1px solid #ccc;
+      border-radius: 8px;
+      resize: none;
+      box-sizing: border-box;
+      transition: border-color 0.2s;
+    }
+
+    #textInput:focus {
+      outline: none;
+      border-color: #4a6cf7;
+      box-shadow: 0 0 0 2px rgba(74, 108, 247, 0.2);
+    }
+
+    #emojiButton {
+      position: absolute;
+      bottom: 12px;
+      right: 12px;
+      background: none;
+      border: none;
+      font-size: 1.5rem;
+      cursor: pointer;
+      color: #555;
+      padding: 4px;
+    }
+
+    #emojiButton:hover {
+      color: #4a6cf7;
+    }
+
+    /* Emoji picker popup style */
+    #emojiPicker {
+      position: absolute;
+      bottom: 50px;
+      right: 0;
+      z-index: 1000;
+      display: none;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+      border-radius: 8px;
+      overflow: hidden;
+    }
+
+    .show {
+      display: block !important;
+    }
+  </style>
+</head>
+<body>
+  <h2>Advanced Text Input with Emoji 🎉</h2>
+  
+  <div class="input-container">
+    <textarea id="textInput" placeholder="Type your message here..."></textarea>
+    <button id="emojiButton" aria-label="Open emoji picker">😊</button>
+    <emoji-picker id="emojiPicker"></emoji-picker>
+  </div>
+
+  <script>
+    const textInput = document.getElementById('textInput');
+    const emojiButton = document.getElementById('emojiButton');
+    const emojiPicker = document.getElementById('emojiPicker');
+
+    // Auto-resize textarea
+    textInput.addEventListener('input', () => {
+      textInput.style.height = 'auto';
+      textInput.style.height = Math.min(textInput.scrollHeight, 300) + 'px';
+    });
+
+    // Toggle emoji picker visibility
+    emojiButton.addEventListener('click', (e) => {
+      e.stopPropagation();
+      emojiPicker.classList.toggle('show');
+    });
+
+    // Insert emoji on selection
+    emojiPicker.addEventListener('emoji-click', (e) => {
+      const cursorPos = textInput.selectionStart;
+      const before = textInput.value.substring(0, cursorPos);
+      const after = textInput.value.substring(cursorPos);
+      textInput.value = before + e.detail.unicode + after;
+      
+      // Move cursor after inserted emoji
+      const newCursorPos = cursorPos + e.detail.unicode.length;
+      textInput.setSelectionRange(newCursorPos, newCursorPos);
+      textInput.focus();
+      
+      // Hide picker after selection
+      emojiPicker.classList.remove('show');
+    });
+
+    // Close picker when clicking outside
+    document.addEventListener('click', (e) => {
+      if (!emojiButton.contains(e.target) && !emojiPicker.contains(e.target)) {
+        emojiPicker.classList.remove('show');
+      }
+    });
+  </script>
+</body>
+</html>
