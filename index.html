@@ -2,63 +2,26 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>I Miss My Loved One</title>
-  <style>
-    body { 
-      font-family: system-ui, -apple-system, sans-serif; 
-      background: #fafafa; 
-      color: #333; 
-      margin: 0; 
-      padding: 0; 
-      line-height: 1.6; 
-    }
-    main { 
-      max-width: 600px; 
-      margin: 4rem auto; 
-      padding: 0 1.5rem; 
-      text-align: center; 
-    }
-    h1 { 
-      font-size: 2.2rem; 
-      font-weight: 700; 
-      margin: 0 0 0.5rem; 
-      color: #4a6fa5; 
-    }
-    p { 
-      color: #555; 
-      margin: 1rem 0; 
-      font-size: 1.1rem; 
-    }
-    .lifeline-btn {
-      background: #4a6fa5;
-      color: white;
-      border: none;
-      padding: 12px 24px;
-      border-radius: 30px;
-      font-size: 1.1rem;
-      cursor: pointer;
-      text-decoration: none;
-      display: inline-block;
-      margin-top: 1.5rem;
-      transition: background 0.2s;
-    }
-    .lifeline-btn:hover {
-      background: #3a5a80;
-    }
-    footer {
-      margin-top: 3rem;
-      font-size: 0.9rem;
-      color: #888;
-    }
-  </style>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Advanced Text Input with Emoji Picker</title>
+
+  <!-- Load emoji picker (latest) -->
+  <script type="module" src="https://cdn.jsdelivr.net/npm/emoji-picker-element@^1/index.js"></script>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/emoji-picker-element@^1/index.min.css" />
+
+  <!-- Local styles -->
+  <link rel="stylesheet" href="styles.css" />
 </head>
 <body>
-  <main>
-    <h1>I Miss My Loved One</h1>
-    <p>This is not a place to “move on.”<br>It’s a place to be seen in your grief—<br>especially if it’s from suicide, sudden loss, or silence that never ends.</p>
-    <a href="/lifeline" class="lifeline-btn">I need to talk</a>
-  </main>
-  <footer>Built by Mike — someone who’s lost too. No funding. Just need to know this matters.</footer>
+  <h2>Advanced Text Input with Emoji Picker ✨</h2>
+
+  <div class="input-wrapper">
+    <textarea id="textInput" placeholder="what's on your mind?"></textarea>
+    <button id="emojiButton" aria-label="Insert emoji">😐</button>
+    <emoji-picker id="emojiPicker" data-emoji-size="20"></emoji-picker>
+  </div>
+
+  <!-- Local script -->
+  <script src="script.js"></script>
 </body>
 </html>

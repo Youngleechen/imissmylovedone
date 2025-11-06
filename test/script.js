@@ -20,13 +20,14 @@ const toggleEmojiPicker = (e) => {
 
   if (isShowing) return;
 
-  // Position logic
+  // Position logic: try below first, else above
   const wrapper = emojiButton.closest('.input-wrapper');
   const wrapperRect = wrapper.getBoundingClientRect();
-  const pickerHeight = 380;
+  const pickerHeight = 380; // approx height of emoji picker
   const spaceBelow = window.innerHeight - wrapperRect.bottom;
   const spaceAbove = wrapperRect.top;
 
+  // Reset picker positioning
   emojiPicker.style.top = 'auto';
   emojiPicker.style.bottom = 'auto';
   emojiPicker.style.left = 'auto';
@@ -41,6 +42,7 @@ const toggleEmojiPicker = (e) => {
     emojiPicker.style.top = (wrapperRect.height + 8) + 'px';
   }
 
+  // Show with slight delay for smooth transition
   setTimeout(() => emojiPicker.classList.add('show'), 10);
 };
 
@@ -56,6 +58,7 @@ emojiPicker.addEventListener('emoji-click', (e) => {
   textInput.value = text.slice(0, start) + emoji + text.slice(end);
   autoResize();
 
+  // Move cursor after emoji
   const newCursorPos = start + emoji.length;
   textInput.setSelectionRange(newCursorPos, newCursorPos);
   textInput.focus();
