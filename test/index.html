@@ -5,23 +5,20 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>My Thoughts</title>
 
-  <!-- Load emoji picker (kept for later) -->
-  <script type="module" src="https://cdn.jsdelivr.net/npm/emoji-picker-element@^1/index.js"></script>
-  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/emoji-picker-element@^1/index.min.css" />
+  <!-- Supabase JS Client -->
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
+  <!-- Local CSS -->
   <link rel="stylesheet" href="style.css" />
 </head>
 <body>
   <div class="input-wrapper">
     <textarea id="textInput" placeholder="what's on your mind?"></textarea>
     <div class="input-actions">
-      <!-- 
-        Emoji hidden for now – uncomment to re-enable:
-        <button id="emojiButton" aria-label="Insert emoji">😊</button>
-      -->
+      <!-- Emoji button hidden for now -->
       <button id="postButton">Post</button>
     </div>
-    <!-- <emoji-picker id="emojiPicker" data-emoji-size="20"></emoji-picker> -->
+    <!-- emoji-picker element is omitted (will be added later if needed) -->
   </div>
 
   <div class="posts-section">
@@ -29,6 +26,7 @@
     <div id="postsContainer"></div>
   </div>
 
+  <!-- Local JS -->
   <script src="script.js"></script>
 </body>
 </html>
