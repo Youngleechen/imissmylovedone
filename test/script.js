@@ -16,6 +16,23 @@ document.addEventListener('DOMContentLoaded', async () => {
   const uploadProgress = document.getElementById('uploadProgress');
   const progressFill = document.getElementById('progressFill');
   const progressText = document.getElementById('progressText');
+  const mediaPreviewContainer = document.getElementById('mediaPreviewContainer');
+
+  // Create media preview container if it doesn't exist
+  let mediaPreviewContainerEl = document.createElement('div');
+  mediaPreviewContainerEl.id = 'mediaPreviewContainer';
+  mediaPreviewContainerEl.style.cssText = `
+    margin-top: 12px;
+    padding: 8px;
+    background: #f9f9f9;
+    border-radius: 8px;
+    display: none;
+  `;
+  memoryBody.parentNode.insertBefore(mediaPreviewContainerEl, mediaButton.parentNode.nextSibling);
+
+  // Track uploaded media URL and filename
+  let currentMediaUrl = null;
+  let currentMediaFilename = null;
 
   // Check if user is authenticated
   async function checkAuth() {
@@ -174,10 +191,17 @@ document.addEventListener('DOMContentLoaded', async () => {
       .from('memories')
       .getPublicUrl(fileName);
 
+    // Store for preview
+    currentMediaUrl = publicUrl;
+    currentMediaFilename = file.name;
+
     // Add media reference to textarea with better formatting
     const currentText = memoryBody.value;
-    memoryBody.value = currentText + `\n\n![Uploaded Media](${publicUrl})\n\n`;
+    memoryBody.value = currentText + `\n\n![${file.name}](${publicUrl})\n\n`;
     autoResize();
+
+    // Show preview
+    showMediaPreview(publicUrl, file.name, file.type);
 
     // Hide progress and clear input
     if (uploadProgress) {
@@ -185,6 +209,63 @@ document.addEventListener('DOMContentLoaded', async () => {
     }
     mediaInput.value = '';
   });
+
+  // === SHOW MEDIA PREVIEW ===
+  function showMediaPreview(url, filename, fileType) {
+    mediaPreviewContainerEl.innerHTML = '';
+
+    let previewElement;
+    if (fileType.startsWith('image')) {
+      previewElement = document.createElement('img');
+      previewElement.src = url;
+      previewElement.alt = filename;
+      previewElement.style.cssText = `
+        max-width: 100%;
+        height: auto;
+        border-radius: 8px;
+        margin-bottom: 8px;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+      `;
+    } else if (fileType.startsWith('video')) {
+      previewElement = document.createElement('video');
+      previewElement.controls = true;
+      previewElement.style.cssText = `
+        max-width: 100%;
+        height: auto;
+        border-radius: 8px;
+        margin-bottom: 8px;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+      `;
+      const source = document.createElement('source');
+      source.src = url;
+      source.type = fileType;
+      previewElement.appendChild(source);
+    }
+
+    const filenameSpan = document.createElement('span');
+    filenameSpan.textContent = filename;
+    filenameSpan.style.cssText = `
+      display: block;
+      font-size: 12px;
+      color: #4a5568;
+      margin-top: 4px;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    `;
+
+    mediaPreviewContainerEl.appendChild(previewElement);
+    mediaPreviewContainerEl.appendChild(filenameSpan);
+    mediaPreviewContainerEl.style.display = 'block';
+  }
+
+  // === CLEAR MEDIA PREVIEW ===
+  function clearMediaPreview() {
+    mediaPreviewContainerEl.innerHTML = '';
+    mediaPreviewContainerEl.style.display = 'none';
+    currentMediaUrl = null;
+    currentMediaFilename = null;
+  }
 
   // === LOADING POSTS (with proper media rendering) ===
   async function loadUserPosts() {
@@ -209,26 +290,25 @@ document.addEventListener('DOMContentLoaded', async () => {
     }
 
     postsContainer.innerHTML = data.map(post => {
-      // Process the body text to convert markdown image links to HTML
       let processedBody = post.body;
-      
-      // Convert markdown image syntax ![Uploaded Media](url) to <img> tag
-      processedBody = processedBody.replace(/\!\[Uploaded Media\]\(([^)]+)\)/g, (match, url) => {
-        // Check if it's a video based on file extension
+
+      // Convert markdown image/video syntax to HTML
+      processedBody = processedBody.replace(/!\[([^\]]*)\]\s*\(\s*([^)]+)\s*\)/g, (match, alt, url) => {
+        url = url.trim();
+
         if (url.includes('.mp4') || url.includes('.webm') || url.includes('.mov')) {
           return `<video controls style="max-width:100%; height:auto; border-radius:8px; margin:10px 0;">
                     <source src="${url}" type="video/mp4">
                     Your browser does not support the video tag.
                   </video>`;
         } else {
-          // It's an image
-          return `<img src="${url}" alt="Uploaded media" style="max-width:100%; height:auto; border-radius:8px; margin:10px 0;">`;
+          return `<img src="${url}" alt="${alt || 'Uploaded media'}" style="max-width:100%; height:auto; border-radius:8px; margin:10px 0;">`;
         }
       });
-      
+
       // Replace newlines with <br> for text formatting
       processedBody = processedBody.replace(/\n/g, '<br>');
-      
+
       return `
         <div class="post-item" style="background: white; padding: 15px; border-radius: 8px; margin-bottom: 15px; box-shadow: 0 1px 3px rgba(0,0,0,0.1);">
           <p style="margin: 0; line-height: 1.6;">${processedBody}</p>
@@ -264,8 +344,12 @@ document.addEventListener('DOMContentLoaded', async () => {
       return;
     }
 
+    // Clear textarea and preview
     memoryBody.value = '';
     autoResize();
+    clearMediaPreview();
+
+    // Reload posts
     loadUserPosts();
   });
 
