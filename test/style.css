@@ -12,11 +12,6 @@ body {
   align-items: center;
 }
 
-h2 {
-  margin-bottom: 1.5rem;
-  color: #333;
-}
-
 .input-wrapper {
   position: relative;
   width: 100%;
@@ -27,7 +22,7 @@ h2 {
   width: 100%;
   min-height: 100px;
   padding: 16px;
-  font-size: 16px;
+  font-size: 16px; /* Prevents zoom on iOS */
   border: 1px solid #ddd;
   border-radius: 12px;
   resize: none;
@@ -48,6 +43,7 @@ h2 {
   gap: 8px;
 }
 
+/* Emoji button (currently hidden in HTML, but styled if shown) */
 #emojiButton {
   background: transparent;
   border: 1px solid #ddd;
@@ -85,6 +81,7 @@ h2 {
   background: #3a5be0;
 }
 
+/* Emoji picker (hidden for now, but styled if shown) */
 #emojiPicker {
   position: absolute;
   right: 0;
@@ -106,12 +103,7 @@ h2 {
   transform: translateY(0);
 }
 
-/* Responsive */
-@media (max-width: 640px) {
-  .input-wrapper {
-    width: 95vw;
-  }
-}
+/* Posts section */
 .posts-section {
   width: 100%;
   max-width: 600px;
@@ -136,6 +128,10 @@ h2 {
   word-break: break-word;
 }
 
-.post-item:first-of-type {
-  margin-top: 0;
+/* Responsive */
+@media (max-width: 640px) {
+  .input-wrapper,
+  .posts-section {
+    width: 95vw;
+  }
 }
