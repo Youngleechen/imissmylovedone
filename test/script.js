@@ -1,7 +1,7 @@
 document.addEventListener('DOMContentLoaded', async () => {
   // Initialize Supabase
   const supabase = window.supabase.createClient(
-    'https://ccetnqdqfrsitooestbh.supabase.co',
+    'https://ccetnqdqfrsitooestbh.supabase.co  ',
     'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImNjZXRucWRxZnJzaXRvb2VzdGJoIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjIzMTE4MjksImV4cCI6MjA3Nzg4NzgyOX0.1NjRZZrgsPOg-2z_r2kRELWn9IVXNEQNpSxK6CktJRY'
   );
 
@@ -191,14 +191,9 @@ document.addEventListener('DOMContentLoaded', async () => {
       .from('memories')
       .getPublicUrl(fileName);
 
-    // Store for preview
+    // Store for preview and posting
     currentMediaUrl = publicUrl;
     currentMediaFilename = file.name;
-
-    // Add media reference to textarea with better formatting
-    const currentText = memoryBody.value;
-    memoryBody.value = currentText + `\n\n![${file.name}](${publicUrl})\n\n`;
-    autoResize();
 
     // Show preview
     showMediaPreview(publicUrl, file.name, file.type);
@@ -327,9 +322,15 @@ document.addEventListener('DOMContentLoaded', async () => {
     const user = await checkAuth();
     if (!user) return;
 
-    const body = memoryBody.value.trim();
+    let body = memoryBody.value.trim();
+
+    // If there's a media file attached, append its Markdown to the body
+    if (currentMediaUrl && currentMediaFilename) {
+      body += `\n\n![${currentMediaFilename}](${currentMediaUrl})`;
+    }
+
     if (!body) {
-      alert('Please write something first.');
+      alert('Please write something or attach media first.');
       return;
     }
 
@@ -350,6 +351,10 @@ document.addEventListener('DOMContentLoaded', async () => {
     memoryBody.value = '';
     autoResize();
     clearMediaPreview();
+
+    // Clear media state
+    currentMediaUrl = null;
+    currentMediaFilename = null;
 
     // Reload posts
     loadUserPosts();
