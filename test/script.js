@@ -11,6 +11,86 @@ document.addEventListener('DOMContentLoaded', async () => {
   const emojiPicker = document.getElementById('emojiPicker');
   const postButton = document.getElementById('postButton');
   const postsContainer = document.getElementById('postsContainer');
+  const mediaButton = document.getElementById('mediaButton');
+  const mediaInput = document.getElementById('mediaInput');
+  const uploadProgress = document.getElementById('uploadProgress');
+  const progressFill = document.getElementById('progressFill');
+  const progressText = document.getElementById('progressText');
+  const authContainer = document.getElementById('authContainer');
+  const loginForm = document.getElementById('loginForm');
+  const userMenu = document.getElementById('userMenu');
+  const userEmail = document.getElementById('userEmail');
+  const loginButton = document.getElementById('loginButton');
+  const signupButton = document.getElementById('signupButton');
+  const logoutButton = document.getElementById('logoutButton');
+  const guestLogin = document.getElementById('guestLogin');
+
+  // === AUTHENTICATION ===
+  async function checkAuthStatus() {
+    const { data: { user } } = await supabase.auth.getUser();
+    if (user) {
+      userEmail.textContent = user.email;
+      authContainer.style.display = 'none';
+      document.getElementById('mainContent').style.display = 'block';
+      loadUserPosts();
+    } else {
+      authContainer.style.display = 'block';
+      document.getElementById('mainContent').style.display = 'none';
+    }
+  }
+
+  // Login handler
+  loginButton.addEventListener('click', async () => {
+    const email = document.getElementById('email').value;
+    const password = document.getElementById('password').value;
+    
+    const { error } = await supabase.auth.signInWithPassword({
+      email,
+      password
+    });
+    
+    if (error) {
+      alert('Login failed: ' + error.message);
+    } else {
+      checkAuthStatus();
+    }
+  });
+
+  // Signup handler
+  signupButton.addEventListener('click', async () => {
+    const email = document.getElementById('email').value;
+    const password = document.getElementById('password').value;
+    
+    const { error } = await supabase.auth.signUp({
+      email,
+      password
+    });
+    
+    if (error) {
+      alert('Signup failed: ' + error.message);
+    } else {
+      alert('Check your email for confirmation!');
+    }
+  });
+
+  // Guest login (anonymous)
+  guestLogin.addEventListener('click', async () => {
+    const { error } = await supabase.auth.signInAnonymously();
+    if (error) {
+      alert('Guest login failed: ' + error.message);
+    } else {
+      checkAuthStatus();
+    }
+  });
+
+  // Logout handler
+  logoutButton.addEventListener('click', async () => {
+    await supabase.auth.signOut();
+    checkAuthStatus();
+  });
+
+  // Check auth on load
+  checkAuthStatus();
 
   // === AUTO-RESIZE ===
   const autoResize = () => {
@@ -89,7 +169,78 @@ document.addEventListener('DOMContentLoaded', async () => {
     }
   });
 
-  // === LOADING POSTS (text only) ===
+  // === MEDIA UPLOAD ===
+  mediaButton.addEventListener('click', () => {
+    mediaInput.click();
+  });
+
+  mediaInput.addEventListener('change', async (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) {
+      alert('You must be signed in to upload media.');
+      return;
+    }
+
+    // Validate file type
+    const allowedTypes = ['image/jpeg', 'image/png', 'image/gif', 'image/webp', 'video/mp4', 'video/webm', 'video/quicktime'];
+    if (!allowedTypes.includes(file.type)) {
+      alert('Only images and videos are allowed.');
+      return;
+    }
+
+    // Validate file size (50MB limit)
+    if (file.size > 50 * 1024 * 1024) {
+      alert('File size must be under 50MB.');
+      return;
+    }
+
+    // Generate unique filename
+    const fileExt = file.name.split('.').pop();
+    const fileName = `${user.id}/${Date.now()}-${Math.random().toString(36).substring(2, 15)}.${fileExt}`;
+
+    // Show upload progress
+    uploadProgress.style.display = 'block';
+    progressFill.style.width = '0%';
+    progressText.textContent = 'Uploading...';
+
+    // Upload to Supabase storage
+    const { error: uploadError } = await supabase.storage
+      .from('memories')
+      .upload(fileName, file, {
+        upsert: false,
+        onUploadProgress: (progressEvent) => {
+          const percentCompleted = Math.round((progressEvent.loaded * 100) / progressEvent.total);
+          progressFill.style.width = percentCompleted + '%';
+          progressText.textContent = `Uploading... ${percentCompleted}%`;
+        }
+      });
+
+    if (uploadError) {
+      console.error('Upload error:', uploadError);
+      alert('Upload failed: ' + uploadError.message);
+      uploadProgress.style.display = 'none';
+      return;
+    }
+
+    // Get public URL
+    const { data: { publicUrl } } = supabase.storage
+      .from('memories')
+      .getPublicUrl(fileName);
+
+    // Add media reference to textarea
+    const currentText = memoryBody.value;
+    memoryBody.value = currentText + `\n![Uploaded Media](${publicUrl})\n`;
+    autoResize();
+
+    // Hide progress and clear input
+    uploadProgress.style.display = 'none';
+    mediaInput.value = '';
+  });
+
+  // === LOADING POSTS (with media support) ===
   async function loadUserPosts() {
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) {
@@ -114,15 +265,29 @@ document.addEventListener('DOMContentLoaded', async () => {
       return;
     }
 
-    postsContainer.innerHTML = data.map(post => `
-      <div class="post-item">
-        <p>${post.body.replace(/\n/g, '<br>')}</p>
-        <small class="post-date">${new Date(post.created_at).toLocaleString()}</small>
-      </div>
-    `).join('');
+    postsContainer.innerHTML = data.map(post => {
+      // Convert markdown-style image links to actual images
+      let body = post.body.replace(/\!\[Uploaded Media\]\(([^)]+)\)/g, (match, url) => {
+        if (url.includes('.mp4') || url.includes('.webm') || url.includes('.mov')) {
+          return `<video controls src="${url}" style="max-width:100%;height:auto;"></video>`;
+        } else {
+          return `<img src="${url}" alt="Uploaded media" style="max-width:100%;height:auto;">`;
+        }
+      });
+      
+      // Replace newlines with <br> for text
+      body = body.replace(/\n/g, '<br>');
+      
+      return `
+        <div class="post-item">
+          <p>${body}</p>
+          <small class="post-date">${new Date(post.created_at).toLocaleString()}</small>
+        </div>
+      `;
+    }).join('');
   }
 
-  // === POSTING (text only) ===
+  // === POSTING (with media support) ===
   postButton.addEventListener('click', async () => {
     const body = memoryBody.value.trim();
     if (!body) {
@@ -154,6 +319,8 @@ document.addEventListener('DOMContentLoaded', async () => {
     loadUserPosts();
   });
 
-  // Initialize
-  loadUserPosts();
+  // Handle auth state changes
+  supabase.auth.onAuthStateChange((event, session) => {
+    checkAuthStatus();
+  });
 });
