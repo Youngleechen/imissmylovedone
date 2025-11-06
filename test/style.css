@@ -58,6 +58,14 @@ button {
   cursor: pointer;
 }
 
+#mediaButton {
+  background-color: #f1f3f4;
+  color: #555;
+}
+#mediaButton:hover {
+  background-color: #e7e9eb;
+}
+
 #emojiButton {
   background-color: #f1f3f4;
   color: #555;
@@ -92,6 +100,22 @@ button {
   display: block;
 }
 
+.photo-preview {
+  margin-top: 12px;
+  padding: 8px;
+  background: #f9f9f9;
+  border-radius: 8px;
+  text-align: center;
+}
+
+.photo-preview img {
+  max-width: 100px;
+  max-height: 100px;
+  object-fit: cover;
+  border-radius: 6px;
+  margin: 0 auto;
+}
+
 .posts-section h2 {
   font-size: 18px;
   margin: 24px 0 12px;
@@ -115,6 +139,12 @@ button {
 .post-item p {
   margin: 0;
   line-height: 1.5;
+}
+
+.post-item img {
+  max-width: 100%;
+  border-radius: 8px;
+  margin-top: 8px;
 }
 
 .post-date {
