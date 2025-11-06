@@ -1,1 +1,24 @@
+body {
+  margin: 0;
+  padding: 0;
+  font-family: Arial, sans-serif;
+}
 
+.login-btn {
+  position: fixed;
+  top: 20px;
+  right: 20px;
+  background-color: #E6E6FA; /* Light purple */
+  color: #4B0082; /* Indigo text for contrast */
+  border: none;
+  padding: 10px 20px;
+  font-size: 16px;
+  border-radius: 6px;
+  cursor: pointer;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
+  transition: background-color 0.3s ease;
+}
+
+.login-btn:hover {
+  background-color: #D8BFD8; /* Slightly darker on hover */
+}
