@@ -112,3 +112,30 @@ h2 {
     width: 95vw;
   }
 }
+.posts-section {
+  width: 100%;
+  max-width: 600px;
+  margin-top: 2.5rem;
+}
+
+.posts-section h2 {
+  margin-bottom: 1rem;
+  color: #333;
+  font-size: 1.25rem;
+}
+
+.post-item {
+  background: white;
+  border: 1px solid #eee;
+  border-radius: 12px;
+  padding: 16px;
+  margin-bottom: 12px;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.05);
+  font-size: 16px;
+  line-height: 1.5;
+  word-break: break-word;
+}
+
+.post-item:first-of-type {
+  margin-top: 0;
+}
