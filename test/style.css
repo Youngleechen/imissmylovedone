@@ -21,7 +21,6 @@ body {
   position: relative;
 }
 
-/* 🔥 CRITICAL: Force textarea styling */
 #memory-body {
   width: 100% !important;
   min-height: 80px !important;
