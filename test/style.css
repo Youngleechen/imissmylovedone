@@ -3,13 +3,16 @@ body {
   padding: 20px;
   font-family: sans-serif;
   background: #f9f9f9;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 100vh;
 }
 
-.input-wrapper {
-  position: relative;
+.post-box {
   width: 100%;
   max-width: 600px;
-  margin: 0 auto;
+  position: relative;
 }
 
 #textInput {
@@ -18,32 +21,46 @@ body {
   padding: 12px;
   font-size: 16px;
   border: 1px solid #ccc;
-  border-radius: 8px;
+  border-radius: 8px 8px 0 0; /* Rounded top only */
   box-sizing: border-box;
   resize: none;
+  outline: none;
+  transition: border-color 0.2s;
 }
 
-#emojiButton,
-#postButton {
-  position: absolute;
-  bottom: 12px;
-  padding: 6px 12px;
-  font-size: 14px;
-  border: none;
-  border-radius: 6px;
-  cursor: pointer;
+#textInput:focus {
+  border-color: #1877f2;
+}
+
+.controls {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 8px 12px;
+  background: white;
+  border: 1px solid #ccc;
+  border-top: none;
+  border-radius: 0 0 8px 8px; /* Rounded bottom only */
 }
 
 #emojiButton {
-  left: 12px;
   background: #eee;
+  border: none;
+  border-radius: 6px;
+  padding: 6px 12px;
+  cursor: pointer;
+  font-size: 16px;
 }
 
 #postButton {
-  right: 12px;
   background: #1877f2;
   color: white;
+  border: none;
+  border-radius: 6px;
+  padding: 6px 16px;
+  cursor: pointer;
   font-weight: bold;
+  font-size: 14px;
 }
 
 #emojiPicker {
