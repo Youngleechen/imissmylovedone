@@ -15,7 +15,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   const postsContainer = document.getElementById('postsContainer');
 
   // State
-  let selectedPhoto = null;
+  let selectedPhoto = null; // Track selected file for preview
 
   // === AUTO-RESIZE ===
   const autoResize = () => {
@@ -94,7 +94,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     }
   });
 
-  // === MEDIA UPLOAD LOGGING ===
+  // === MEDIA UPLOAD (LOCAL PREVIEW ONLY) ===
   mediaButton.addEventListener('click', () => {
     console.log('🖼️ Media button clicked — opening file picker');
     mediaInput.click();
@@ -114,7 +114,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     const existingPreview = document.querySelector('.photo-preview');
     if (existingPreview) existingPreview.remove();
 
-    // Create new preview
+    // Create new preview using FileReader (local only)
     const reader = new FileReader();
     reader.onload = (event) => {
       const img = document.createElement('img');
@@ -129,23 +129,18 @@ document.addEventListener('DOMContentLoaded', async () => {
       previewContainer.appendChild(img);
       document.querySelector('.thought-box').insertBefore(previewContainer, emojiPicker);
 
-      console.log('🖼️ Photo preview rendered in UI');
+      console.log('🖼️ Local photo preview rendered in UI');
     };
     reader.readAsDataURL(file);
   });
 
-  // === POSTING WITH REAL AUTH ===
+  // === LOADING POSTS ===
   async function loadUserPosts() {
-    console.log('🔍 Loading posts for current user...');
-    
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) {
       postsContainer.innerHTML = '<p>Sign in to see your posts.</p>';
-      console.log('❌ Not signed in — cannot load posts');
       return;
     }
-
-    console.log('👤 Loading posts for user ID:', user.id);
 
     const { data, error } = await supabase
       .from('memories')
@@ -154,12 +149,10 @@ document.addEventListener('DOMContentLoaded', async () => {
       .order('created_at', { ascending: false });
 
     if (error) {
-      console.error('❌ Load error:', error);
+      console.error('Load error:', error);
       postsContainer.innerHTML = '<p>Could not load your posts.</p>';
       return;
     }
-
-    console.log('📊 Loaded', data.length, 'posts:', data);
 
     if (data.length === 0) {
       postsContainer.innerHTML = '<p>You haven’t posted anything yet.</p>';
@@ -181,89 +174,43 @@ document.addEventListener('DOMContentLoaded', async () => {
     }).join('');
   }
 
+  // === POSTING (WITHOUT UPLOAD FOR NOW) ===
   postButton.addEventListener('click', async () => {
     const body = memoryBody.value.trim();
     if (!body && !selectedPhoto) {
       alert('Please write something or add a photo.');
-      console.log('❌ Post failed: No text or photo added');
       return;
     }
-
-    console.log('✅ Starting post process...');
-    console.log('📝 Text content:', body);
-    console.log('🖼️ Photo selected:', selectedPhoto ? `${selectedPhoto.name} (${selectedPhoto.size} bytes)` : 'None');
 
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) {
       alert('You must be signed in to post.');
-      console.log('❌ Post failed: User not authenticated');
       return;
     }
 
-    console.log('👤 Signed in as user ID:', user.id);
-
-    // Prepare post data
+    // Prepare post data — NO UPLOAD YET, so no media_url
     const postData = {
       user_id: user.id,
       title: 'Untitled',
       body
+      // media_url: will be added later when we implement upload
     };
 
-    // Upload photo if exists
-    if (selectedPhoto) {
-      console.log('📤 Uploading photo:', selectedPhoto.name);
+    // For now, don't include media_url unless you upload
+    // If you want to test saving without media, comment out the media_url line above
 
-      const fileName = `${Date.now()}-${selectedPhoto.name}`;
-      console.log('💾 Filename for upload:', fileName);
-
-      try {
-        const { data, error } = await supabase.storage
-          .from('memories')
-          .upload(fileName, selectedPhoto, {
-            upsert: true,
-            contentType: selectedPhoto.type
-          });
-
-        if (error) {
-          console.error('❌ Upload failed:', error);
-          alert('Failed to upload photo: ' + error.message);
-          return;
-        }
-
-        console.log('✅ Upload succeeded:', data);
-
-        // Get public URL
-        const { data: publicUrlData } = supabase.storage
-          .from('memories')
-          .getPublicUrl(fileName);
-
-        postData.media_url = publicUrlData.publicUrl;
-        console.log('🔗 Public URL generated:', publicUrlData.publicUrl);
-
-      } catch (err) {
-        console.error('💥 Unexpected upload error:', err);
-        alert('Unexpected error during upload: ' + err.message);
-        return;
-      }
-    }
-
-    // Insert post
-    console.log('📥 Inserting post into memories table...');
-    console.log('📝 Post data being sent:', postData);
-    
     try {
       const { error } = await supabase
         .from('memories')
         .insert(postData);
 
       if (error) {
-        console.error('❌ Database insert failed:', error);
+        console.error('Database insert failed:', error);
         alert('Failed to save post: ' + error.message);
         return;
       }
 
       console.log('✅ Post saved successfully!');
-      console.log('📌 Post ', postData);
 
       // Reset UI
       memoryBody.value = '';
@@ -273,10 +220,9 @@ document.addEventListener('DOMContentLoaded', async () => {
       if (preview) preview.remove();
 
       loadUserPosts();
-      console.log('🎉 Post completed and UI refreshed!');
 
     } catch (err) {
-      console.error('💥 Unexpected database error:', err);
+      console.error('Unexpected database error:', err);
       alert('Unexpected error saving post: ' + err.message);
     }
   });
