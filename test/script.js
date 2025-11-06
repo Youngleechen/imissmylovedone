@@ -24,47 +24,59 @@ document.addEventListener('DOMContentLoaded', async () => {
   // === EMOJI PICKER SETUP ===
   let pickerInstance = null;
 
-  emojiButton.addEventListener('click', (e) => {
-    e.stopPropagation();
+ emojiButton.addEventListener('click', (e) => {
+  e.stopPropagation();
 
-    if (!pickerInstance) {
-      pickerInstance = document.createElement('emoji-picker');
-      pickerInstance.setAttribute('id', 'actual-emoji-picker');
-      emojiPicker.appendChild(pickerInstance);
+  if (!pickerInstance) {
+    pickerInstance = document.createElement('emoji-picker');
+    pickerInstance.setAttribute('id', 'actual-emoji-picker');
+    emojiPicker.appendChild(pickerInstance);
 
-      pickerInstance.addEventListener('emoji-click', (event) => {
-        const emoji = event.detail.unicode;
-        const start = memoryBody.selectionStart;
-        const end = memoryBody.selectionEnd;
-        const text = memoryBody.value;
-        memoryBody.value = text.slice(0, start) + emoji + text.slice(end);
-        autoResize();
-        const newCursorPos = start + emoji.length;
-        memoryBody.setSelectionRange(newCursorPos, newCursorPos);
-        memoryBody.focus();
-        emojiPicker.classList.remove('show');
-      });
-    }
+    pickerInstance.addEventListener('emoji-click', (event) => {
+      const emoji = event.detail.unicode;
+      const start = memoryBody.selectionStart;
+      const end = memoryBody.selectionEnd;
+      const text = memoryBody.value;
+      memoryBody.value = text.slice(0, start) + emoji + text.slice(end);
+      autoResize();
+      const newCursorPos = start + emoji.length;
+      memoryBody.setSelectionRange(newCursorPos, newCursorPos);
+      memoryBody.focus();
+      emojiPicker.classList.remove('show');
+    });
+  }
 
-    const isShowing = emojiPicker.classList.contains('show');
-    emojiPicker.classList.remove('show');
+  const isShowing = emojiPicker.classList.contains('show');
+  emojiPicker.classList.remove('show');
 
-    if (isShowing) return;
+  if (isShowing) return;
 
-    // ✅ Safe: emojiButton exists because we're inside DOMContentLoaded
-    const rect = emojiButton.getBoundingClientRect();
-    const spaceBelow = window.innerHeight - rect.bottom;
-    const pickerHeight = 380;
+  // ✅ FIXED: Use .thought-actions or .thought-box as wrapper
+  const wrapper = emojiButton.closest('.thought-actions') || emojiButton.closest('.thought-box');
+  if (!wrapper) {
+    console.error('Emoji button wrapper not found!');
+    return;
+  }
+  const wrapperRect = wrapper.getBoundingClientRect();
+  const pickerHeight = 380;
+  const spaceBelow = window.innerHeight - wrapperRect.bottom;
+  const spaceAbove = wrapperRect.top;
 
-    emojiPicker.style.top = spaceBelow >= pickerHeight
-      ? (rect.height + 8) + 'px'
-      : 'auto';
-    emojiPicker.style.bottom = spaceBelow < pickerHeight
-      ? (rect.height + 8) + 'px'
-      : 'auto';
+  emojiPicker.style.top = 'auto';
+  emojiPicker.style.bottom = 'auto';
+  emojiPicker.style.left = 'auto';
+  emojiPicker.style.right = '0';
 
-    emojiPicker.classList.add('show');
-  });
+  if (spaceBelow >= pickerHeight) {
+    emojiPicker.style.top = (wrapperRect.height + 8) + 'px';
+  } else if (spaceAbove >= pickerHeight) {
+    emojiPicker.style.bottom = (wrapperRect.height + 8) + 'px';
+  } else {
+    emojiPicker.style.top = (wrapperRect.height + 8) + 'px';
+  }
+
+  emojiPicker.classList.add('show');
+});
 
   // Close picker on outside click
   document.addEventListener('click', (e) => {
@@ -141,3 +153,4 @@ document.addEventListener('DOMContentLoaded', async () => {
   autoResize(); // Set initial height
   loadUserPosts();
 });
+
