@@ -2,22 +2,21 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Share a Thought</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Advanced Text Input with Emoji Picker</title>
+
+  <!-- Load emoji picker -->
+  <script type="module" src="https://cdn.jsdelivr.net/npm/emoji-picker-element@^1/index.js"></script>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/emoji-picker-element@^1/index.min.css" />
   <link rel="stylesheet" href="style.css" />
 </head>
 <body>
-  <div class="input-container">
-    <textarea 
-      id="thoughtInput" 
-      placeholder="What’s on your mind?"
-      aria-label="Share a memory or thought"
-    ></textarea>
-    <button id="emojiButton" type="button" aria-label="Add an emoji">
-      <!-- Light grey neutral face: U+1F610 (😐) -->
-      <span class="emoji-icon">😐</span>
-    </button>
-    <button id="sendButton" type="button" aria-label="Post your thought">Send</button>
+  <h2>Advanced Text Input with Emoji Picker ✨</h2>
+
+  <div class="input-wrapper">
+    <textarea id="textInput" placeholder="What's on your mind?"></textarea>
+    <button id="emojiButton" aria-label="Insert emoji">😶</button>
+    <emoji-picker id="emojiPicker" data-emoji-size="20"></emoji-picker>
   </div>
 
   <script src="script.js"></script>
