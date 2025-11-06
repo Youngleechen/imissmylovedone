@@ -11,41 +11,35 @@ const autoResize = () => {
 
 textInput.addEventListener('input', autoResize);
 
-// Toggle emoji picker
+// Toggle emoji picker with smart positioning
 const toggleEmojiPicker = (e) => {
   e.stopPropagation();
   const isShowing = emojiPicker.classList.contains('show');
+
   emojiPicker.classList.remove('show');
 
   if (isShowing) return;
 
-  // Use the textarea as the anchor (more reliable)
-  const textareaRect = textInput.getBoundingClientRect();
+  const wrapper = emojiButton.closest('.input-wrapper');
+  const wrapperRect = wrapper.getBoundingClientRect();
   const pickerHeight = 380;
-  const spaceBelow = window.innerHeight - textareaRect.bottom;
-  const spaceAbove = textareaRect.top;
+  const spaceBelow = window.innerHeight - wrapperRect.bottom;
+  const spaceAbove = wrapperRect.top;
 
-  // Position relative to viewport
-  emojiPicker.style.position = 'fixed';
-  emojiPicker.style.left = textareaRect.left + 'px';
-  emojiPicker.style.right = 'auto';
-  emojiPicker.style.width = Math.min(textareaRect.width, 320) + 'px';
+  emojiPicker.style.top = 'auto';
+  emojiPicker.style.bottom = 'auto';
+  emojiPicker.style.left = 'auto';
+  emojiPicker.style.right = '0';
 
   if (spaceBelow >= pickerHeight) {
-    // Show below textarea
-    emojiPicker.style.top = textareaRect.bottom + 4 + 'px';
-    emojiPicker.style.bottom = 'auto';
+    emojiPicker.style.top = (wrapper.offsetHeight + 12) + 'px';
   } else if (spaceAbove >= pickerHeight) {
-    // Show above textarea
-    emojiPicker.style.bottom = spaceBelow + textareaRect.height + 4 + 'px';
+    emojiPicker.style.bottom = (wrapper.offsetHeight + 12) + 'px';
     emojiPicker.style.top = 'auto';
   } else {
-    // Default: below (even if clipped)
-    emojiPicker.style.top = textareaRect.bottom + 4 + 'px';
-    emojiPicker.style.bottom = 'auto';
+    emojiPicker.style.top = (wrapper.offsetHeight + 12) + 'px';
   }
 
-  // Apply visibility after positioning
   setTimeout(() => emojiPicker.classList.add('show'), 10);
 };
 
@@ -64,20 +58,8 @@ emojiPicker.addEventListener('emoji-click', (e) => {
   const newCursorPos = start + emoji.length;
   textInput.setSelectionRange(newCursorPos, newCursorPos);
   textInput.focus();
-  emojiPicker.classList.remove('show');
-});
 
-// Post button functionality
-postButton.addEventListener('click', () => {
-  const message = textInput.value.trim();
-  if (message) {
-    console.log('Posted:', message);
-    // TODO: Replace with actual post logic
-    textInput.value = '';
-    autoResize();
-  } else {
-    textInput.focus();
-  }
+  emojiPicker.classList.remove('show');
 });
 
 // Close picker on outside click
@@ -85,9 +67,22 @@ document.addEventListener('click', (e) => {
   if (
     !emojiButton.contains(e.target) &&
     !emojiPicker.contains(e.target) &&
-    !textInput.contains(e.target)
+    !textInput.contains(e.target) &&
+    !postButton.contains(e.target)
   ) {
     emojiPicker.classList.remove('show');
+  }
+});
+
+// Post button functionality (example)
+postButton.addEventListener('click', () => {
+  const content = textInput.value.trim();
+  if (content) {
+    alert('Posted: ' + content); // Replace with real logic (e.g., send to server)
+    textInput.value = '';
+    autoResize();
+  } else {
+    textInput.focus();
   }
 });
 
