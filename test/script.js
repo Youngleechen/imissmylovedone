@@ -59,12 +59,12 @@ emojiPicker.addEventListener('emoji-click', (e) => {
   emojiPicker.classList.remove('show');
 });
 
-// Post button functionality (example: log to console)
+// Post button functionality
 postButton.addEventListener('click', () => {
   const message = textInput.value.trim();
   if (message) {
     console.log('Posted:', message);
-    // TODO: Later, send to your backend or display in feed
+    // TODO: Replace with API call or local storage save
     textInput.value = '';
     autoResize();
   } else {
