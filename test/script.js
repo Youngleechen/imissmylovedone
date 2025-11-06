@@ -5,14 +5,14 @@ document.addEventListener('DOMContentLoaded', async () => {
     'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImNjZXRucWRxZnJzaXRvb2VzdGJoIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjIzMTE4MjksImV4cCI6MjA3Nzg4NzgyOX0.1NjRZZrgsPOg-2z_r2kRELWn9IVXNEQNpSxK6CktJRY'
   );
 
-  // DOM Elements
+  // DOM elements
   const memoryBody = document.getElementById('memory-body');
   const emojiButton = document.getElementById('emojiButton');
   const emojiPicker = document.getElementById('emojiPicker');
   const postButton = document.getElementById('postButton');
   const postsContainer = document.getElementById('postsContainer');
 
-  // === AUTO-RESIZE ===
+  // Auto-resize textarea
   const autoResize = () => {
     memoryBody.style.height = 'auto';
     const newHeight = Math.min(memoryBody.scrollHeight, 300);
@@ -20,63 +20,65 @@ document.addEventListener('DOMContentLoaded', async () => {
   };
 
   memoryBody.addEventListener('input', autoResize);
+  autoResize(); // initial
 
-  // === EMOJI PICKER SETUP ===
+  // Emoji picker
   let pickerInstance = null;
 
- emojiButton.addEventListener('click', (e) => {
-  e.stopPropagation();
+  emojiButton.addEventListener('click', (e) => {
+    e.stopPropagation();
 
-  if (!pickerInstance) {
-    pickerInstance = document.createElement('emoji-picker');
-    pickerInstance.setAttribute('id', 'actual-emoji-picker');
-    emojiPicker.appendChild(pickerInstance);
+    if (!pickerInstance) {
+      pickerInstance = document.createElement('emoji-picker');
+      pickerInstance.setAttribute('id', 'actual-emoji-picker');
+      emojiPicker.appendChild(pickerInstance);
 
-    pickerInstance.addEventListener('emoji-click', (event) => {
-      const emoji = event.detail.unicode;
-      const start = memoryBody.selectionStart;
-      const end = memoryBody.selectionEnd;
-      const text = memoryBody.value;
-      memoryBody.value = text.slice(0, start) + emoji + text.slice(end);
-      autoResize();
-      const newCursorPos = start + emoji.length;
-      memoryBody.setSelectionRange(newCursorPos, newCursorPos);
-      memoryBody.focus();
-      emojiPicker.classList.remove('show');
-    });
-  }
+      pickerInstance.addEventListener('emoji-click', (event) => {
+        const emoji = event.detail.unicode;
+        const start = memoryBody.selectionStart;
+        const end = memoryBody.selectionEnd;
+        const text = memoryBody.value;
+        memoryBody.value = text.slice(0, start) + emoji + text.slice(end);
+        autoResize();
+        const newCursorPos = start + emoji.length;
+        memoryBody.setSelectionRange(newCursorPos, newCursorPos);
+        memoryBody.focus();
+        emojiPicker.classList.remove('show');
+      });
+    }
 
-  const isShowing = emojiPicker.classList.contains('show');
-  emojiPicker.classList.remove('show');
+    const isShowing = emojiPicker.classList.contains('show');
+    emojiPicker.classList.remove('show');
 
-  if (isShowing) return;
+    if (isShowing) return;
 
-  // ✅ FIXED: Use .thought-actions or .thought-box as wrapper
-  const wrapper = emojiButton.closest('.thought-actions') || emojiButton.closest('.thought-box');
-  if (!wrapper) {
-    console.error('Emoji button wrapper not found!');
-    return;
-  }
-  const wrapperRect = wrapper.getBoundingClientRect();
-  const pickerHeight = 380;
-  const spaceBelow = window.innerHeight - wrapperRect.bottom;
-  const spaceAbove = wrapperRect.top;
+    // ✅ FIXED: Use existing parent containers (no .form-group needed)
+    const wrapper = emojiButton.closest('.thought-actions') || emojiButton.closest('.thought-box');
+    if (!wrapper) {
+      console.error('Could not find wrapper for emoji picker');
+      return;
+    }
 
-  emojiPicker.style.top = 'auto';
-  emojiPicker.style.bottom = 'auto';
-  emojiPicker.style.left = 'auto';
-  emojiPicker.style.right = '0';
+    const wrapperRect = wrapper.getBoundingClientRect();
+    const pickerHeight = 380;
+    const spaceBelow = window.innerHeight - wrapperRect.bottom;
+    const spaceAbove = wrapperRect.top;
 
-  if (spaceBelow >= pickerHeight) {
-    emojiPicker.style.top = (wrapperRect.height + 8) + 'px';
-  } else if (spaceAbove >= pickerHeight) {
-    emojiPicker.style.bottom = (wrapperRect.height + 8) + 'px';
-  } else {
-    emojiPicker.style.top = (wrapperRect.height + 8) + 'px';
-  }
+    emojiPicker.style.top = 'auto';
+    emojiPicker.style.bottom = 'auto';
+    emojiPicker.style.left = 'auto';
+    emojiPicker.style.right = '0';
 
-  emojiPicker.classList.add('show');
-});
+    if (spaceBelow >= pickerHeight) {
+      emojiPicker.style.top = (wrapperRect.height + 8) + 'px';
+    } else if (spaceAbove >= pickerHeight) {
+      emojiPicker.style.bottom = (wrapperRect.height + 8) + 'px';
+    } else {
+      emojiPicker.style.top = (wrapperRect.height + 8) + 'px';
+    }
+
+    emojiPicker.classList.add('show');
+  });
 
   // Close picker on outside click
   document.addEventListener('click', (e) => {
@@ -89,7 +91,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     }
   });
 
-  // === POSTING & LOADING ===
+  // Load & post
   async function loadUserPosts() {
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) {
@@ -149,8 +151,6 @@ document.addEventListener('DOMContentLoaded', async () => {
     loadUserPosts();
   });
 
-  // Initialize
-  autoResize(); // Set initial height
+  // Initial load
   loadUserPosts();
 });
-
