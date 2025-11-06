@@ -134,14 +134,23 @@ document.addEventListener('DOMContentLoaded', async () => {
     reader.readAsDataURL(file);
   });
 
-  // === POSTING WITH LOGGING ===
+  // === POSTING WITH REAL AUTH ===
   async function loadUserPosts() {
-    console.log('🔍 Loading posts from Supabase...');
+    console.log('🔍 Loading posts for current user...');
     
-    // Bypass auth for testing
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) {
+      postsContainer.innerHTML = '<p>Sign in to see your posts.</p>';
+      console.log('❌ Not signed in — cannot load posts');
+      return;
+    }
+
+    console.log('👤 Loading posts for user ID:', user.id);
+
     const { data, error } = await supabase
       .from('memories')
       .select('body, created_at, media_url')
+      .eq('user_id', user.id)
       .order('created_at', { ascending: false });
 
     if (error) {
@@ -184,17 +193,14 @@ document.addEventListener('DOMContentLoaded', async () => {
     console.log('📝 Text content:', body);
     console.log('🖼️ Photo selected:', selectedPhoto ? `${selectedPhoto.name} (${selectedPhoto.size} bytes)` : 'None');
 
-    // Bypass auth for testing
-    // const { data: { user } } = await supabase.auth.getUser();
-    // if (!user) {
-    //   alert('You must be signed in to post.');
-    //   console.log('❌ Post failed: User not authenticated');
-    //   return;
-    // }
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) {
+      alert('You must be signed in to post.');
+      console.log('❌ Post failed: User not authenticated');
+      return;
+    }
 
-    // Use a test user ID for now
-    const user = { id: 'test-user-123' };
-    console.log('👤 Using test user ID:', user.id);
+    console.log('👤 Signed in as user ID:', user.id);
 
     // Prepare post data
     const postData = {
@@ -257,7 +263,7 @@ document.addEventListener('DOMContentLoaded', async () => {
       }
 
       console.log('✅ Post saved successfully!');
-      console.log('📌 Post data:', postData);
+      console.log('📌 Post ', postData);
 
       // Reset UI
       memoryBody.value = '';
