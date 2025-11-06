@@ -10,12 +10,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   const emojiButton = document.getElementById('emojiButton');
   const emojiPicker = document.getElementById('emojiPicker');
   const postButton = document.getElementById('postButton');
-  const mediaButton = document.getElementById('mediaButton');
-  const mediaInput = document.getElementById('mediaInput');
   const postsContainer = document.getElementById('postsContainer');
-
-  // State
-  let selectedPhoto = null;
 
   // === AUTO-RESIZE ===
   const autoResize = () => {
@@ -94,191 +89,69 @@ document.addEventListener('DOMContentLoaded', async () => {
     }
   });
 
-  // === MEDIA UPLOAD LOGGING ===
-  mediaButton.addEventListener('click', () => {
-    console.log('🖼️ Media button clicked — opening file picker');
-    mediaInput.click();
-  });
-
-  mediaInput.addEventListener('change', (e) => {
-    const file = e.target.files[0];
-    if (!file) {
-      console.log('❌ No file selected');
-      return;
-    }
-
-    selectedPhoto = file;
-    console.log('✅ Photo selected:', file.name, `(${file.size} bytes)`, file.type);
-
-    // Clear previous preview
-    const existingPreview = document.querySelector('.photo-preview');
-    if (existingPreview) existingPreview.remove();
-
-    // Create new preview
-    const reader = new FileReader();
-    reader.onload = (event) => {
-      const img = document.createElement('img');
-      img.src = event.target.result;
-      img.style.maxWidth = '100px';
-      img.style.maxHeight = '100px';
-      img.style.borderRadius = '6px';
-      img.style.marginTop = '8px';
-
-      const previewContainer = document.createElement('div');
-      previewContainer.className = 'photo-preview';
-      previewContainer.appendChild(img);
-      document.querySelector('.thought-box').insertBefore(previewContainer, emojiPicker);
-
-      console.log('🖼️ Photo preview rendered in UI');
-    };
-    reader.readAsDataURL(file);
-  });
-
-  // === POSTING WITH REAL AUTH ===
+  // === LOADING POSTS (text only) ===
   async function loadUserPosts() {
-    console.log('🔍 Loading posts for current user...');
-    
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) {
       postsContainer.innerHTML = '<p>Sign in to see your posts.</p>';
-      console.log('❌ Not signed in — cannot load posts');
       return;
     }
 
-    console.log('👤 Loading posts for user ID:', user.id);
-
     const { data, error } = await supabase
       .from('memories')
-      .select('body, created_at, media_url')
+      .select('body, created_at')
       .eq('user_id', user.id)
       .order('created_at', { ascending: false });
 
     if (error) {
-      console.error('❌ Load error:', error);
+      console.error('Load error:', error);
       postsContainer.innerHTML = '<p>Could not load your posts.</p>';
       return;
     }
-
-    console.log('📊 Loaded', data.length, 'posts:', data);
 
     if (data.length === 0) {
       postsContainer.innerHTML = '<p>You haven’t posted anything yet.</p>';
       return;
     }
 
-    postsContainer.innerHTML = data.map(post => {
-      const mediaHtml = post.media_url
-        ? `<img src="${post.media_url}" alt="Memory photo" style="max-width:100%;border-radius:8px;margin-top:8px;">`
-        : '';
-
-      return `
-        <div class="post-item">
-          <p>${post.body.replace(/\n/g, '<br>')}</p>
-          ${mediaHtml}
-          <small class="post-date">${new Date(post.created_at).toLocaleString()}</small>
-        </div>
-      `;
-    }).join('');
+    postsContainer.innerHTML = data.map(post => `
+      <div class="post-item">
+        <p>${post.body.replace(/\n/g, '<br>')}</p>
+        <small class="post-date">${new Date(post.created_at).toLocaleString()}</small>
+      </div>
+    `).join('');
   }
 
+  // === POSTING (text only) ===
   postButton.addEventListener('click', async () => {
     const body = memoryBody.value.trim();
-    if (!body && !selectedPhoto) {
-      alert('Please write something or add a photo.');
-      console.log('❌ Post failed: No text or photo added');
+    if (!body) {
+      alert('Please write something first.');
       return;
     }
-
-    console.log('✅ Starting post process...');
-    console.log('📝 Text content:', body);
-    console.log('🖼️ Photo selected:', selectedPhoto ? `${selectedPhoto.name} (${selectedPhoto.size} bytes)` : 'None');
 
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) {
       alert('You must be signed in to post.');
-      console.log('❌ Post failed: User not authenticated');
       return;
     }
 
-    console.log('👤 Signed in as user ID:', user.id);
+    const { error } = await supabase
+      .from('memories')
+      .insert({
+        user_id: user.id,
+        title: 'Untitled',
+        body
+      });
 
-    // Prepare post data
-    const postData = {
-      user_id: user.id,
-      title: 'Untitled',
-      body
-    };
-
-    // Upload photo if exists
-    if (selectedPhoto) {
-      console.log('📤 Uploading photo:', selectedPhoto.name);
-
-      const fileName = `${Date.now()}-${selectedPhoto.name}`;
-      console.log('💾 Filename for upload:', fileName);
-
-      try {
-        const { data, error } = await supabase.storage
-          .from('memories')
-          .upload(fileName, selectedPhoto, {
-            upsert: true,
-            contentType: selectedPhoto.type
-          });
-
-        if (error) {
-          console.error('❌ Upload failed:', error);
-          alert('Failed to upload photo: ' + error.message);
-          return;
-        }
-
-        console.log('✅ Upload succeeded:', data);
-
-        // Get public URL
-        const { data: publicUrlData } = supabase.storage
-          .from('memories')
-          .getPublicUrl(fileName);
-
-        postData.media_url = publicUrlData.publicUrl;
-        console.log('🔗 Public URL generated:', publicUrlData.publicUrl);
-
-      } catch (err) {
-        console.error('💥 Unexpected upload error:', err);
-        alert('Unexpected error during upload: ' + err.message);
-        return;
-      }
+    if (error) {
+      alert('Failed to post: ' + error.message);
+      return;
     }
 
-    // Insert post
-    console.log('📥 Inserting post into memories table...');
-    console.log('📝 Post data being sent:', postData);
-    
-    try {
-      const { error } = await supabase
-        .from('memories')
-        .insert(postData);
-
-      if (error) {
-        console.error('❌ Database insert failed:', error);
-        alert('Failed to save post: ' + error.message);
-        return;
-      }
-
-      console.log('✅ Post saved successfully!');
-      console.log('📌 Post ', postData);
-
-      // Reset UI
-      memoryBody.value = '';
-      autoResize();
-      selectedPhoto = null;
-      const preview = document.querySelector('.photo-preview');
-      if (preview) preview.remove();
-
-      loadUserPosts();
-      console.log('🎉 Post completed and UI refreshed!');
-
-    } catch (err) {
-      console.error('💥 Unexpected database error:', err);
-      alert('Unexpected error saving post: ' + err.message);
-    }
+    memoryBody.value = '';
+    autoResize();
+    loadUserPosts();
   });
 
   // Initialize
