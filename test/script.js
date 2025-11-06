@@ -1,107 +1,83 @@
-// DOM elements (emoji-related may be null if commented out in HTML)
+// === SUPABASE SETUP ===
+// Replace with your project's actual URL and anon key
+const supabaseUrl = 'YOUR_SUPABASE_URL';
+const supabaseAnonKey = 'YOUR_SUPABASE_ANON_KEY';
+const supabase = window.supabase.createClient(supabaseUrl, supabaseAnonKey);
+
+// === DOM ELEMENTS ===
 const textInput = document.getElementById('textInput');
-const emojiButton = document.getElementById('emojiButton');
 const postButton = document.getElementById('postButton');
-const emojiPicker = document.getElementById('emojiPicker');
 const postsContainer = document.getElementById('postsContainer');
 
-// Auto-resize textarea
+// === HELPERS ===
 const autoResize = () => {
   textInput.style.height = 'auto';
   textInput.style.height = Math.min(textInput.scrollHeight, 300) + 'px';
 };
 
-textInput.addEventListener('input', autoResize);
-
-// Emoji toggle logic (only if emoji elements exist)
-const toggleEmojiPicker = (e) => {
-  e.stopPropagation();
-  if (!emojiPicker) return;
-
-  emojiPicker.classList.remove('show');
-  const isNowShowing = emojiPicker.classList.contains('show');
-  if (isNowShowing) return;
-
-  if (!emojiButton) return;
-
-  const wrapper = emojiButton.closest('.input-wrapper');
-  const wrapperRect = wrapper.getBoundingClientRect();
-  const pickerHeight = 380;
-  const spaceBelow = window.innerHeight - wrapperRect.bottom;
-  const spaceAbove = wrapperRect.top;
-
-  emojiPicker.style.top = 'auto';
-  emojiPicker.style.bottom = 'auto';
-  emojiPicker.style.left = 'auto';
-  emojiPicker.style.right = '0';
-
-  if (spaceBelow >= pickerHeight) {
-    emojiPicker.style.top = (wrapper.offsetHeight + 12) + 'px';
-  } else if (spaceAbove >= pickerPickerHeight) {
-    emojiPicker.style.bottom = (wrapper.offsetHeight + 12) + 'px';
-    emojiPicker.style.top = 'auto';
-  } else {
-    emojiPicker.style.top = (wrapper.offsetHeight + 12) + 'px';
-  }
-
-  setTimeout(() => {
-    if (emojiPicker) emojiPicker.classList.add('show');
-  }, 10);
+const addPostToUI = (content) => {
+  const postEl = document.createElement('div');
+  postEl.className = 'post-item';
+  postEl.textContent = content;
+  postsContainer.insertBefore(postEl, postsContainer.firstChild);
 };
 
-// Conditionally attach emoji events
-if (emojiButton && emojiPicker) {
-  emojiButton.addEventListener('click', toggleEmojiPicker);
-
-  emojiPicker.addEventListener('emoji-click', (e) => {
-    const emoji = e.detail.unicode;
-    const start = textInput.selectionStart;
-    const end = textInput.selectionEnd;
-    const text = textInput.value;
-
-    textInput.value = text.slice(0, start) + emoji + text.slice(end);
-    autoResize();
-
-    const newCursorPos = start + emoji.length;
-    textInput.setSelectionRange(newCursorPos, newCursorPos);
+// === POST HANDLER ===
+postButton.addEventListener('click', async () => {
+  const content = textInput.value.trim();
+  if (!content) {
     textInput.focus();
-
-    emojiPicker.classList.remove('show');
-  });
-}
-
-// Close emoji picker on outside click (if it exists)
-document.addEventListener('click', (e) => {
-  if (
-    textInput.contains(e.target) ||
-    postButton.contains(e.target) ||
-    (emojiButton && emojiButton.contains(e.target)) ||
-    (emojiPicker && emojiPicker.contains(e.target))
-  ) {
     return;
   }
-  if (emojiPicker) {
-    emojiPicker.classList.remove('show');
+
+  const {  { user }, error: authError } = await supabase.auth.getUser();
+  if (authError || !user) {
+    alert('Please sign in to share a memory.');
+    return;
   }
-});
 
-// Post functionality
-postButton.addEventListener('click', () => {
-  const content = textInput.value.trim();
-  if (content) {
-    const postEl = document.createElement('div');
-    postEl.className = 'post-item';
-    postEl.textContent = content;
+  // Optimistic UI update
+  addPostToUI(content);
+  textInput.value = '';
+  autoResize();
 
-    // Add new post to the top
-    postsContainer.insertBefore(postEl, postsContainer.firstChild);
+  // Save to Supabase
+  const { error } = await supabase.from('memories').insert({
+    user_id: user.id,
+    body: content,
+    is_public: true
+  });
 
-    // Clear and refocus
-    textInput.value = '';
+  if (error) {
+    // Roll back UI on failure
+    postsContainer.removeChild(postsContainer.firstChild);
+    console.error('Save failed:', error);
+    alert('Could not save your memory. Please try again.');
+    textInput.value = content;
     autoResize();
   }
-  textInput.focus();
 });
 
-// Initialize
+// === LOAD EXISTING MEMORIES ===
+const loadMyMemories = async () => {
+  const {  { user } } = await supabase.auth.getUser();
+  if (!user) return;
+
+  const { data, error } = await supabase
+    .from('memories')
+    .select('body')
+    .eq('user_id', user.id)
+    .order('created_at', { ascending: false });
+
+  if (error) {
+    console.warn('Failed to load memories:', error);
+    return;
+  }
+
+  postsContainer.innerHTML = '';
+  data.forEach(mem => addPostToUI(mem.body));
+};
+
+// === INIT ===
 autoResize();
+loadMyMemories();
