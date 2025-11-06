@@ -13,13 +13,15 @@
 </head>
 <body>
   <div class="input-wrapper">
-    <textarea id="textInput" placeholder="what's on your mind?"></textarea>
-    <div class="input-actions">
-      <button id="emojiButton">🙂</button>
-      <button id="postButton">Post</button>
+    <div class="form-group">
+      <textarea id="memory-body" placeholder="what's on your mind?"></textarea>
+      <div class="input-actions">
+        <button id="emojiButton">🙂</button>
+        <button id="postButton">Post</button>
+      </div>
+      <!-- Emoji picker (will be populated by emoji-picker-element) -->
+      <div id="emojiPicker"></div>
     </div>
-    <!-- Emoji picker (hidden by default) -->
-    <div id="emojiPicker" class="emoji-picker"></div>
   </div>
 
   <div class="posts-section">
@@ -27,7 +29,13 @@
     <div id="postsContainer"></div>
   </div>
 
+  <!-- Load emoji-picker-element -->
+  <script type="module" src="https://cdn.jsdelivr.net/npm/emoji-picker-element@^1/index.js"></script>
+
+  <!-- Supabase -->
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
   <!-- Local JS -->
-  <script src="script.js"></script>
+  <script type="module" src="script.js"></script>
 </body>
 </html>
