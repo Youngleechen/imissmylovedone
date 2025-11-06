@@ -138,9 +138,11 @@ document.addEventListener('DOMContentLoaded', async () => {
     const fileName = `${user.id}/${Date.now()}-${Math.random().toString(36).substring(2, 15)}.${fileExt}`;
 
     // Show upload progress
-    uploadProgress.style.display = 'block';
-    progressFill.style.width = '0%';
-    progressText.textContent = 'Uploading...';
+    if (uploadProgress && progressFill && progressText) {
+      uploadProgress.style.display = 'block';
+      progressFill.style.width = '0%';
+      progressText.textContent = 'Uploading...';
+    }
 
     // Upload to Supabase storage
     const { error: uploadError } = await supabase.storage
@@ -149,15 +151,21 @@ document.addEventListener('DOMContentLoaded', async () => {
         upsert: false,
         onUploadProgress: (progressEvent) => {
           const percentCompleted = Math.round((progressEvent.loaded * 100) / progressEvent.total);
-          progressFill.style.width = percentCompleted + '%';
-          progressText.textContent = `Uploading... ${percentCompleted}%`;
+          if (progressFill) {
+            progressFill.style.width = percentCompleted + '%';
+          }
+          if (progressText) {
+            progressText.textContent = `Uploading... ${percentCompleted}%`;
+          }
         }
       });
 
     if (uploadError) {
       console.error('Upload error:', uploadError);
       alert('Upload failed: ' + uploadError.message);
-      uploadProgress.style.display = 'none';
+      if (uploadProgress) {
+        uploadProgress.style.display = 'none';
+      }
       return;
     }
 
@@ -166,17 +174,19 @@ document.addEventListener('DOMContentLoaded', async () => {
       .from('memories')
       .getPublicUrl(fileName);
 
-    // Add media reference to textarea
+    // Add media reference to textarea with better formatting
     const currentText = memoryBody.value;
-    memoryBody.value = currentText + `\n![Uploaded Media](${publicUrl})\n`;
+    memoryBody.value = currentText + `\n\n![Uploaded Media](${publicUrl})\n\n`;
     autoResize();
 
     // Hide progress and clear input
-    uploadProgress.style.display = 'none';
+    if (uploadProgress) {
+      uploadProgress.style.display = 'none';
+    }
     mediaInput.value = '';
   });
 
-  // === LOADING POSTS (with media support) ===
+  // === LOADING POSTS (with proper media rendering) ===
   async function loadUserPosts() {
     const user = await checkAuth();
     if (!user) return;
@@ -199,22 +209,32 @@ document.addEventListener('DOMContentLoaded', async () => {
     }
 
     postsContainer.innerHTML = data.map(post => {
-      // Convert markdown-style image links to actual images
-      let body = post.body.replace(/\!\[Uploaded Media\]\(([^)]+)\)/g, (match, url) => {
+      // Process the body text to convert markdown image links to HTML
+      let processedBody = post.body;
+      
+      // Convert markdown image syntax ![Uploaded Media](url) to <img> tag
+      processedBody = processedBody.replace(/\!\[Uploaded Media\]\(([^)]+)\)/g, (match, url) => {
+        // Check if it's a video based on file extension
         if (url.includes('.mp4') || url.includes('.webm') || url.includes('.mov')) {
-          return `<video controls src="${url}" style="max-width:100%;height:auto;"></video>`;
+          return `<video controls style="max-width:100%; height:auto; border-radius:8px; margin:10px 0;">
+                    <source src="${url}" type="video/mp4">
+                    Your browser does not support the video tag.
+                  </video>`;
         } else {
-          return `<img src="${url}" alt="Uploaded media" style="max-width:100%;height:auto;">`;
+          // It's an image
+          return `<img src="${url}" alt="Uploaded media" style="max-width:100%; height:auto; border-radius:8px; margin:10px 0;">`;
         }
       });
       
-      // Replace newlines with <br> for text
-      body = body.replace(/\n/g, '<br>');
+      // Replace newlines with <br> for text formatting
+      processedBody = processedBody.replace(/\n/g, '<br>');
       
       return `
-        <div class="post-item">
-          <p>${body}</p>
-          <small class="post-date">${new Date(post.created_at).toLocaleString()}</small>
+        <div class="post-item" style="background: white; padding: 15px; border-radius: 8px; margin-bottom: 15px; box-shadow: 0 1px 3px rgba(0,0,0,0.1);">
+          <p style="margin: 0; line-height: 1.6;">${processedBody}</p>
+          <small style="display: block; color: #718096; font-size: 12px; margin-top: 8px;">
+            ${new Date(post.created_at).toLocaleString()}
+          </small>
         </div>
       `;
     }).join('');
