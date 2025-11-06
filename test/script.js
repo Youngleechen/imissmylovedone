@@ -16,7 +16,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   const uploadProgress = document.getElementById('uploadProgress');
   const progressFill = document.getElementById('progressFill');
   const progressText = document.getElementById('progressText');
-  const mediaPreviewContainer = document.getElementById('mediaPreviewContainer');
+  // Removed: const mediaPreviewContainer = document.getElementById('mediaPreviewContainer');
 
   // Create media preview container if it doesn't exist
   let mediaPreviewContainerEl = document.createElement('div');
@@ -267,57 +267,61 @@ document.addEventListener('DOMContentLoaded', async () => {
     currentMediaFilename = null;
   }
 
-async function loadUserPosts() {
-  const user = await checkAuth();
-  if (!user) return;
+  // === LOADING POSTS (with proper media rendering) ===
+  async function loadUserPosts() {
+    const user = await checkAuth();
+    if (!user) return;
 
-  const { data, error } = await supabase
-    .from('memories')
-    .select('body, created_at')
-    .eq('user_id', user.id)
-    .order('created_at', { ascending: false });
+    const { data, error } = await supabase
+      .from('memories')
+      .select('body, created_at')
+      .eq('user_id', user.id)
+      .order('created_at', { ascending: false });
 
-  if (error) {
-    console.error('Load error:', error);
-    postsContainer.innerHTML = '<p>Could not load your posts.</p>';
-    return;
+    if (error) {
+      console.error('Load error:', error);
+      postsContainer.innerHTML = '<p>Could not load your posts.</p>';
+      return;
+    }
+
+    if (data.length === 0) {
+      postsContainer.innerHTML = '<p>You haven’t posted anything yet.</p>';
+      return;
+    }
+
+    postsContainer.innerHTML = data.map(post => {
+      let processedBody = post.body;
+
+      // Convert markdown image/video syntax to HTML
+      processedBody = processedBody.replace(/!\[([^\]]*)\]\s*\(\s*([^)]+)\s*\)/g, (match, alt, url) => {
+        const cleanUrl = url.trim();
+        // For safety, encode the URL for HTML attributes
+        const safeUrl = cleanUrl.replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+
+        if (safeUrl.includes('.mp4') || safeUrl.includes('.webm') || safeUrl.includes('.mov')) {
+          return `<video controls style="max-width:100%; height:auto; border-radius:8px; margin:10px 0;">
+                    <source src="${safeUrl}" type="video/mp4">
+                    Your browser does not support the video tag.
+                  </video>`;
+        } else {
+          return `<img src="${safeUrl}" alt="${alt || 'Uploaded media'}" style="max-width:100%; height:auto; border-radius:8px; margin:10px 0;">`;
+        }
+      });
+
+      // Replace newlines with <br> for text formatting
+      processedBody = processedBody.replace(/\n/g, '<br>');
+
+      return `
+        <div class="post-item" style="background: white; padding: 15px; border-radius: 8px; margin-bottom: 15px; box-shadow: 0 1px 3px rgba(0,0,0,0.1);">
+          <p style="margin: 0; line-height: 1.6;">${processedBody}</p>
+          <small style="display: block; color: #718096; font-size: 12px; margin-top: 8px;">
+            ${new Date(post.created_at).toLocaleString()}
+          </small>
+        </div>
+      `;
+    }).join('');
   }
 
-  if (data.length === 0) {
-    postsContainer.innerHTML = '<p>You haven’t posted anything yet.</p>';
-    return;
-  }
-
-  postsContainer.innerHTML = data.map(post => {
-    let processedBody = post.body;
-
-    // Convert markdown image/video syntax to HTML
-    processedBody = processedBody.replace(/!\[([^\]]*)\]\s*\(\s*([^)]+)\s*\)/g, (match, alt, url) => {
-      url = url.trim();
-
-      if (url.includes('.mp4') || url.includes('.webm') || url.includes('.mov')) {
-        return `<video controls style="max-width:100%; height:auto; border-radius:8px; margin:10px 0;">
-                  <source src="${url}" type="video/mp4">
-                  Your browser does not support the video tag.
-                </video>`;
-      } else {
-        return `<img src="${url}" alt="${alt || 'Uploaded media'}" style="max-width:100%; height:auto; border-radius:8px; margin:10px 0;">`;
-      }
-    });
-
-    // Replace newlines with <br> for text formatting
-    processedBody = processedBody.replace(/\n/g, '<br>');
-
-    return `
-      <div class="post-item" style="background: white; padding: 15px; border-radius: 8px; margin-bottom: 15px; box-shadow: 0 1px 3px rgba(0,0,0,0.1);">
-        <p style="margin: 0; line-height: 1.6;">${processedBody}</p>
-        <small style="display: block; color: #718096; font-size: 12px; margin-top: 8px;">
-          ${new Date(post.created_at).toLocaleString()}
-        </small>
-      </div>
-    `;
-  }).join('');
-}
   // === POSTING (with media support) ===
   postButton.addEventListener('click', async () => {
     const user = await checkAuth();
@@ -358,4 +362,3 @@ async function loadUserPosts() {
     }
   });
 });
-
