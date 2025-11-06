@@ -94,16 +94,21 @@ document.addEventListener('DOMContentLoaded', async () => {
     }
   });
 
-  // === MEDIA UPLOAD ===
+  // === MEDIA UPLOAD LOGGING ===
   mediaButton.addEventListener('click', () => {
+    console.log('🖼️ Media button clicked — opening file picker');
     mediaInput.click();
   });
 
   mediaInput.addEventListener('change', (e) => {
     const file = e.target.files[0];
-    if (!file) return;
+    if (!file) {
+      console.log('❌ No file selected');
+      return;
+    }
 
     selectedPhoto = file;
+    console.log('✅ Photo selected:', file.name, `(${file.size} bytes)`, file.type);
 
     // Clear previous preview
     const existingPreview = document.querySelector('.photo-preview');
@@ -123,29 +128,29 @@ document.addEventListener('DOMContentLoaded', async () => {
       previewContainer.className = 'photo-preview';
       previewContainer.appendChild(img);
       document.querySelector('.thought-box').insertBefore(previewContainer, emojiPicker);
+
+      console.log('🖼️ Photo preview rendered in UI');
     };
     reader.readAsDataURL(file);
   });
 
-  // === POSTING ===
+  // === POSTING WITH LOGGING ===
   async function loadUserPosts() {
-    const { data: { user } } = await supabase.auth.getUser();
-    if (!user) {
-      postsContainer.innerHTML = '<p>Sign in to see your posts.</p>';
-      return;
-    }
-
+    console.log('🔍 Loading posts from Supabase...');
+    
+    // Bypass auth for testing
     const { data, error } = await supabase
       .from('memories')
       .select('body, created_at, media_url')
-      .eq('user_id', user.id)
       .order('created_at', { ascending: false });
 
     if (error) {
-      console.error('Load error:', error);
+      console.error('❌ Load error:', error);
       postsContainer.innerHTML = '<p>Could not load your posts.</p>';
       return;
     }
+
+    console.log('📊 Loaded', data.length, 'posts:', data);
 
     if (data.length === 0) {
       postsContainer.innerHTML = '<p>You haven’t posted anything yet.</p>';
@@ -171,14 +176,25 @@ document.addEventListener('DOMContentLoaded', async () => {
     const body = memoryBody.value.trim();
     if (!body && !selectedPhoto) {
       alert('Please write something or add a photo.');
+      console.log('❌ Post failed: No text or photo added');
       return;
     }
 
-    const { data: { user } } = await supabase.auth.getUser();
-    if (!user) {
-      alert('You must be signed in to post.');
-      return;
-    }
+    console.log('✅ Starting post process...');
+    console.log('📝 Text content:', body);
+    console.log('🖼️ Photo selected:', selectedPhoto ? `${selectedPhoto.name} (${selectedPhoto.size} bytes)` : 'None');
+
+    // Bypass auth for testing
+    // const { data: { user } } = await supabase.auth.getUser();
+    // if (!user) {
+    //   alert('You must be signed in to post.');
+    //   console.log('❌ Post failed: User not authenticated');
+    //   return;
+    // }
+
+    // Use a test user ID for now
+    const user = { id: 'test-user-123' };
+    console.log('👤 Using test user ID:', user.id);
 
     // Prepare post data
     const postData = {
@@ -189,45 +205,74 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     // Upload photo if exists
     if (selectedPhoto) {
-      const fileName = `${Date.now()}-${selectedPhoto.name}`;
-      const { data, error } = await supabase.storage
-        .from('memories')
-        .upload(fileName, selectedPhoto, {
-          upsert: true,
-          contentType: selectedPhoto.type
-        });
+      console.log('📤 Uploading photo:', selectedPhoto.name);
 
-      if (error) {
-        console.error('Upload error:', error);
-        alert('Failed to upload photo: ' + error.message);
+      const fileName = `${Date.now()}-${selectedPhoto.name}`;
+      console.log('💾 Filename for upload:', fileName);
+
+      try {
+        const { data, error } = await supabase.storage
+          .from('memories')
+          .upload(fileName, selectedPhoto, {
+            upsert: true,
+            contentType: selectedPhoto.type
+          });
+
+        if (error) {
+          console.error('❌ Upload failed:', error);
+          alert('Failed to upload photo: ' + error.message);
+          return;
+        }
+
+        console.log('✅ Upload succeeded:', data);
+
+        // Get public URL
+        const { data: publicUrlData } = supabase.storage
+          .from('memories')
+          .getPublicUrl(fileName);
+
+        postData.media_url = publicUrlData.publicUrl;
+        console.log('🔗 Public URL generated:', publicUrlData.publicUrl);
+
+      } catch (err) {
+        console.error('💥 Unexpected upload error:', err);
+        alert('Unexpected error during upload: ' + err.message);
         return;
       }
-
-      // Get public URL
-      const { data: publicUrlData } = supabase.storage
-        .from('memories')
-        .getPublicUrl(fileName);
-
-      postData.media_url = publicUrlData.publicUrl;
     }
 
     // Insert post
-    const { error } = await supabase
-      .from('memories')
-      .insert(postData);
+    console.log('📥 Inserting post into memories table...');
+    console.log('📝 Post data being sent:', postData);
+    
+    try {
+      const { error } = await supabase
+        .from('memories')
+        .insert(postData);
 
-    if (error) {
-      alert('Failed to post: ' + error.message);
-      return;
+      if (error) {
+        console.error('❌ Database insert failed:', error);
+        alert('Failed to save post: ' + error.message);
+        return;
+      }
+
+      console.log('✅ Post saved successfully!');
+      console.log('📌 Post data:', postData);
+
+      // Reset UI
+      memoryBody.value = '';
+      autoResize();
+      selectedPhoto = null;
+      const preview = document.querySelector('.photo-preview');
+      if (preview) preview.remove();
+
+      loadUserPosts();
+      console.log('🎉 Post completed and UI refreshed!');
+
+    } catch (err) {
+      console.error('💥 Unexpected database error:', err);
+      alert('Unexpected error saving post: ' + err.message);
     }
-
-    // Reset UI
-    memoryBody.value = '';
-    autoResize();
-    selectedPhoto = null;
-    const preview = document.querySelector('.photo-preview');
-    if (preview) preview.remove();
-    loadUserPosts();
   });
 
   // Initialize
