@@ -16,81 +16,17 @@ document.addEventListener('DOMContentLoaded', async () => {
   const uploadProgress = document.getElementById('uploadProgress');
   const progressFill = document.getElementById('progressFill');
   const progressText = document.getElementById('progressText');
-  const authContainer = document.getElementById('authContainer');
-  const loginForm = document.getElementById('loginForm');
-  const userMenu = document.getElementById('userMenu');
-  const userEmail = document.getElementById('userEmail');
-  const loginButton = document.getElementById('loginButton');
-  const signupButton = document.getElementById('signupButton');
-  const logoutButton = document.getElementById('logoutButton');
-  const guestLogin = document.getElementById('guestLogin');
 
-  // === AUTHENTICATION ===
-  async function checkAuthStatus() {
+  // Check if user is authenticated
+  async function checkAuth() {
     const { data: { user } } = await supabase.auth.getUser();
-    if (user) {
-      userEmail.textContent = user.email;
-      authContainer.style.display = 'none';
-      document.getElementById('mainContent').style.display = 'block';
-      loadUserPosts();
-    } else {
-      authContainer.style.display = 'block';
-      document.getElementById('mainContent').style.display = 'none';
+    if (!user) {
+      // Redirect to login if not authenticated
+      window.location.href = 'signin.html';
+      return null;
     }
+    return user;
   }
-
-  // Login handler
-  loginButton.addEventListener('click', async () => {
-    const email = document.getElementById('email').value;
-    const password = document.getElementById('password').value;
-    
-    const { error } = await supabase.auth.signInWithPassword({
-      email,
-      password
-    });
-    
-    if (error) {
-      alert('Login failed: ' + error.message);
-    } else {
-      checkAuthStatus();
-    }
-  });
-
-  // Signup handler
-  signupButton.addEventListener('click', async () => {
-    const email = document.getElementById('email').value;
-    const password = document.getElementById('password').value;
-    
-    const { error } = await supabase.auth.signUp({
-      email,
-      password
-    });
-    
-    if (error) {
-      alert('Signup failed: ' + error.message);
-    } else {
-      alert('Check your email for confirmation!');
-    }
-  });
-
-  // Guest login (anonymous)
-  guestLogin.addEventListener('click', async () => {
-    const { error } = await supabase.auth.signInAnonymously();
-    if (error) {
-      alert('Guest login failed: ' + error.message);
-    } else {
-      checkAuthStatus();
-    }
-  });
-
-  // Logout handler
-  logoutButton.addEventListener('click', async () => {
-    await supabase.auth.signOut();
-    checkAuthStatus();
-  });
-
-  // Check auth on load
-  checkAuthStatus();
 
   // === AUTO-RESIZE ===
   const autoResize = () => {
@@ -170,19 +106,19 @@ document.addEventListener('DOMContentLoaded', async () => {
   });
 
   // === MEDIA UPLOAD ===
-  mediaButton.addEventListener('click', () => {
+  mediaButton.addEventListener('click', async () => {
+    const user = await checkAuth();
+    if (!user) return;
+
     mediaInput.click();
   });
 
   mediaInput.addEventListener('change', async (e) => {
+    const user = await checkAuth();
+    if (!user) return;
+
     const file = e.target.files[0];
     if (!file) return;
-
-    const { data: { user } } = await supabase.auth.getUser();
-    if (!user) {
-      alert('You must be signed in to upload media.');
-      return;
-    }
 
     // Validate file type
     const allowedTypes = ['image/jpeg', 'image/png', 'image/gif', 'image/webp', 'video/mp4', 'video/webm', 'video/quicktime'];
@@ -242,11 +178,8 @@ document.addEventListener('DOMContentLoaded', async () => {
 
   // === LOADING POSTS (with media support) ===
   async function loadUserPosts() {
-    const { data: { user } } = await supabase.auth.getUser();
-    if (!user) {
-      postsContainer.innerHTML = '<p>Sign in to see your posts.</p>';
-      return;
-    }
+    const user = await checkAuth();
+    if (!user) return;
 
     const { data, error } = await supabase
       .from('memories')
@@ -289,15 +222,12 @@ document.addEventListener('DOMContentLoaded', async () => {
 
   // === POSTING (with media support) ===
   postButton.addEventListener('click', async () => {
+    const user = await checkAuth();
+    if (!user) return;
+
     const body = memoryBody.value.trim();
     if (!body) {
       alert('Please write something first.');
-      return;
-    }
-
-    const { data: { user } } = await supabase.auth.getUser();
-    if (!user) {
-      alert('You must be signed in to post.');
       return;
     }
 
@@ -319,8 +249,10 @@ document.addEventListener('DOMContentLoaded', async () => {
     loadUserPosts();
   });
 
-  // Handle auth state changes
-  supabase.auth.onAuthStateChange((event, session) => {
-    checkAuthStatus();
+  // Initialize
+  checkAuth().then(user => {
+    if (user) {
+      loadUserPosts();
+    }
   });
 });
