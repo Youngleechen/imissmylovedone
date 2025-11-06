@@ -5,23 +5,22 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Homepage</title>
 
-  <!-- Load emoji picker (latest) -->
+  <!-- Emoji picker from CDN -->
   <script type="module" src="https://cdn.jsdelivr.net/npm/emoji-picker-element@^1/index.js"></script>
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/emoji-picker-element@^1/index.min.css" />
 
-  <!-- Local CSS -->
   <link rel="stylesheet" href="style.css" />
 </head>
 <body>
-  <h2>What’s on your mind? ✨</h2>
-
-  <div class="input-wrapper">
-    <textarea id="textInput" placeholder="what's on your mind?"></textarea>
-    <button id="emojiButton" aria-label="Insert emoji">😊</button>
-    <emoji-picker id="emojiPicker" data-emoji-size="20"></emoji-picker>
+  <div class="input-container">
+    <div class="input-wrapper">
+      <textarea id="textInput" placeholder="what's on your mind?"></textarea>
+      <button id="emojiButton" aria-label="Insert emoji">😊</button>
+      <button id="postButton" aria-label="Post message">Post</button>
+      <emoji-picker id="emojiPicker" data-emoji-size="20"></emoji-picker>
+    </div>
   </div>
 
-  <!-- Local JS -->
   <script src="script.js"></script>
 </body>
 </html>
