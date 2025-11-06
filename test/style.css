@@ -27,7 +27,7 @@ h2 {
   width: 100%;
   min-height: 100px;
   padding: 16px;
-  font-size: 16px;
+  font-size: 16px; /* Prevents zoom on iOS */
   border: 1px solid #ddd;
   border-radius: 12px;
   resize: none;
@@ -49,10 +49,9 @@ h2 {
   border: none;
   font-size: 1.4rem;
   cursor: pointer;
-  color: #999; /* Light grey for neutral tone */
+  color: #666;
   padding: 4px;
   border-radius: 6px;
-  line-height: 1;
 }
 
 #emojiButton:hover {
@@ -81,6 +80,7 @@ h2 {
   transform: translateY(0);
 }
 
+/* Ensure emoji picker doesn't go off screen */
 @media (max-width: 640px) {
   .input-wrapper {
     width: 95vw;

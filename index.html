@@ -5,11 +5,11 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Advanced Text Input with Emoji Picker</title>
 
-  <!-- Load emoji picker from CDN -->
+  <!-- Load emoji picker (latest) -->
   <script type="module" src="https://cdn.jsdelivr.net/npm/emoji-picker-element@^1/index.js"></script>
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/emoji-picker-element@^1/index.min.css" />
 
-  <!-- Local CSS — must match actual filename: styles.css -->
+  <!-- Local styles -->
   <link rel="stylesheet" href="styles.css" />
 </head>
 <body>
@@ -17,10 +17,11 @@
 
   <div class="input-wrapper">
     <textarea id="textInput" placeholder="what's on your mind?"></textarea>
-    <button id="emojiButton" aria-label="Insert emoji">😐</button>
+    <button id="emojiButton" aria-label="Insert emoji">😊</button>
     <emoji-picker id="emojiPicker" data-emoji-size="20"></emoji-picker>
   </div>
 
+  <!-- Local script -->
   <script src="script.js"></script>
 </body>
 </html>
