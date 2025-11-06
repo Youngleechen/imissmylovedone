@@ -8,9 +8,13 @@ body {
   background: #f8f9fa;
   margin: 0;
   display: flex;
-  justify-content: flex-start;
+  flex-direction: column;
   align-items: center;
-  min-height: 100vh;
+}
+
+h2 {
+  margin-bottom: 1.5rem;
+  color: #333;
 }
 
 .input-wrapper {
@@ -23,19 +27,13 @@ body {
   width: 100%;
   min-height: 100px;
   padding: 16px;
-  font-size: 16px;
+  font-size: 16px; /* Prevents zoom on iOS */
   border: 1px solid #ddd;
   border-radius: 12px;
   resize: none;
   outline: none;
   transition: border-color 0.2s;
   box-shadow: 0 2px 6px rgba(0,0,0,0.05);
-  color: #333;
-}
-
-#textInput::placeholder {
-  color: #999;
-  font-style: italic;
 }
 
 #textInput:focus {
@@ -51,9 +49,10 @@ body {
   border: none;
   font-size: 1.4rem;
   cursor: pointer;
-  color: #888;
+  color: #999; /* Light grey neutral face */
   padding: 4px;
   border-radius: 6px;
+  line-height: 1;
 }
 
 #emojiButton:hover {
@@ -73,12 +72,9 @@ body {
   visibility: hidden;
   pointer-events: none;
   transition: opacity 0.2s, transform 0.2s, visibility 0.2s;
-  /* Ensure it's hidden on load */
-  display: none;
 }
 
 #emojiPicker.show {
-  display: block;
   opacity: 1;
   visibility: visible;
   pointer-events: auto;

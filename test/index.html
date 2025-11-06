@@ -3,20 +3,22 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>What's on your mind?</title>
-
-  <!-- Emoji picker from CDN -->
-  <script type="module" src="https://cdn.jsdelivr.net/npm/emoji-picker-element@^1/index.js"></script>
+  <title>Advanced Text Input with Emoji Picker</title>
+  <link rel="stylesheet" href="styles.css" />
+  <!-- Load emoji picker CSS -->
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/emoji-picker-element@^1/index.min.css" />
-  <link rel="stylesheet" href="style.css" />
 </head>
 <body>
+  <h2>Advanced Text Input with Emoji Picker ✨</h2>
+
   <div class="input-wrapper">
-    <textarea id="textInput" placeholder="What's on your mind?"></textarea>
-    <button id="emojiButton" aria-label="Insert emoji">😶</button>
+    <textarea id="textInput" placeholder="what's on your mind?"></textarea>
+    <button id="emojiButton" aria-label="Insert emoji">😐</button>
     <emoji-picker id="emojiPicker" data-emoji-size="20"></emoji-picker>
   </div>
 
+  <!-- Load emoji picker JS -->
+  <script type="module" src="https://cdn.jsdelivr.net/npm/emoji-picker-element@^1/index.js"></script>
   <script src="script.js"></script>
 </body>
 </html>

@@ -1,92 +1,78 @@
-* {
-  box-sizing: border-box;
-}
+const textInput = document.getElementById('textInput');
+const emojiButton = document.getElementById('emojiButton');
+const emojiPicker = document.getElementById('emojiPicker');
 
-body {
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-  padding: 2rem;
-  background: #f8f9fa;
-  margin: 0;
-  display: flex;
-  justify-content: flex-start;
-  align-items: center;
-  min-height: 100vh;
-}
+// Auto-resize textarea
+const autoResize = () => {
+  textInput.style.height = 'auto';
+  textInput.style.height = Math.min(textInput.scrollHeight, 300) + 'px';
+};
 
-.input-wrapper {
-  position: relative;
-  width: 100%;
-  max-width: 600px;
-}
+textInput.addEventListener('input', autoResize);
 
-#textInput {
-  width: 100%;
-  min-height: 100px;
-  padding: 16px;
-  font-size: 16px;
-  border: 1px solid #ddd;
-  border-radius: 12px;
-  resize: none;
-  outline: none;
-  transition: border-color 0.2s;
-  box-shadow: 0 2px 6px rgba(0,0,0,0.05);
-  color: #333;
-}
+// Toggle emoji picker with smart positioning
+const toggleEmojiPicker = (e) => {
+  e.stopPropagation();
+  const isShowing = emojiPicker.classList.contains('show');
 
-#textInput::placeholder {
-  color: #999;
-  font-style: italic;
-}
+  // Always hide first
+  emojiPicker.classList.remove('show');
 
-#textInput:focus {
-  border-color: #4a6cf7;
-  box-shadow: 0 2px 8px rgba(74, 108, 247, 0.2);
-}
+  if (isShowing) return;
 
-#emojiButton {
-  position: absolute;
-  bottom: 12px;
-  right: 12px;
-  background: transparent;
-  border: none;
-  font-size: 1.4rem;
-  cursor: pointer;
-  color: #888;
-  padding: 4px;
-  border-radius: 6px;
-}
+  // Position logic
+  const wrapper = emojiButton.closest('.input-wrapper');
+  const wrapperRect = wrapper.getBoundingClientRect();
+  const pickerHeight = 380;
+  const spaceBelow = window.innerHeight - wrapperRect.bottom;
+  const spaceAbove = wrapperRect.top;
 
-#emojiButton:hover {
-  color: #4a6cf7;
-  background: #f0f4ff;
-}
+  emojiPicker.style.top = 'auto';
+  emojiPicker.style.bottom = 'auto';
+  emojiPicker.style.left = 'auto';
+  emojiPicker.style.right = '0';
 
-#emojiPicker {
-  position: absolute;
-  right: 0;
-  z-index: 1000;
-  box-shadow: 0 6px 16px rgba(0,0,0,0.15);
-  border-radius: 12px;
-  overflow: hidden;
-  transform: translateY(8px);
-  opacity: 0;
-  visibility: hidden;
-  pointer-events: none;
-  transition: opacity 0.2s, transform 0.2s, visibility 0.2s;
-  /* Ensure it's hidden on load */
-  display: none;
-}
-
-#emojiPicker.show {
-  display: block;
-  opacity: 1;
-  visibility: visible;
-  pointer-events: auto;
-  transform: translateY(0);
-}
-
-@media (max-width: 640px) {
-  .input-wrapper {
-    width: 95vw;
+  if (spaceBelow >= pickerHeight) {
+    emojiPicker.style.top = (wrapperRect.height + 8) + 'px';
+  } else if (spaceAbove >= pickerHeight) {
+    emojiPicker.style.bottom = (wrapperRect.height + 8) + 'px';
+    emojiPicker.style.top = 'auto';
+  } else {
+    emojiPicker.style.top = (wrapperRect.height + 8) + 'px';
   }
-}
+
+  setTimeout(() => emojiPicker.classList.add('show'), 10);
+};
+
+emojiButton.addEventListener('click', toggleEmojiPicker);
+
+// Insert emoji at cursor
+emojiPicker.addEventListener('emoji-click', (e) => {
+  const emoji = e.detail.unicode;
+  const start = textInput.selectionStart;
+  const end = textInput.selectionEnd;
+  const text = textInput.value;
+
+  textInput.value = text.slice(0, start) + emoji + text.slice(end);
+  autoResize();
+
+  const newCursorPos = start + emoji.length;
+  textInput.setSelectionRange(newCursorPos, newCursorPos);
+  textInput.focus();
+
+  emojiPicker.classList.remove('show');
+});
+
+// Close on outside click
+document.addEventListener('click', (e) => {
+  if (
+    !emojiButton.contains(e.target) &&
+    !emojiPicker.contains(e.target) &&
+    !textInput.contains(e.target)
+  ) {
+    emojiPicker.classList.remove('show');
+  }
+});
+
+// Initial resize
+autoResize();
