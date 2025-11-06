@@ -23,6 +23,14 @@
       <button id="postButton">Post</button>
     </div>
     <div id="emojiPicker"></div>
+    
+    <!-- Add this missing upload progress container -->
+    <div id="uploadProgress" style="display:none; margin-top: 10px;">
+      <div class="progress-bar" style="height: 4px; background: #e2e8f0; border-radius: 2px; overflow: hidden;">
+        <div id="progressFill" style="height: 100%; background: #5a67d8; width: 0%; transition: width 0.3s ease;"></div>
+      </div>
+      <span id="progressText" style="display: block; margin-top: 5px; font-size: 14px; color: #4a5568;">Uploading...</span>
+    </div>
   </div>
 
   <div class="posts-section">
@@ -31,7 +39,7 @@
   </div>
 
   <!-- Hidden file input -->
-  <input type="file" id="mediaInput" accept="image/*" style="display:none;" />
+  <input type="file" id="mediaInput" accept="image/*,video/*" style="display:none;" />
 
   <script type="module" src="script.js"></script>
 </body>
