@@ -1,15 +1,9 @@
-body {
-  margin: 0;
-  padding: 0;
-  font-family: Arial, sans-serif;
-}
-
 .login-btn {
   position: fixed;
   top: 20px;
   right: 20px;
   background-color: #E6E6FA; /* Light purple */
-  color: #4B0082; /* Indigo text for contrast */
+  color: #4B0082;            /* Deep purple text */
   border: none;
   padding: 10px 20px;
   font-size: 16px;
