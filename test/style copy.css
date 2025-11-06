@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 /* =============== THOUGHT BOX (YOUR SKETCH) =============== */
 .thought-box {
   position: relative;
@@ -8,11 +9,17 @@
   box-shadow: 0 4px 12px var(--shadow);
   transition: box-shadow 0.2s;
 }
+=======
+>>>>>>> ba4e486055fdb5a45f4e68ac12e9c0aa4cbc42ca
 
+<<<<<<< HEAD
 .thought-box:hover {
   box-shadow: 0 6px 16px rgba(0, 0, 0, 0.08);
 }
+=======
+>>>>>>> ba4e486055fdb5a45f4e68ac12e9c0aa4cbc42ca
 
+<<<<<<< HEAD
 #memory-body {
   width: 100%;
   min-height: 100px;
@@ -93,3 +100,5 @@
   max-height: 380px;
   font-family: inherit;
 }
+=======
+>>>>>>> ba4e486055fdb5a45f4e68ac12e9c0aa4cbc42ca

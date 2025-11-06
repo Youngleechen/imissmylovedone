@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>My Thoughts</title>
+
+  <!-- Supabase JS -->
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+  <!-- Emoji Picker Web Component -->
+  <script type="module" src="https://cdn.jsdelivr.net/npm/emoji-picker-element@^1/index.js"></script>
+
+  <!-- Local Styles -->
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <!-- Unified Thought Box (as you drew) -->
+  <div class="thought-box">
+    <textarea id="memory-body" placeholder="what's on your mind?"></textarea>
+    <div class="thought-actions">
+      <button id="emojiButton">🙂</button>
+      <button id="postButton">Post</button>
+    </div>
+    <div id="emojiPicker"></div>
+  </div>
+
+  <!-- Your Posts -->
+  <div class="posts-section">
+    <h2>My Posts</h2>
+    <div id="postsContainer"></div>
+  </div>
+
+  <!-- Local Script (must be type="module" for emoji-picker) -->
+  <script type="module" src="script.js"></script>
+</body>
+</html>
