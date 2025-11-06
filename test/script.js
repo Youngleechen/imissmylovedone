@@ -29,8 +29,8 @@ postButton.addEventListener('click', async () => {
     return;
   }
 
-  // ✅ Correct destructuring
-  const {  { user }, error: authError } = await supabase.auth.getUser();
+  // ✅ CORRECT DESTRUCTURING: data contains the user
+  const { data: { user }, error: authError } = await supabase.auth.getUser();
   if (authError || !user) {
     alert('Please sign in to share a memory.');
     return;
@@ -41,7 +41,7 @@ postButton.addEventListener('click', async () => {
   textInput.value = '';
   autoResize();
 
-  // Save to Supabase memories table
+  // Save to Supabase
   const { error } = await supabase.from('memories').insert({
     user_id: user.id,
     body: content,
@@ -60,7 +60,7 @@ postButton.addEventListener('click', async () => {
 
 // === LOAD EXISTING MEMORIES ===
 const loadMyMemories = async () => {
-  const {  { user } } = await supabase.auth.getUser();
+  const { data: { user } } = await supabase.auth.getUser();
   if (!user) return;
 
   const { data, error } = await supabase
