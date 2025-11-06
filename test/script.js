@@ -2,6 +2,7 @@ const textInput = document.getElementById('textInput');
 const emojiButton = document.getElementById('emojiButton');
 const postButton = document.getElementById('postButton');
 const emojiPicker = document.getElementById('emojiPicker');
+const postsContainer = document.getElementById('postsContainer');
 
 // Auto-resize textarea
 const autoResize = () => {
@@ -11,14 +12,11 @@ const autoResize = () => {
 
 textInput.addEventListener('input', autoResize);
 
-// Toggle emoji picker with smart positioning
+// Toggle emoji picker
 const toggleEmojiPicker = (e) => {
   e.stopPropagation();
-  const isShowing = emojiPicker.classList.contains('show');
-
   emojiPicker.classList.remove('show');
-
-  if (isShowing) return;
+  if (emojiPicker.classList.contains('show')) return;
 
   const wrapper = emojiButton.closest('.input-wrapper');
   const wrapperRect = wrapper.getBoundingClientRect();
@@ -28,7 +26,6 @@ const toggleEmojiPicker = (e) => {
 
   emojiPicker.style.top = 'auto';
   emojiPicker.style.bottom = 'auto';
-  emojiPicker.style.left = 'auto';
   emojiPicker.style.right = '0';
 
   if (spaceBelow >= pickerHeight) {
@@ -45,7 +42,7 @@ const toggleEmojiPicker = (e) => {
 
 emojiButton.addEventListener('click', toggleEmojiPicker);
 
-// Insert emoji at cursor
+// Insert emoji
 emojiPicker.addEventListener('emoji-click', (e) => {
   const emoji = e.detail.unicode;
   const start = textInput.selectionStart;
@@ -74,17 +71,23 @@ document.addEventListener('click', (e) => {
   }
 });
 
-// Post button functionality (example)
+// Handle posting
 postButton.addEventListener('click', () => {
   const content = textInput.value.trim();
   if (content) {
-    alert('Posted: ' + content); // Replace with real logic (e.g., send to server)
+    // Create post element
+    const postEl = document.createElement('div');
+    postEl.className = 'post-item';
+    postEl.textContent = content;
+
+    // Add to top of posts (newest first)
+    postsContainer.insertBefore(postEl, postsContainer.firstChild);
+
+    // Clear input
     textInput.value = '';
     autoResize();
-  } else {
-    textInput.focus();
   }
+  textInput.focus();
 });
 
-// Initial resize
 autoResize();
