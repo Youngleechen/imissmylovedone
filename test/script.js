@@ -47,8 +47,7 @@ postButton.addEventListener('click', async () => {
 });
 
 async function loadUserPosts() {
-  // ✅ FIXED: Correct destructuring
-  const { data: { user } } = await supabase.auth.getUser();
+  const {  { user } } = await supabase.auth.getUser();
   if (!user) {
     postsContainer.innerHTML = '<p>Sign in to see your posts.</p>';
     return;
@@ -56,7 +55,7 @@ async function loadUserPosts() {
 
   const { data, error } = await supabase
     .from('memories')
-    .select('title, body, created_at')
+    .select('body, created_at')
     .eq('user_id', user.id)
     .order('created_at', { ascending: false });
 
@@ -73,9 +72,9 @@ async function loadUserPosts() {
 
   postsContainer.innerHTML = data.map(post => `
     <div class="post-item">
-      <h4>${post.title}</h4>
       <p>${post.body.replace(/\n/g, '<br>')}</p>
       <small>${new Date(post.created_at).toLocaleString()}</small>
     </div>
   `).join('');
 }
+
