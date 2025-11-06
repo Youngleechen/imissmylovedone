@@ -1,137 +1,184 @@
+/* =============== RESET & BASE =============== */
 * {
+  margin: 0;
+  padding: 0;
   box-sizing: border-box;
 }
 
+:root {
+  /* Grief-friendly palette: soft, not cold */
+  --bg: #faf9f6;
+  --text: #2d2b28;
+  --muted: #7a7773;
+  --border: #e0dcd6;
+  --focus: #b8a99a;
+  --post-bg: #ffffff;
+  --shadow: rgba(0, 0, 0, 0.06);
+}
+
 body {
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-  padding: 2rem;
-  background: #f8f9fa;
-  margin: 0;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Helvetica Neue', sans-serif;
+  background-color: var(--bg);
+  color: var(--text);
+  line-height: 1.6;
+  padding: 20px;
+  max-width: 700px;
+  margin: 0 auto;
 }
 
+@media (max-width: 600px) {
+  body {
+    padding: 16px;
+  }
+}
+
+/* =============== INPUT AREA =============== */
 .input-wrapper {
+  margin-bottom: 32px;
   position: relative;
-  width: 100%;
-  max-width: 600px;
 }
 
-#textInput {
+.form-group {
+  position: relative;
+}
+
+#memory-body {
   width: 100%;
-  min-height: 100px;
+  min-height: 120px;
   padding: 16px;
-  font-size: 16px; /* Prevents zoom on iOS */
-  border: 1px solid #ddd;
+  border: 1px solid var(--border);
   border-radius: 12px;
+  font-size: 18px;
   resize: none;
-  outline: none;
-  transition: border-color 0.2s;
-  box-shadow: 0 2px 6px rgba(0,0,0,0.05);
-  margin-bottom: 12px;
+  background-color: white;
+  box-shadow: 0 2px 6px var(--shadow);
+  transition: border-color 0.2s, box-shadow 0.2s;
 }
 
-#textInput:focus {
-  border-color: #4a6cf7;
-  box-shadow: 0 2px 8px rgba(74, 108, 247, 0.2);
+#memory-body:focus {
+  outline: none;
+  border-color: var(--focus);
+  box-shadow: 0 2px 8px rgba(184, 169, 154, 0.3);
 }
 
 .input-actions {
   display: flex;
+  gap: 12px;
+  margin-top: 12px;
   justify-content: flex-end;
-  gap: 8px;
 }
 
-/* Emoji button (currently hidden in HTML, but styled if shown) */
-#emojiButton {
-  background: transparent;
-  border: 1px solid #ddd;
+#emojiButton,
+#postButton {
+  background: white;
+  border: 1px solid var(--border);
   border-radius: 8px;
-  font-size: 1.2rem;
-  width: 40px;
-  height: 40px;
+  padding: 8px 16px;
+  font-size: 16px;
   cursor: pointer;
-  color: #666;
-  display: flex;
-  align-items: center;
-  justify-content: center;
+  transition: all 0.2s;
+  font-weight: 500;
 }
 
-#emojiButton:hover {
-  color: #4a6cf7;
-  border-color: #4a6cf7;
-  background: #f0f4ff;
+#emojiButton:hover,
+#postButton:hover {
+  background-color: #f5f3f0;
+  border-color: var(--focus);
 }
 
 #postButton {
-  background: #4a6cf7;
+  background-color: #2d2b28;
   color: white;
-  border: none;
-  border-radius: 8px;
-  padding: 0 16px;
-  font-weight: 600;
-  font-size: 14px;
-  height: 40px;
-  cursor: pointer;
-  transition: background 0.2s;
+  border-color: #2d2b28;
 }
 
 #postButton:hover {
-  background: #3a5be0;
+  background-color: #1a1917;
 }
 
-/* Emoji picker (hidden for now, but styled if shown) */
+/* =============== EMOJI PICKER =============== */
 #emojiPicker {
+  display: none;
   position: absolute;
-  right: 0;
   z-index: 1000;
-  box-shadow: 0 6px 16px rgba(0,0,0,0.15);
-  border-radius: 12px;
-  overflow: hidden;
-  transform: translateY(8px);
-  opacity: 0;
-  visibility: hidden;
-  pointer-events: none;
-  transition: opacity 0.2s, transform 0.2s, visibility 0.2s;
+  right: 0;
+  margin-top: 4px;
 }
 
 #emojiPicker.show {
-  opacity: 1;
-  visibility: visible;
-  pointer-events: auto;
-  transform: translateY(0);
+  display: block;
 }
 
-/* Posts section */
-.posts-section {
-  width: 100%;
-  max-width: 600px;
-  margin-top: 2.5rem;
+#emojiPicker emoji-picker {
+  --rgb-picker-border: 224, 220, 214;
+  --rgb-picker-bg: 255, 255, 255;
+  --rgb-input-bg: 245, 243, 240;
+  --rgb-button: 255, 255, 255;
+  --rgb-input-text: 45, 43, 40;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  box-shadow: 0 6px 20px var(--shadow);
+  width: 320px;
+  max-height: 380px;
+  font-family: inherit;
 }
 
+/* =============== POSTS SECTION =============== */
 .posts-section h2 {
-  margin-bottom: 1rem;
-  color: #333;
-  font-size: 1.25rem;
+  font-size: 22px;
+  margin-bottom: 16px;
+  color: var(--text);
+  font-weight: 600;
+}
+
+#postsContainer {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
 }
 
 .post-item {
-  background: white;
-  border: 1px solid #eee;
+  background: var(--post-bg);
+  border: 1px solid var(--border);
   border-radius: 12px;
-  padding: 16px;
-  margin-bottom: 12px;
-  box-shadow: 0 2px 6px rgba(0,0,0,0.05);
-  font-size: 16px;
-  line-height: 1.5;
+  padding: 20px;
+  box-shadow: 0 2px 6px var(--shadow);
   word-break: break-word;
 }
 
-/* Responsive */
-@media (max-width: 640px) {
-  .input-wrapper,
-  .posts-section {
-    width: 95vw;
-  }
+.post-item p {
+  font-size: 18px;
+  margin-bottom: 12px;
+  white-space: pre-wrap;
+}
+
+.post-item small {
+  color: var(--muted);
+  font-size: 14px;
+  display: block;
+}
+
+/* =============== ALERTS & PLACEHOLDERS =============== */
+#memory-body::placeholder {
+  color: var(--muted);
+  opacity: 1;
+}
+
+.error {
+  color: #c2410c;
+  padding: 12px;
+  background: #fff8f5;
+  border-left: 3px solid #f97316;
+  border-radius: 6px;
+  margin-top: 12px;
+}
+
+/* =============== OTHER UTILITIES =============== */
+.hidden {
+  display: none !important;
+}
+
+small {
+  font-size: 0.875em;
+  color: var(--muted);
 }
