@@ -1,83 +1,71 @@
-// === SUPABASE SETUP ===
-const supabaseUrl = 'https://imissmylovedone.supabase.co';
-const supabaseAnonKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImltaXNzbXlsb3ZlZG9uZSIsImtleSI6ImRhdGEtYW5vbiIsImV4cCI6MTczMjQxOTQwMH0.Nk8L2oE8pD7HqyW4fCnKd6r7TgPjJ7eZsO1m5J5dK4c';
-const supabase = window.supabase.createClient(supabaseUrl, supabaseAnonKey);
+// Initialize Supabase with your known project credentials
+const SUPABASE_URL = 'https://ccetnqdqfrsitooestbh.supabase.co';
+const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImNjZXRucWRxZnJzaXRvb2VzdGJoIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjIzMTE4MjksImV4cCI6MjA3Nzg4NzgyOX0.1NjRZZrgsPOg-2z_r2kRELWn9IVXNEQNpSxK6CktJRY';
 
-// === DOM ELEMENTS ===
+const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
 const textInput = document.getElementById('textInput');
 const postButton = document.getElementById('postButton');
 const postsContainer = document.getElementById('postsContainer');
 
-// === HELPERS ===
-const autoResize = () => {
-  textInput.style.height = 'auto';
-  textInput.style.height = Math.min(textInput.scrollHeight, 300) + 'px';
-};
+// Load user's posts on page load
+loadUserPosts();
 
-const addPostToUI = (content) => {
-  const postEl = document.createElement('div');
-  postEl.className = 'post-item';
-  postEl.textContent = content;
-  postsContainer.insertBefore(postEl, postsContainer.firstChild);
-};
-
-// === POST HANDLER ===
 postButton.addEventListener('click', async () => {
-  const content = textInput.value.trim();
-  if (!content) {
-    textInput.focus();
+  const body = textInput.value.trim();
+  if (!body) {
+    alert('Please write something first.');
     return;
   }
 
-  // ✅ CORRECT DESTRUCTURING: data contains the user
-  const { data: { user }, error: authError } = await supabase.auth.getUser();
-  if (authError || !user) {
-    alert('Please sign in to share a memory.');
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) {
+    alert('You must be signed in to post.');
     return;
   }
 
-  // Optimistic UI update
-  addPostToUI(content);
-  textInput.value = '';
-  autoResize();
-
-  // Save to Supabase
-  const { error } = await supabase.from('memories').insert({
-    user_id: user.id,
-    body: content,
-    is_public: true
-  });
+  const { error } = await supabase
+    .from('memories')
+    .insert({ user_id: user.id, body });
 
   if (error) {
-    // Roll back UI on failure
-    postsContainer.removeChild(postsContainer.firstChild);
-    console.error('Failed to save memory:', error);
-    alert('Could not save your memory. Please try again.');
-    textInput.value = content;
-    autoResize();
+    console.error('Post error:', error);
+    alert('Failed to save your thought.');
+    return;
   }
+
+  textInput.value = '';
+  loadUserPosts();
 });
 
-// === LOAD EXISTING MEMORIES ===
-const loadMyMemories = async () => {
+async function loadUserPosts() {
   const { data: { user } } = await supabase.auth.getUser();
-  if (!user) return;
+  if (!user) {
+    postsContainer.innerHTML = '<p>Sign in to see your posts.</p>';
+    return;
+  }
 
   const { data, error } = await supabase
     .from('memories')
-    .select('body')
+    .select('body, created_at')
     .eq('user_id', user.id)
     .order('created_at', { ascending: false });
 
   if (error) {
-    console.warn('Could not load memories:', error);
+    console.error('Load error:', error);
+    postsContainer.innerHTML = '<p>Could not load your posts.</p>';
     return;
   }
 
-  postsContainer.innerHTML = '';
-  data.forEach((mem) => addPostToUI(mem.body));
-};
+  if (data.length === 0) {
+    postsContainer.innerHTML = '<p>You haven’t posted anything yet.</p>';
+    return;
+  }
 
-// === INIT ===
-autoResize();
-loadMyMemories();
+  postsContainer.innerHTML = data.map(post => `
+    <div class="post-item">
+      <p>${post.body.replace(/\n/g, '<br>')}</p>
+      <small>${new Date(post.created_at).toLocaleString()}</small>
+    </div>
+  `).join('');
+}
