@@ -153,3 +153,28 @@ button {
   margin-top: 8px;
   font-style: italic;
 }
+
+/* Media styling */
+.post-item img {
+  max-width: 100%;
+  height: auto;
+  border-radius: 8px;
+  margin: 10px 0;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+.post-item video {
+  max-width: 100%;
+  height: auto;
+  border-radius: 8px;
+  margin: 10px 0;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+.post-item video::-webkit-media-controls {
+  background-color: #f7fafc;
+}
+
+.post-item video::-moz-media-controls {
+  background-color: #f7fafc;
+}
