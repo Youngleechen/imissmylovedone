@@ -18,6 +18,7 @@
   <div class="thought-box">
     <textarea id="memory-body" placeholder="what's on your mind?"></textarea>
     <div class="thought-actions">
+      <button id="mediaButton">➕</button>
       <button id="emojiButton">🙂</button>
       <button id="postButton">Post</button>
     </div>
@@ -28,6 +29,9 @@
     <h2>My Posts</h2>
     <div id="postsContainer"></div>
   </div>
+
+  <!-- Hidden file input -->
+  <input type="file" id="mediaInput" accept="image/*" style="display:none;" />
 
   <script type="module" src="script.js"></script>
 </body>
