@@ -1,3 +1,4 @@
+// Initialize Supabase with your known project credentials
 const SUPABASE_URL = 'https://ccetnqdqfrsitooestbh.supabase.co';
 const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImNjZXRucWRxZnJzaXRvb2VzdGJoIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjIzMTE4MjksImV4cCI6MjA3Nzg4NzgyOX0.1NjRZZrgsPOg-2z_r2kRELWn9IVXNEQNpSxK6CktJRY';
 
@@ -7,6 +8,7 @@ const textInput = document.getElementById('textInput');
 const postButton = document.getElementById('postButton');
 const postsContainer = document.getElementById('postsContainer');
 
+// Load user's posts on page load
 loadUserPosts();
 
 postButton.addEventListener('click', async () => {
@@ -16,7 +18,8 @@ postButton.addEventListener('click', async () => {
     return;
   }
 
-  const {  { user } } = await supabase.auth.getUser();
+  // ✅ Fixed: Correct destructuring
+  const { data: { user } } = await supabase.auth.getUser();
   if (!user) {
     alert('You must be signed in to post.');
     return;
@@ -26,9 +29,9 @@ postButton.addEventListener('click', async () => {
     .from('memories')
     .insert({
       user_id: user.id,
-      title: 'Untitled', // 👈 Safe fallback
+      title: 'Untitled', // Safe fallback
       body,
-      is_public: true   // 👈 Optional but good for consistency
+      is_public: true
     });
 
   if (error) {
@@ -42,7 +45,8 @@ postButton.addEventListener('click', async () => {
 });
 
 async function loadUserPosts() {
-  const {  { user } } = await supabase.auth.getUser();
+  // ✅ Fixed: Correct destructuring
+  const { data: { user } } = await supabase.auth.getUser();
   if (!user) {
     postsContainer.innerHTML = '<p>Sign in to see your posts.</p>';
     return;
