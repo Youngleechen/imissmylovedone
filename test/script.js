@@ -1,26 +1,25 @@
 // === SUPABASE SETUP ===
-// Replace with your project's actual URL and anon key
-const supabaseUrl = 'YOUR_SUPABASE_URL';
-const supabaseAnonKey = 'YOUR_SUPABASE_ANON_KEY';
-const supabase = window.supabase.createClient(supabaseUrl, supabaseAnonKey);
+const supabaseUrl = 'YOUR_SUPABASE_URL'; // Replace with your project URL
+const supabaseAnonKey = 'YOUR_SUPABASE_ANON_KEY'; // Replace with your anon key
+const supabase = window.supabase.createClient(supabaseUrl, supabaseAnonKey); // ✅ Semicolon added
 
 // === DOM ELEMENTS ===
-const textInput = document.getElementById('textInput');
-const postButton = document.getElementById('postButton');
-const postsContainer = document.getElementById('postsContainer');
+const textInput = document.getElementById('textInput'); // ✅ Semicolon
+const postButton = document.getElementById('postButton'); // ✅ Semicolon
+const postsContainer = document.getElementById('postsContainer'); // ✅ Semicolon
 
 // === HELPERS ===
 const autoResize = () => {
   textInput.style.height = 'auto';
   textInput.style.height = Math.min(textInput.scrollHeight, 300) + 'px';
-};
+}; // ✅ Semicolon
 
 const addPostToUI = (content) => {
   const postEl = document.createElement('div');
   postEl.className = 'post-item';
   postEl.textContent = content;
   postsContainer.insertBefore(postEl, postsContainer.firstChild);
-};
+}; // ✅ Semicolon
 
 // === POST HANDLER ===
 postButton.addEventListener('click', async () => {
@@ -56,7 +55,7 @@ postButton.addEventListener('click', async () => {
     textInput.value = content;
     autoResize();
   }
-});
+}); // ✅ Semicolon
 
 // === LOAD EXISTING MEMORIES ===
 const loadMyMemories = async () => {
@@ -76,8 +75,8 @@ const loadMyMemories = async () => {
 
   postsContainer.innerHTML = '';
   data.forEach(mem => addPostToUI(mem.body));
-};
+}; // ✅ Semicolon
 
 // === INIT ===
-autoResize();
-loadMyMemories();
+autoResize(); // ✅ Semicolon
+loadMyMemories(); // ✅ Semicolon
