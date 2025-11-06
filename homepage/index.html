@@ -1,28 +1,191 @@
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>I Miss My Loved One</title>
+  <title>I Miss My Loved One — Coming Soon</title>
   <style>
-    body {
+    * {
       margin: 0;
       padding: 0;
-      height: 100vh;
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      font-family: system-ui, -apple-system, sans-serif;
-      background: white;
+      box-sizing: border-box;
     }
-    h1 {
-      margin: 0;
-      font-weight: normal;
+
+    body {
+      font-family: system-ui, -apple-system, sans-serif;
+      background: #fafafa;
+      color: #1a202c;
+      min-height: 100vh;
+      overflow: hidden;
+      position: relative;
+    }
+
+    /* Filter Bar — Top Left */
+    .filters {
+      position: absolute;
+      top: 20px;
+      left: 20px;
+      display: flex;
+      gap: 16px;
+      z-index: 10;
+    }
+    .filter {
+      padding: 6px 12px;
+      background: white;
+      border: 1px solid #e2e8f0;
+      border-radius: 20px;
+      font-size: 0.85rem;
+      color: #4a5568;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    .filter.active {
+      background: #5a67d8;
+      color: white;
+      border-color: #5a67d8;
+    }
+
+    /* Login Button — Slides from left */
+    #login-btn {
+      position: absolute;
+      top: 50%;
+      left: -120px;
+      transform: translateY(-50%);
+      padding: 12px 24px;
+      background: #5a67d8;
+      color: white;
+      border: none;
+      border-radius: 30px;
+      font-weight: 600;
+      cursor: pointer;
+      opacity: 0;
+      transition: all 0.6s ease-out;
+      z-index: 20;
+      box-shadow: 0 4px 12px rgba(90, 103, 216, 0.2);
+    }
+
+    /* Show login button after short delay */
+    body.loaded #login-btn {
+      left: 20px;
+      opacity: 1;
+    }
+
+    /* Memories — Slide from bottom */
+    .memories-container {
+      position: absolute;
+      bottom: 0;
+      left: 0;
+      width: 100%;
+      padding: 20px;
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+      pointer-events: none;
+    }
+
+    .memory {
+      background: white;
+      border: 1px solid #e2e8f0;
+      border-radius: 12px;
+      padding: 16px;
+      max-width: 500px;
+      margin-left: auto;
+      margin-right: auto;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.05);
+      opacity: 0;
+      transform: translateY(100px);
+      transition: transform 0.6s ease-out, opacity 0.6s ease-out;
+    }
+
+    /* Staggered entrance */
+    body.loaded .memory:nth-child(1) {
+      transition-delay: 0.3s;
+      opacity: 1;
+      transform: translateY(0);
+    }
+    body.loaded .memory:nth-child(2) {
+      transition-delay: 0.6s;
+      opacity: 1;
+      transform: translateY(0);
+    }
+    body.loaded .memory:nth-child(3) {
+      transition-delay: 0.9s;
+      opacity: 1;
+      transform: translateY(0);
+    }
+
+    /* Title — Centered & subtle */
+    .title {
+      text-align: center;
+      margin-top: 40vh;
+      font-size: 1.8rem;
+      font-weight: 500;
+      color: #2d3748;
+      opacity: 0.9;
+    }
+
+    @media (max-width: 600px) {
+      .filters {
+        flex-wrap: wrap;
+        top: 10px;
+        left: 10px;
+      }
+      .memory {
+        max-width: 100%;
+      }
     }
   </style>
 </head>
 <body>
-  <h1>I Miss My Loved One</h1>
+  <!-- Filter bar -->
+  <div class="filters">
+    <div class="filter active">Suicide</div>
+    <div class="filter">Illness</div>
+    <div class="filter">Accident</div>
+    <div class="filter">Other</div>
+  </div>
+
+  <!-- Title -->
+  <div class="title">I Miss My Loved One</div>
+
+  <!-- Login button -->
+  <button id="login-btn">Log In to Share</button>
+
+  <!-- Memories preview -->
+  <div class="memories-container">
+    <div class="memory">
+      <h3 class="memory-title">I still hear your laugh</h3>
+      <p class="memory-body">It echoes in the kitchen when I make coffee. I swear I hear you say, “Good morning.”</p>
+    </div>
+    <div class="memory">
+      <h3 class="memory-title">Your shoes by the door</h3>
+      <p class="memory-body">I haven’t moved them. It feels like you’ll walk back in any minute.</p>
+    </div>
+    <div class="memory">
+      <h3 class="memory-title">First birthday without you</h3>
+      <p class="memory-body">I lit a candle and cried into the cake. But I’m learning to carry you with me.</p>
+    </div>
+  </div>
+
+  <script>
+    // Trigger animations after page load
+    window.addEventListener('load', () => {
+      document.body.classList.add('loaded');
+    });
+
+    // Make filters interactive (visual only)
+    document.querySelectorAll('.filter').forEach(filter => {
+      filter.addEventListener('click', () => {
+        document.querySelectorAll('.filter').forEach(f => f.classList.remove('active'));
+        filter.classList.add('active');
+      });
+    });
+
+    // Login button action
+    document.getElementById('login-btn').addEventListener('click', () => {
+      // 👉 Later: redirect to /login/
+      alert("Soon: you'll log in and share your own memory here.");
+    });
+  </script>
 </body>
 </html>
