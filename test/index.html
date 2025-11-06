@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Homepage</title>
+  <title>My Thoughts</title>
 
   <!-- Load emoji picker -->
   <script type="module" src="https://cdn.jsdelivr.net/npm/emoji-picker-element@^1/index.js"></script>
@@ -13,8 +13,6 @@
   <link rel="stylesheet" href="style.css" />
 </head>
 <body>
-  <h2>What’s on your mind? ✨</h2>
-
   <div class="input-wrapper">
     <textarea id="textInput" placeholder="what's on your mind?"></textarea>
     <div class="input-actions">
@@ -22,6 +20,11 @@
       <button id="postButton">Post</button>
     </div>
     <emoji-picker id="emojiPicker" data-emoji-size="20"></emoji-picker>
+  </div>
+
+  <div class="posts-section">
+    <h2>My Posts</h2>
+    <div id="postsContainer"></div>
   </div>
 
   <!-- Local JS -->
