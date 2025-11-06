@@ -5,11 +5,15 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>My Thoughts</title>
 
-  <!-- Supabase JS Client -->
+  <!-- Supabase -->
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
-  <!-- Local CSS -->
+  <!-- Emoji Picker -->
+  <script type="module" src="https://cdn.jsdelivr.net/npm/emoji-picker-element@^1/index.js"></script>
+
+  <!-- Local Styles -->
   <link rel="stylesheet" href="style.css" />
+
 </head>
 <body>
   <div class="input-wrapper">
@@ -19,7 +23,6 @@
         <button id="emojiButton">🙂</button>
         <button id="postButton">Post</button>
       </div>
-      <!-- Emoji picker (will be populated by emoji-picker-element) -->
       <div id="emojiPicker"></div>
     </div>
   </div>
@@ -29,13 +32,7 @@
     <div id="postsContainer"></div>
   </div>
 
-  <!-- Load emoji-picker-element -->
-  <script type="module" src="https://cdn.jsdelivr.net/npm/emoji-picker-element@^1/index.js"></script>
-
-  <!-- Supabase -->
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-
-  <!-- Local JS -->
+  <!-- Local Script -->
   <script type="module" src="script.js"></script>
 </body>
 </html>
