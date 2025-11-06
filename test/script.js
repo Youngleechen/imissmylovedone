@@ -1,7 +1,6 @@
 // === SUPABASE SETUP ===
-// 🔑 Replace these with your actual Supabase project URL and anon key
-const supabaseUrl = 'YOUR_SUPABASE_URL';
-const supabaseAnonKey = 'YOUR_SUPABASE_ANON_KEY';
+const supabaseUrl = 'https://imissmylovedone.supabase.co';
+const supabaseAnonKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImltaXNzbXlsb3ZlZG9uZSIsImtleSI6ImRhdGEtYW5vbiIsImV4cCI6MTczMjQxOTQwMH0.Nk8L2oE8pD7HqyW4fCnKd6r7TgPjJ7eZsO1m5J5dK4c';
 const supabase = window.supabase.createClient(supabaseUrl, supabaseAnonKey);
 
 // === DOM ELEMENTS ===
@@ -30,8 +29,8 @@ postButton.addEventListener('click', async () => {
     return;
   }
 
-  // ✅ Correct destructuring: { data: { user }, error }
-  const { data: { user }, error: authError } = await supabase.auth.getUser();
+  // ✅ Correct destructuring
+  const {  { user }, error: authError } = await supabase.auth.getUser();
   if (authError || !user) {
     alert('Please sign in to share a memory.');
     return;
@@ -61,7 +60,7 @@ postButton.addEventListener('click', async () => {
 
 // === LOAD EXISTING MEMORIES ===
 const loadMyMemories = async () => {
-  const { data: { user } } = await supabase.auth.getUser();
+  const {  { user } } = await supabase.auth.getUser();
   if (!user) return;
 
   const { data, error } = await supabase
