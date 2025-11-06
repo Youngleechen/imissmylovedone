@@ -10,14 +10,9 @@ document.addEventListener('DOMContentLoaded', async () => {
   const emojiButton = document.getElementById('emojiButton');
   const emojiPicker = document.getElementById('emojiPicker');
   const postButton = document.getElementById('postButton');
-  const mediaButton = document.getElementById('mediaButton');
-  const mediaInput = document.getElementById('mediaInput');
   const postsContainer = document.getElementById('postsContainer');
 
-  // State
-  let selectedPhoto = null;
-
-  // === AUTO-RESIZE ===
+  // Auto-resize textarea
   const autoResize = () => {
     memoryBody.style.height = 'auto';
     const newHeight = Math.min(memoryBody.scrollHeight, 300);
@@ -25,9 +20,9 @@ document.addEventListener('DOMContentLoaded', async () => {
   };
 
   memoryBody.addEventListener('input', autoResize);
-  autoResize();
+  autoResize(); // initial
 
-  // === EMOJI PICKER ===
+  // Emoji picker
   let pickerInstance = null;
 
   emojiButton.addEventListener('click', (e) => {
@@ -57,11 +52,13 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     if (isShowing) return;
 
+    // ✅ FIXED: Use existing parent containers (no .form-group needed)
     const wrapper = emojiButton.closest('.thought-actions') || emojiButton.closest('.thought-box');
     if (!wrapper) {
-      console.error('Emoji button wrapper not found!');
+      console.error('Could not find wrapper for emoji picker');
       return;
     }
+
     const wrapperRect = wrapper.getBoundingClientRect();
     const pickerHeight = 380;
     const spaceBelow = window.innerHeight - wrapperRect.bottom;
@@ -94,42 +91,9 @@ document.addEventListener('DOMContentLoaded', async () => {
     }
   });
 
-  // === MEDIA UPLOAD ===
-  mediaButton.addEventListener('click', () => {
-    mediaInput.click();
-  });
-
-  mediaInput.addEventListener('change', (e) => {
-    const file = e.target.files[0];
-    if (!file) return;
-
-    selectedPhoto = file;
-
-    // Clear previous preview
-    const existingPreview = document.querySelector('.photo-preview');
-    if (existingPreview) existingPreview.remove();
-
-    // Create new preview
-    const reader = new FileReader();
-    reader.onload = (event) => {
-      const img = document.createElement('img');
-      img.src = event.target.result;
-      img.style.maxWidth = '100px';
-      img.style.maxHeight = '100px';
-      img.style.borderRadius = '6px';
-      img.style.marginTop = '8px';
-
-      const previewContainer = document.createElement('div');
-      previewContainer.className = 'photo-preview';
-      previewContainer.appendChild(img);
-      document.querySelector('.thought-box').insertBefore(previewContainer, emojiPicker);
-    };
-    reader.readAsDataURL(file);
-  });
-
-  // === POSTING ===
+  // Load & post
   async function loadUserPosts() {
-    const { data: { user } } = await supabase.auth.getUser();
+    const {  { user } } = await supabase.auth.getUser();
     if (!user) {
       postsContainer.innerHTML = '<p>Sign in to see your posts.</p>';
       return;
@@ -137,7 +101,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     const { data, error } = await supabase
       .from('memories')
-      .select('body, created_at, media_url')
+      .select('body, created_at')
       .eq('user_id', user.id)
       .order('created_at', { ascending: false });
 
@@ -152,84 +116,41 @@ document.addEventListener('DOMContentLoaded', async () => {
       return;
     }
 
-    postsContainer.innerHTML = data.map(post => {
-      const mediaHtml = post.media_url
-        ? `<img src="${post.media_url}" alt="Memory photo" style="max-width:100%;border-radius:8px;margin-top:8px;">`
-        : '';
-
-      return `
-        <div class="post-item">
-          <p>${post.body.replace(/\n/g, '<br>')}</p>
-          ${mediaHtml}
-          <small class="post-date">${new Date(post.created_at).toLocaleString()}</small>
-        </div>
-      `;
-    }).join('');
+    postsContainer.innerHTML = data.map(post => `
+      <div class="post-item">
+        <p>${post.body.replace(/\n/g, '<br>')}</p>
+        <small class="post-date">${new Date(post.created_at).toLocaleString()}</small>
+      </div>
+    `).join('');
   }
 
   postButton.addEventListener('click', async () => {
     const body = memoryBody.value.trim();
-    if (!body && !selectedPhoto) {
-      alert('Please write something or add a photo.');
+    if (!body) {
+      alert('Please write something first.');
       return;
     }
 
-    const { data: { user } } = await supabase.auth.getUser();
+    const {  { user } } = await supabase.auth.getUser();
     if (!user) {
       alert('You must be signed in to post.');
       return;
     }
 
-    // Prepare post data
-    const postData = {
-      user_id: user.id,
-      title: 'Untitled',
-      body
-    };
-
-    // Upload photo if exists
-    if (selectedPhoto) {
-      const fileName = `${Date.now()}-${selectedPhoto.name}`;
-      const { data, error } = await supabase.storage
-        .from('memories')
-        .upload(fileName, selectedPhoto, {
-          upsert: true,
-          contentType: selectedPhoto.type
-        });
-
-      if (error) {
-        console.error('Upload error:', error);
-        alert('Failed to upload photo: ' + error.message);
-        return;
-      }
-
-      // Get public URL
-      const { data: publicUrlData } = supabase.storage
-        .from('memories')
-        .getPublicUrl(fileName);
-
-      postData.media_url = publicUrlData.publicUrl;
-    }
-
-    // Insert post
     const { error } = await supabase
       .from('memories')
-      .insert(postData);
+      .insert({ user_id: user.id, title: 'Untitled', body });
 
     if (error) {
       alert('Failed to post: ' + error.message);
       return;
     }
 
-    // Reset UI
     memoryBody.value = '';
     autoResize();
-    selectedPhoto = null;
-    const preview = document.querySelector('.photo-preview');
-    if (preview) preview.remove();
     loadUserPosts();
   });
 
-  // Initialize
+  // Initial load
   loadUserPosts();
 });
