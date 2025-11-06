@@ -19,25 +19,33 @@ const toggleEmojiPicker = (e) => {
 
   if (isShowing) return;
 
-  const wrapper = emojiButton.closest('.input-wrapper');
-  const wrapperRect = wrapper.getBoundingClientRect();
+  // Use the textarea as the anchor (more reliable)
+  const textareaRect = textInput.getBoundingClientRect();
   const pickerHeight = 380;
-  const spaceBelow = window.innerHeight - wrapperRect.bottom;
-  const spaceAbove = wrapperRect.top;
+  const spaceBelow = window.innerHeight - textareaRect.bottom;
+  const spaceAbove = textareaRect.top;
 
-  emojiPicker.style.top = 'auto';
-  emojiPicker.style.bottom = 'auto';
-  emojiPicker.style.right = '0';
+  // Position relative to viewport
+  emojiPicker.style.position = 'fixed';
+  emojiPicker.style.left = textareaRect.left + 'px';
+  emojiPicker.style.right = 'auto';
+  emojiPicker.style.width = Math.min(textareaRect.width, 320) + 'px';
 
   if (spaceBelow >= pickerHeight) {
-    emojiPicker.style.top = (wrapperRect.height + 8) + 'px';
+    // Show below textarea
+    emojiPicker.style.top = textareaRect.bottom + 4 + 'px';
+    emojiPicker.style.bottom = 'auto';
   } else if (spaceAbove >= pickerHeight) {
-    emojiPicker.style.bottom = (wrapperRect.height + 8) + 'px';
+    // Show above textarea
+    emojiPicker.style.bottom = spaceBelow + textareaRect.height + 4 + 'px';
     emojiPicker.style.top = 'auto';
   } else {
-    emojiPicker.style.top = (wrapperRect.height + 8) + 'px';
+    // Default: below (even if clipped)
+    emojiPicker.style.top = textareaRect.bottom + 4 + 'px';
+    emojiPicker.style.bottom = 'auto';
   }
 
+  // Apply visibility after positioning
   setTimeout(() => emojiPicker.classList.add('show'), 10);
 };
 
@@ -64,7 +72,7 @@ postButton.addEventListener('click', () => {
   const message = textInput.value.trim();
   if (message) {
     console.log('Posted:', message);
-    // TODO: Replace with API call or local storage save
+    // TODO: Replace with actual post logic
     textInput.value = '';
     autoResize();
   } else {
@@ -77,8 +85,7 @@ document.addEventListener('click', (e) => {
   if (
     !emojiButton.contains(e.target) &&
     !emojiPicker.contains(e.target) &&
-    !textInput.contains(e.target) &&
-    !postButton.contains(e.target)
+    !textInput.contains(e.target)
   ) {
     emojiPicker.classList.remove('show');
   }
