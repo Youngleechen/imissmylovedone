@@ -20,11 +20,11 @@
       position: relative;
     }
 
-    /* Filter Bar — Top Left */
+    /* Filter Bar — Top Right */
     .filters {
       position: absolute;
       top: 20px;
-      left: 20px;
+      right: 20px;
       display: flex;
       gap: 16px;
       z-index: 10;
@@ -114,21 +114,11 @@
       transform: translateY(0);
     }
 
-    /* Title — Centered & subtle */
-    .title {
-      text-align: center;
-      margin-top: 40vh;
-      font-size: 1.8rem;
-      font-weight: 500;
-      color: #2d3748;
-      opacity: 0.9;
-    }
-
     @media (max-width: 600px) {
       .filters {
         flex-wrap: wrap;
         top: 10px;
-        left: 10px;
+        right: 10px;
       }
       .memory {
         max-width: 100%;
@@ -137,7 +127,7 @@
   </style>
 </head>
 <body>
-  <!-- Filter bar -->
+  <!-- Filter bar — Top Right -->
   <div class="filters">
     <div class="filter active">Suicide</div>
     <div class="filter">Illness</div>
@@ -145,13 +135,10 @@
     <div class="filter">Other</div>
   </div>
 
-  <!-- Title -->
-  <div class="title">I Miss My Loved One</div>
-
-  <!-- Login button -->
+  <!-- Login button — Slides in from left -->
   <button id="login-btn">Log In to Share</button>
 
-  <!-- Memories preview -->
+  <!-- Memories preview — Slide up from bottom -->
   <div class="memories-container">
     <div class="memory">
       <h3 class="memory-title">I still hear your laugh</h3>
@@ -183,8 +170,7 @@
 
     // Login button action
     document.getElementById('login-btn').addEventListener('click', () => {
-      // 👉 Later: redirect to /login/
-      alert("Soon: you'll log in and share your own memory here.");
+      alert("Coming soon: Log in to share your own memory.");
     });
   </script>
 </body>
