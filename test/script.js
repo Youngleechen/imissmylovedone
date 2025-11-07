@@ -1,6 +1,6 @@
 document.addEventListener('DOMContentLoaded', async () => {
   const supabase = window.supabase.createClient(
-    'https://ccetnqdqfrsitooestbh.supabase.co',
+    'https://ccetnqdqfrsitooestbh.supabase.co   ',
     'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImNjZXRucWRxZnJzaXRvb2VzdGJoIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjIzMTE4MjksImV4cCI6MjA3Nzg4NzgyOX0.1NjRZZrgsPOg-2z_r2kRELWn9IVXNEQNpSxK6CktJRY'
   );
 
@@ -287,32 +287,50 @@ document.addEventListener('DOMContentLoaded', async () => {
       const mediaMatches = [...post.body.matchAll(/!\[([^\]]*)\]\s*\(\s*([^)]+)\s*\)/g)];
       
       if (mediaMatches.length > 0) {
-        // Create media container with main image + overlay for more
-        let mediaHtml = '';
+        let mediaGridHtml = '<div class="media-grid" style="position: relative; width: 100%; height: 300px; margin: 10px 0;">';
         
-        // Main image (first one)
+        // Show first media item as large
         const firstMedia = mediaMatches[0];
-        const alt = firstMedia[1] || 'Media';
-        const url = firstMedia[2].trim();
-        const isVideo = url.includes('.mp4') || url.includes('.webm') || url.includes('.mov');
+        const firstAlt = firstMedia[1] || 'Media';
+        const firstUrl = firstMedia[2].trim();
+        const isFirstVideo = firstUrl.includes('.mp4') || firstUrl.includes('.webm') || firstUrl.includes('.mov');
         
-        mediaHtml += `
-          <div class="main-media-container" onclick="openSingleMedia('${url}', '${alt}')">
-            ${isVideo ? 
-              `<video muted playsinline>
-                 <source src="${url}" type="video/mp4">
+        mediaGridHtml += `
+          <div class="media-grid-item large" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; cursor: pointer;" onclick="openGallery('${post.id}', '${encodeURIComponent(JSON.stringify(mediaMatches.map(m => m[2])))}')">
+            ${isFirstVideo ? 
+              `<video muted playsinline style="width: 100%; height: 100%; object-fit: cover;">
+                 <source src="${firstUrl}" type="video/mp4">
                </video>` :
-              `<img src="${url}" alt="${alt}">
-             `
-            }
-            ${mediaMatches.length > 1 ? 
-              `<div class="more-overlay" onclick="event.stopPropagation(); openGalleryFromSecond('${JSON.stringify(mediaMatches.map(m => m[2]))}')">
-                +${mediaMatches.length - 1}
-              </div>` : ''
+              `<img src="${firstUrl}" alt="${firstAlt}" style="width: 100%; height: 100%; object-fit: cover;">`
             }
           </div>
         `;
         
+        // If there are more media items, show the +N overlay
+        if (mediaMatches.length > 1) {
+          const secondMedia = mediaMatches[1];
+          const secondUrl = secondMedia[2].trim();
+          const isSecondVideo = secondUrl.includes('.mp4') || secondUrl.includes('.webm') || secondUrl.includes('.mov');
+          
+          mediaGridHtml += `
+            <div class="media-grid-overlay" style="position: absolute; bottom: 10px; right: 10px; width: 80px; height: 80px; cursor: pointer;" onclick="openGallery('${post.id}', '${encodeURIComponent(JSON.stringify(mediaMatches.map(m => m[2])))}')">
+              <div class="second-thumbnail" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; border-radius: 8px; overflow: hidden; box-shadow: 0 2px 4px rgba(0,0,0,0.3);">
+                ${isSecondVideo ? 
+                  `<video muted playsinline style="width: 100%; height: 100%; object-fit: cover;">
+                     <source src="${secondUrl}" type="video/mp4">
+                   </video>` :
+                  `<img src="${secondUrl}" alt="Additional media" style="width: 100%; height: 100%; object-fit: cover;">`
+                }
+              </div>
+              <div class="more-overlay" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); border-radius: 8px; display: flex; align-items: center; justify-content: center;">
+                <div class="more-text" style="color: white; font-size: 16px; font-weight: bold;">+${mediaMatches.length - 1}</div>
+              </div>
+            </div>
+          `;
+        }
+        
+        mediaGridHtml += '</div>';
+
         // Remove media markdown from text body
         let textOnlyBody = post.body.replace(/!\[([^\]]*)\]\s*\(\s*([^)]+)\s*\)/g, '');
         textOnlyBody = textOnlyBody.replace(/\n/g, '<br>');
@@ -320,7 +338,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         return `
           <div class="post-item" style="background: white; padding: 15px; border-radius: 8px; margin-bottom: 15px; box-shadow: 0 1px 3px rgba(0,0,0,0.1);">
             <p style="margin: 0; line-height: 1.6;">${textOnlyBody}</p>
-            ${mediaHtml}
+            ${mediaGridHtml}
             <small style="display: block; color: #718096; font-size: 12px; margin-top: 8px;">
               ${new Date(post.created_at).toLocaleString()}
             </small>
@@ -390,60 +408,28 @@ document.addEventListener('DOMContentLoaded', async () => {
   });
 });
 
-// Single media viewer (for main image)
-window.openSingleMedia = function(url, alt) {
-  const isVideo = url.includes('.mp4') || url.includes('.webm') || url.includes('.mov');
-  const modalHtml = `
-    <div id="single-media-modal" style="position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.9); z-index: 9999; display: flex; align-items: center; justify-content: center; padding: 20px; cursor: pointer;">
-      <div style="background: white; border-radius: 12px; max-width: 90vw; max-height: 90vh; overflow: auto; position: relative; cursor: default;">
-        <button onclick="closeSingleMedia()" style="position: absolute; top: 10px; right: 10px; background: #f1f3f4; border: none; border-radius: 50%; width: 30px; height: 30px; font-size: 18px; cursor: pointer; z-index: 1000;">×</button>
-        
-        <div style="padding: 20px; text-align: center;">
-          ${isVideo ? 
-            `<video controls style="max-width: 100%; max-height: 80vh; object-fit: contain; border-radius: 8px;">
-               <source src="${url}" type="video/mp4">
-               Your browser does not support the video tag.
-             </video>` :
-            `<img src="${url}" alt="${alt}" style="max-width: 100%; max-height: 80vh; object-fit: contain; border-radius: 8px;">
-           `
-          }
-          <p style="margin-top: 10px; font-size: 14px; color: #555;">${alt}</p>
-        </div>
-      </div>
-    </div>
-  `;
-  
-  document.body.insertAdjacentHTML('beforeend', modalHtml);
-};
+// Gallery functions
+window.galleryCurrentIndex = 0;
 
-window.closeSingleMedia = function() {
-  const modal = document.getElementById('single-media-modal');
-  if (modal) modal.remove();
-};
-
-// Gallery viewer for remaining images (starting from second)
-window.openGalleryFromSecond = function(mediaUrlsJson) {
-  const mediaUrls = JSON.parse(mediaUrlsJson);
-  if (mediaUrls.length <= 1) return;
+window.openGallery = function(postId, encodedMediaUrlsJson) {
+  const mediaUrls = JSON.parse(decodeURIComponent(encodedMediaUrlsJson));
   
-  // Start from index 1 (second image onwards)
-  const startIndex = 1;
+  // Create gallery HTML with swiping capability
   const galleryHtml = `
-    <div id="gallery-swipe-modal" style="position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.9); z-index: 9999; display: flex; align-items: center; justify-content: center; padding: 20px; cursor: pointer;">
-      <div style="background: white; border-radius: 12px; max-width: 90vw; max-height: 90vh; overflow: hidden; position: relative; cursor: default;">
-        <button onclick="closeGallerySwipe()" style="position: absolute; top: 10px; right: 10px; background: #f1f3f4; border: none; border-radius: 50%; width: 30px; height: 30px; font-size: 18px; cursor: pointer; z-index: 1000;">×</button>
+    <div id="gallery-overlay" style="position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.9); z-index: 9999; display: flex; align-items: center; justify-content: center; padding: 20px;">
+      <div class="gallery-container" style="position: relative; max-width: 90vw; max-height: 90vh; width: 100%; height: 100%; display: flex; align-items: center; justify-content: center;">
+        <button onclick="closeGallery()" style="position: absolute; top: 20px; right: 20px; background: rgba(255,255,255,0.2); border: none; border-radius: 50%; width: 40px; height: 40px; font-size: 24px; cursor: pointer; color: white; z-index: 10000;">×</button>
         
-        <div id="gallery-swipe-container" style="height: 100%; display: flex; align-items: center; justify-content: center; overflow-x: scroll; scroll-snap-type: x mandatory; -webkit-overflow-scrolling: touch; padding: 20px;">
-          ${mediaUrls.slice(startIndex).map((url, index) => {
+        <div id="gallery-swiper" style="width: 100%; height: 100%; display: flex; align-items: center; justify-content: center;">
+          ${mediaUrls.map((url, index) => {
             const isVideo = url.includes('.mp4') || url.includes('.webm') || url.includes('.mov');
             return `
-              <div class="gallery-slide" style="min-width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; scroll-snap-align: start; padding: 0 10px;">
+              <div class="gallery-slide" style="position: absolute; width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; opacity: 0; transition: opacity 0.3s ease;" data-index="${index}">
                 ${isVideo ? 
-                  `<video controls style="max-width: 100%; max-height: 80vh; object-fit: contain; border-radius: 8px;">
+                  `<video controls style="max-width: 90vw; max-height: 80vh; width: auto; height: auto;">
                      <source src="${url}" type="video/mp4">
-                     Your browser does not support the video tag.
                    </video>` :
-                  `<img src="${url}" alt="Image ${startIndex + index + 1}" style="max-width: 100%; max-height: 80vh; object-fit: contain; border-radius: 8px;">
+                  `<img src="${url}" alt="Gallery item" style="max-width: 90vw; max-height: 80vh; object-fit: contain;">
                  `
                 }
               </div>
@@ -451,10 +437,11 @@ window.openGalleryFromSecond = function(mediaUrlsJson) {
           }).join('')}
         </div>
         
-        <div style="position: absolute; bottom: 10px; left: 50%; transform: translateX(-50%); display: flex; gap: 5px;">
-          ${mediaUrls.slice(startIndex).map((_, index) => {
-            return `<div class="dot" style="width: 8px; height: 8px; border-radius: 50%; background: ${index === 0 ? '#5a67d8' : '#ccc'}; cursor: pointer;" onclick="goToSlide(${index})"></div>`;
-          }).join('')}
+        <button id="gallery-prev" onclick="galleryPrev()" style="position: absolute; left: 20px; background: rgba(255,255,255,0.2); border: none; border-radius: 50%; width: 50px; height: 50px; font-size: 24px; cursor: pointer; color: white; z-index: 10000;">‹</button>
+        <button id="gallery-next" onclick="galleryNext()" style="position: absolute; right: 20px; background: rgba(255,255,255,0.2); border: none; border-radius: 50%; width: 50px; height: 50px; font-size: 24px; cursor: pointer; color: white; z-index: 10000;">›</button>
+        
+        <div id="gallery-counter" style="position: absolute; bottom: 20px; left: 50%; transform: translateX(-50%); color: white; font-size: 16px; z-index: 10000;">
+          <span id="current-index">1</span> / ${mediaUrls.length}
         </div>
       </div>
     </div>
@@ -462,60 +449,69 @@ window.openGalleryFromSecond = function(mediaUrlsJson) {
   
   document.body.insertAdjacentHTML('beforeend', galleryHtml);
   
-  // Add swipe navigation
-  const container = document.getElementById('gallery-swipe-container');
-  let startX = 0;
-  let currentIndex = 0;
+  // Initialize gallery
+  window.galleryCurrentIndex = 0;
+  showGallerySlide(0);
   
-  container.addEventListener('touchstart', (e) => {
+  // Add swipe/touch support
+  const swiper = document.getElementById('gallery-swiper');
+  let startX = 0;
+  let endX = 0;
+  
+  swiper.addEventListener('touchstart', (e) => {
     startX = e.touches[0].clientX;
   });
   
-  container.addEventListener('touchmove', (e) => {
-    e.preventDefault();
-    const moveX = e.touches[0].clientX;
-    const diff = startX - moveX;
-    
-    if (diff > 50) {
-      // Swipe left
-      goToSlide(currentIndex + 1);
-      startX = moveX;
-    } else if (diff < -50) {
-      // Swipe right
-      goToSlide(currentIndex - 1);
-      startX = moveX;
+  swiper.addEventListener('touchend', (e) => {
+    endX = e.changedTouches[0].clientX;
+    handleSwipe();
+  });
+  
+  swiper.addEventListener('mousedown', (e) => {
+    startX = e.clientX;
+  });
+  
+  swiper.addEventListener('mouseup', (e) => {
+    endX = e.clientX;
+    handleSwipe();
+  });
+};
+
+function handleSwipe() {
+  const threshold = 50;
+  const diff = startX - endX;
+  
+  if (Math.abs(diff) > threshold) {
+    if (diff > 0) {
+      galleryNext(); // Swipe left - next
+    } else {
+      galleryPrev(); // Swipe right - prev
     }
+  }
+}
+
+function showGallerySlide(index) {
+  const slides = document.querySelectorAll('.gallery-slide');
+  slides.forEach((slide, i) => {
+    slide.style.opacity = i === index ? '1' : '0';
   });
   
-  // Update dots on scroll
-  container.addEventListener('scroll', () => {
-    const slideWidth = container.scrollWidth / mediaUrls.slice(startIndex).length;
-    currentIndex = Math.round(container.scrollLeft / slideWidth);
-    updateDots(currentIndex);
-  });
+  document.getElementById('current-index').textContent = index + 1;
+}
+
+window.galleryNext = function() {
+  const mediaUrls = JSON.parse(decodeURIComponent(document.querySelector('[onclick*="openGallery"]').getAttribute('onclick').match(/'([^']+)'/)[1]));
+  window.galleryCurrentIndex = (window.galleryCurrentIndex + 1) % mediaUrls.length;
+  showGallerySlide(window.galleryCurrentIndex);
 };
 
-window.goToSlide = function(index) {
-  const container = document.getElementById('gallery-swipe-container');
-  const slides = container.querySelectorAll('.gallery-slide');
-  if (index < 0 || index >= slides.length) return;
-  
-  container.scrollTo({
-    left: index * slides[0].offsetWidth,
-    behavior: 'smooth'
-  });
-  
-  updateDots(index);
+window.galleryPrev = function() {
+  const mediaUrls = JSON.parse(decodeURIComponent(document.querySelector('[onclick*="openGallery"]').getAttribute('onclick').match(/'([^']+)'/)[1]));
+  window.galleryCurrentIndex = (window.galleryCurrentIndex - 1 + mediaUrls.length) % mediaUrls.length;
+  showGallerySlide(window.galleryCurrentIndex);
 };
 
-window.updateDots = function(index) {
-  const dots = document.querySelectorAll('.dot');
-  dots.forEach((dot, i) => {
-    dot.style.background = i === index ? '#5a67d8' : '#ccc';
-  });
-};
-
-window.closeGallerySwipe = function() {
-  const modal = document.getElementById('gallery-swipe-modal');
-  if (modal) modal.remove();
+window.closeGallery = function() {
+  const overlay = document.getElementById('gallery-overlay');
+  if (overlay) overlay.remove();
 };
