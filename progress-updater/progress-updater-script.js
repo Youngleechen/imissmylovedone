@@ -8,9 +8,11 @@ document.addEventListener('DOMContentLoaded', async () => {
   async function checkAuth() {
     const {  { user } } = await supabase.auth.getUser();
     if (!user) {
+      console.log('Auth failed, redirecting to signin.html');
       window.location.href = 'signin.html';
       return null;
     }
+    console.log('Auth successful, user:', user.id);
     return user;
   }
 
@@ -22,89 +24,97 @@ document.addEventListener('DOMContentLoaded', async () => {
   memoryBody.addEventListener('input', autoResize);
   autoResize();
 
+  // Post handler (NEW - talks to 'progress_updates' table)
   postButton.addEventListener('click', async () => {
-  console.log('1. Post button clicked!');
-  
-  const user = await checkAuth();
-  console.log('2. User:', user);
-  if (!user) return;
+    console.log('1. Post button clicked!');
 
-  let body = memoryBody.value.trim();
-  console.log('3. Body text:', body);
+    const user = await checkAuth();
+    console.log('2. User:', user);
+    if (!user) return;
 
-  // Check if media files exist
-  console.log('4. window.currentMediaFiles:', window.currentMediaFiles);
-  console.log('5. Type of window.currentMediaFiles:', typeof window.currentMediaFiles);
-  console.log('6. Length of window.currentMediaFiles:', window.currentMediaFiles?.length || 0);
+    let body = memoryBody.value.trim();
+    console.log('3. Body text:', body);
 
-  // Append media markdown (managed by media.js)
-  if (window.currentMediaFiles && window.currentMediaFiles.length > 0) {
-    console.log('7. Adding media files...');
-    for (const media of window.currentMediaFiles) {
-      console.log('8. Media item:', media);
-      body += `\n\n![${media.name}](${media.url})`;
+    // Check if media files exist
+    console.log('4. window.currentMediaFiles:', window.currentMediaFiles);
+    console.log('5. Type of window.currentMediaFiles:', typeof window.currentMediaFiles);
+    console.log('6. Length of window.currentMediaFiles:', window.currentMediaFiles?.length || 0);
+
+    // Append media markdown (managed by media.js)
+    if (window.currentMediaFiles && window.currentMediaFiles.length > 0) {
+      console.log('7. Adding media files...');
+      for (const media of window.currentMediaFiles) {
+        console.log('8. Media item:', media);
+        body += `\n\n![${media.name}](${media.url})`;
+      }
+    } else {
+      console.log('9. No media files to add');
     }
-  } else {
-    console.log('9. No media files to add');
-  }
 
-  console.log('10. Final body:', body);
+    console.log('10. Final body:', body);
 
-  if (!body) {
-    console.log('11. No body content, showing alert');
-    alert('Please write something or attach media first.');
-    return;
-  }
-
-  console.log('12. About to insert into progress_updates table');
-  console.log('13. Insert data:', {
-    user_id: user.id,
-    title: 'Progress Update',
-    body: body
-  });
-
-  try {
-    const { data, error } = await supabase
-      .from('progress_updates')
-      .insert({
-        user_id: user.id,
-        title: 'Progress Update',
-        body
-      });
-
-    if (error) {
-      console.error('14. Insert error:', error);
-      alert('Failed to post progress: ' + error.message);
+    if (!body) {
+      console.log('11. No body content, showing alert');
+      alert('Please write something or attach media first.');
       return;
     }
 
-    console.log('15. Insert successful:', data);
+    console.log('12. About to insert into progress_updates table');
+    console.log('13. Insert data:', {
+      user_id: user.id,
+      title: 'Progress Update',
+      body: body
+    });
 
-    // Clear state
-    memoryBody.value = '';
-    autoResize();
-    if (typeof window.clearMediaPreviews === 'function') {
-      window.clearMediaPreviews();
+    try {
+      const { data, error } = await supabase
+        .from('progress_updates') // ← NEW TABLE
+        .insert({
+          user_id: user.id,
+          title: 'Progress Update',
+          body
+        });
+
+      if (error) {
+        console.error('14. Insert error:', error);
+        console.error('14a. Error details:', {
+          message: error.message,
+          code: error.code,
+          details: error.details
+        });
+        alert('Failed to post progress: ' + error.message);
+        return;
+      }
+
+      console.log('15. Insert successful:', data);
+
+      // Clear state
+      memoryBody.value = '';
+      autoResize();
+      if (typeof window.clearMediaPreviews === 'function') {
+        console.log('15a. Clearing media previews');
+        window.clearMediaPreviews();
+      }
+
+      console.log('16. About to reload posts');
+      loadUserProgress();
+      console.log('17. Posts reloaded');
+
+    } catch (err) {
+      console.error('18. Unexpected error:', err);
+      console.error('18a. Error stack:', err.stack);
+      alert('An unexpected error occurred: ' + err.message);
     }
-
-    console.log('16. About to reload posts');
-    loadUserProgress();
-    console.log('17. Posts reloaded');
-
-  } catch (err) {
-    console.error('18. Unexpected error:', err);
-    alert('An unexpected error occurred: ' + err.message);
-  }
-});
+  });
 
   // Load progress posts (NEW - from 'progress_updates' table)
   async function loadUserProgress() {
-    console.log('LoadUserProgress called'); // Debug log
+    console.log('LoadUserProgress called');
     const user = await checkAuth();
-    console.log('LoadUserProgress user:', user); // Debug log
+    console.log('LoadUserProgress user:', user);
     if (!user) return;
 
-    console.log('About to fetch from progress_updates table'); // Debug log
+    console.log('About to fetch from progress_updates table');
     const { data, error } = await supabase
       .from('progress_updates') // ← NEW TABLE
       .select('id, body, created_at')
@@ -112,12 +122,17 @@ document.addEventListener('DOMContentLoaded', async () => {
       .order('created_at', { ascending: false });
 
     if (error) {
-      console.error('Load progress error:', error); // Debug log
+      console.error('Load progress error:', error);
+      console.error('Load progress error details:', {
+        message: error.message,
+        code: error.code,
+        details: error.details
+      });
       postsContainer.innerHTML = '<p>Could not load your progress updates.</p>';
       return;
     }
 
-    console.log('Fetched data:', data); // Debug log
+    console.log('Fetched data:', data);
 
     if (data.length === 0) {
       postsContainer.innerHTML = '<p>You haven’t shared any progress yet.</p>';
@@ -198,11 +213,11 @@ document.addEventListener('DOMContentLoaded', async () => {
   }
 
   // Initialize
-  console.log('About to check auth and load posts'); // Debug log
+  console.log('About to check auth and load posts');
   checkAuth().then(user => {
-    console.log('Initial auth check result:', user); // Debug log
+    console.log('Initial auth check result:', user);
     if (user) {
-      console.log('User authenticated, loading posts'); // Debug log
+      console.log('User authenticated, loading posts');
       loadUserProgress();
     }
   });
