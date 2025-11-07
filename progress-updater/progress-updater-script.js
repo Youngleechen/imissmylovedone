@@ -26,14 +26,21 @@ document.addEventListener('DOMContentLoaded', async () => {
     return user;
   }
 
-  // Auto-resize textarea
-  const autoResize = () => {
-    updateBody.style.height = 'auto';
-    const newHeight = Math.min(updateBody.scrollHeight, 300);
-    updateBody.style.height = newHeight + 'px';
-  };
-  updateBody.addEventListener('input', autoResize);
-  autoResize();
+  // ✅ FIXED: Robust auto-resize for textarea
+  if (updateBody) {
+    const autoResize = () => {
+      updateBody.style.height = 'auto';
+      const newHeight = Math.min(updateBody.scrollHeight, 300);
+      updateBody.style.height = newHeight + 'px';
+    };
+
+    updateBody.addEventListener('input', autoResize);
+    updateBody.addEventListener('focus', autoResize); // For mobile/focus changes
+    updateBody.addEventListener('blur', autoResize);  // For content changes after blur
+
+    // Initial resize
+    autoResize();
+  }
 
   // Emoji picker
   let pickerInstance = null;
@@ -50,10 +57,11 @@ document.addEventListener('DOMContentLoaded', async () => {
         const end = updateBody.selectionEnd;
         const text = updateBody.value;
         updateBody.value = text.slice(0, start) + emoji + text.slice(end);
-        autoResize();
-        const newCursorPos = start + emoji.length;
-        updateBody.setSelectionRange(newCursorPos, newCursorPos);
-        updateBody.focus();
+        if (updateBody) {
+          const newCursorPos = start + emoji.length;
+          updateBody.setSelectionRange(newCursorPos, newCursorPos);
+          updateBody.focus();
+        }
         emojiPicker.classList.remove('show');
       });
     }
@@ -163,7 +171,7 @@ document.addEventListener('DOMContentLoaded', async () => {
       }
 
       // Get public URL
-      const { data: { publicUrl } } = supabase.storage
+      const {  { publicUrl } } = supabase.storage
         .from('dev-updates-media') // ✅ NEW BUCKET
         .getPublicUrl(fileName);
 
@@ -294,7 +302,11 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     // Clear state
     updateBody.value = '';
-    autoResize();
+    if (updateBody) {
+      updateBody.style.height = 'auto'; // Reset height
+      const newHeight = Math.min(updateBody.scrollHeight, 300);
+      updateBody.style.height = newHeight + 'px';
+    }
     currentMediaFiles = [];
     mediaPreviewContainer.innerHTML = '';
     mediaPreviewContainer.style.display = 'none';
