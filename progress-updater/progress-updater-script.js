@@ -1,224 +1,161 @@
 // progress-updater-script.js
-document.addEventListener('DOMContentLoaded', async () => {
-  const supabase = window.supabaseClient;
-  const memoryBody = document.getElementById('memory-body');
-  const postButton = document.getElementById('postButton');
-  const postsContainer = document.getElementById('postsContainer');
+import { uploadMedia, displayMediaPreview, clearMediaPreview } from '../test/media.js';
 
-  async function checkAuth() {
-    const {  { user } } = await supabase.auth.getUser();
-    if (!user) {
-      console.log('Auth failed, redirecting to signin.html');
-      window.location.href = 'signin.html';
-      return null;
-    }
-    console.log('Auth successful, user:', user.id);
-    return user;
+// Initialize Supabase client
+const supabase = window.supabaseClient;
+
+// DOM elements
+const memoryBody = document.getElementById('memory-body');
+const postButton = document.getElementById('postButton');
+const postsContainer = document.getElementById('postsContainer');
+
+// Current user (you'll need to implement authentication)
+let currentUser = null;
+
+// Get current user session
+async function getCurrentUser() {
+  const { data: { session }, error } = await supabase.auth.getSession();
+  if (error) {
+    console.error('Error getting session:', error);
+    return null;
+  }
+  return session?.user || null;
+}
+
+// Function to create progress update
+async function createProgressUpdate() {
+  const content = memoryBody.value.trim();
+  
+  if (!content) {
+    alert('Please enter some progress update content');
+    return;
   }
 
-  const autoResize = () => {
-    memoryBody.style.height = 'auto';
-    const newHeight = Math.min(memoryBody.scrollHeight, 300);
-    memoryBody.style.height = newHeight + 'px';
-  };
-  memoryBody.addEventListener('input', autoResize);
-  autoResize();
-
-  // Post handler (NEW - talks to 'progress_updates' table)
-  postButton.addEventListener('click', async () => {
-    console.log('1. Post button clicked!');
-
-    const user = await checkAuth();
-    console.log('2. User:', user);
-    if (!user) return;
-
-    let body = memoryBody.value.trim();
-    console.log('3. Body text:', body);
-
-    // Check if media files exist
-    console.log('4. window.currentMediaFiles:', window.currentMediaFiles);
-    console.log('5. Type of window.currentMediaFiles:', typeof window.currentMediaFiles);
-    console.log('6. Length of window.currentMediaFiles:', window.currentMediaFiles?.length || 0);
-
-    // Append media markdown (managed by media.js)
-    if (window.currentMediaFiles && window.currentMediaFiles.length > 0) {
-      console.log('7. Adding media files...');
-      for (const media of window.currentMediaFiles) {
-        console.log('8. Media item:', media);
-        body += `\n\n![${media.name}](${media.url})`;
-      }
-    } else {
-      console.log('9. No media files to add');
+  try {
+    // Show upload progress if there are media files
+    const mediaFiles = Array.from(document.getElementById('mediaInput').files);
+    
+    // Upload media files if any
+    let mediaUrls = [];
+    if (mediaFiles.length > 0) {
+      document.getElementById('uploadProgress').style.display = 'block';
+      mediaUrls = await uploadMedia(mediaFiles, 'progress-updates'); // Use the correct bucket
+      document.getElementById('uploadProgress').style.display = 'none';
     }
 
-    console.log('10. Final body:', body);
-
-    if (!body) {
-      console.log('11. No body content, showing alert');
-      alert('Please write something or attach media first.');
+    // Get current user
+    const user = await getCurrentUser();
+    if (!user) {
+      alert('Please log in to share progress');
       return;
     }
 
-    console.log('12. About to insert into progress_updates table');
-    console.log('13. Insert data:', {
-      user_id: user.id,
-      title: 'Progress Update',
-      body: body
-    });
-
-    try {
-      const { data, error } = await supabase
-        .from('progress_updates') // ← NEW TABLE
-        .insert({
-          user_id: user.id,
-          title: 'Progress Update',
-          body
-        });
-
-      if (error) {
-        console.error('14. Insert error:', error);
-        console.error('14a. Error details:', {
-          message: error.message,
-          code: error.code,
-          details: error.details
-        });
-        alert('Failed to post progress: ' + error.message);
-        return;
-      }
-
-      console.log('15. Insert successful:', data);
-
-      // Clear state
-      memoryBody.value = '';
-      autoResize();
-      if (typeof window.clearMediaPreviews === 'function') {
-        console.log('15a. Clearing media previews');
-        window.clearMediaPreviews();
-      }
-
-      console.log('16. About to reload posts');
-      loadUserProgress();
-      console.log('17. Posts reloaded');
-
-    } catch (err) {
-      console.error('18. Unexpected error:', err);
-      console.error('18a. Error stack:', err.stack);
-      alert('An unexpected error occurred: ' + err.message);
-    }
-  });
-
-  // Load progress posts (NEW - from 'progress_updates' table)
-  async function loadUserProgress() {
-    console.log('LoadUserProgress called');
-    const user = await checkAuth();
-    console.log('LoadUserProgress user:', user);
-    if (!user) return;
-
-    console.log('About to fetch from progress_updates table');
+    // Insert progress update into database
     const { data, error } = await supabase
-      .from('progress_updates') // ← NEW TABLE
-      .select('id, body, created_at')
-      .eq('user_id', user.id)
+      .from('progress_updates')
+      .insert([{
+        user_id: user.id,
+        content: content,
+        media_urls: mediaUrls,
+        created_at: new Date().toISOString()
+      }]);
+
+    if (error) {
+      console.error('Error creating progress update:', error);
+      alert('Error saving progress update: ' + error.message);
+      return;
+    }
+
+    console.log('Progress update created:', data);
+
+    // Clear the input and media preview
+    memoryBody.value = '';
+    clearMediaPreview();
+    
+    // Reload posts to show the new one
+    loadProgressUpdates();
+
+  } catch (error) {
+    console.error('Error in createProgressUpdate:', error);
+    alert('Error sharing progress: ' + error.message);
+  }
+}
+
+// Function to load progress updates
+async function loadProgressUpdates() {
+  try {
+    const { data, error } = await supabase
+      .from('progress_updates')
+      .select(`
+        *,
+        profiles (username, avatar_url)
+      `)
       .order('created_at', { ascending: false });
 
     if (error) {
-      console.error('Load progress error:', error);
-      console.error('Load progress error details:', {
-        message: error.message,
-        code: error.code,
-        details: error.details
-      });
-      postsContainer.innerHTML = '<p>Could not load your progress updates.</p>';
+      console.error('Error loading progress updates:', error);
       return;
     }
 
-    console.log('Fetched data:', data);
+    // Clear existing posts
+    postsContainer.innerHTML = '';
 
-    if (data.length === 0) {
-      postsContainer.innerHTML = '<p>You haven’t shared any progress yet.</p>';
-      return;
-    }
+    // Render posts
+    data.forEach(post => {
+      const postElement = createPostElement(post);
+      postsContainer.appendChild(postElement);
+    });
 
-    // Reuse the same rendering logic from original script (with minor text changes)
-    postsContainer.innerHTML = data.map(post => {
-      const mediaMatches = [...post.body.matchAll(/!\[([^\]]*)\]\s*\(\s*([^)]+)\s*\)/g)];
-      
-      if (mediaMatches.length > 0) {
-        let mediaGridHtml = '<div class="media-grid" style="position: relative; width: 100%; height: 300px; margin: 10px 0;">';
-        
-        const firstMedia = mediaMatches[0];
-        const firstAlt = firstMedia[1] || 'Progress Media';
-        const firstUrl = firstMedia[2].trim();
-        const isFirstVideo = firstUrl.includes('.mp4') || firstUrl.includes('.webm') || firstUrl.includes('.mov');
-        
-        mediaGridHtml += `
-          <div class="media-grid-item large" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; cursor: pointer;" onclick="openGallery('${post.id}', '${encodeURIComponent(JSON.stringify(mediaMatches.map(m => m[2])))}', 0)">
-            ${isFirstVideo ? 
-              `<video muted playsinline style="width: 100%; height: 100%; object-fit: cover;">
-                 <source src="${firstUrl}" type="video/mp4">
-               </video>` :
-              `<img src="${firstUrl}" alt="${firstAlt}" style="width: 100%; height: 100%; object-fit: cover;">`
-            }
-          </div>
-        `;
-        
-        if (mediaMatches.length > 1) {
-          const secondMedia = mediaMatches[1];
-          const secondUrl = secondMedia[2].trim();
-          const isSecondVideo = secondUrl.includes('.mp4') || secondUrl.includes('.webm') || secondUrl.includes('.mov');
-          
-          mediaGridHtml += `
-            <div class="media-grid-overlay" style="position: absolute; bottom: 10px; right: 10px; width: 80px; height: 80px; cursor: pointer;" onclick="openGallery('${post.id}', '${encodeURIComponent(JSON.stringify(mediaMatches.map(m => m[2])))}', 1)">
-              <div class="second-thumbnail" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; border-radius: 8px; overflow: hidden; box-shadow: 0 2px 4px rgba(0,0,0,0.3);">
-                ${isSecondVideo ? 
-                  `<video muted playsinline style="width: 100%; height: 100%; object-fit: cover;">
-                     <source src="${secondUrl}" type="video/mp4">
-                   </video>` :
-                  `<img src="${secondUrl}" alt="Additional media" style="width: 100%; height: 100%; object-fit: cover;">`
-                }
-              </div>
-              <div class="more-overlay" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); border-radius: 8px; display: flex; align-items: center; justify-content: center;">
-                <div class="more-text" style="color: white; font-size: 16px; font-weight: bold;">+${mediaMatches.length - 1}</div>
-              </div>
-            </div>
-          `;
-        }
-        
-        mediaGridHtml += '</div>';
-
-        let textOnlyBody = post.body.replace(/!\[([^\]]*)\]\s*\(\s*([^)]+)\s*\)/g, '');
-        textOnlyBody = textOnlyBody.replace(/\n/g, '<br>');
-        
-        return `
-          <div class="post-item" style="background: white; padding: 15px; border-radius: 8px; margin-bottom: 15px; box-shadow: 0 1px 3px rgba(0,0,0,0.1);">
-            <p style="margin: 0; line-height: 1.6;">${textOnlyBody}</p>
-            ${mediaGridHtml}
-            <small style="display: block; color: #718096; font-size: 12px; margin-top: 8px;">
-              Progress update on ${new Date(post.created_at).toLocaleString()}
-            </small>
-          </div>
-        `;
-      } else {
-        let processedBody = post.body.replace(/\n/g, '<br>');
-        return `
-          <div class="post-item" style="background: white; padding: 15px; border-radius: 8px; margin-bottom: 15px; box-shadow: 0 1px 3px rgba(0,0,0,0.1);">
-            <p style="margin: 0; line-height: 1.6;">${processedBody}</p>
-            <small style="display: block; color: #718096; font-size: 12px; margin-top: 8px;">
-              Progress update on ${new Date(post.created_at).toLocaleString()}
-            </small>
-          </div>
-        `;
-      }
-    }).join('');
+  } catch (error) {
+    console.error('Error loading progress updates:', error);
   }
+}
 
-  // Initialize
-  console.log('About to check auth and load posts');
-  checkAuth().then(user => {
-    console.log('Initial auth check result:', user);
-    if (user) {
-      console.log('User authenticated, loading posts');
-      loadUserProgress();
-    }
-  });
+// Function to create post element
+function createPostElement(post) {
+  const postDiv = document.createElement('div');
+  postDiv.className = 'post';
+
+  const user = post.profiles || { username: 'Unknown User', avatar_url: '' };
+  const mediaHtml = post.media_urls && post.media_urls.length > 0 
+    ? post.media_urls.map(url => {
+        const ext = url.split('.').pop().toLowerCase();
+        if (['jpg', 'jpeg', 'png', 'gif'].includes(ext)) {
+          return `<img src="${url}" alt="Progress media" style="max-width: 100%; border-radius: 8px; margin-top: 8px;" />`;
+        } else if (['mp4', 'webm', 'ogg'].includes(ext)) {
+          return `<video controls style="max-width: 100%; border-radius: 8px; margin-top: 8px;"><source src="${url}" type="video/${ext}">Your browser does not support the video tag.</video>`;
+        }
+        return `<a href="${url}" target="_blank">View Media</a>`;
+      }).join('')
+    : '';
+
+  postDiv.innerHTML = `
+    <div class="post-header">
+      <div class="user-info">
+        <img src="${user.avatar_url || '/default-avatar.png'}" alt="Avatar" class="avatar" />
+        <div class="user-details">
+          <strong>${user.username}</strong>
+          <small>${new Date(post.created_at).toLocaleString()}</small>
+        </div>
+      </div>
+    </div>
+    <div class="post-content">
+      <p>${post.content}</p>
+      ${mediaHtml}
+    </div>
+  `;
+
+  return postDiv;
+}
+
+// Event listeners
+postButton.addEventListener('click', createProgressUpdate);
+
+// Initialize the page
+document.addEventListener('DOMContentLoaded', async () => {
+  // Load existing progress updates
+  await loadProgressUpdates();
+  
+  // Set the correct bucket for progress updates
+  window.CURRENT_BUCKET_OVERRIDE = 'progress-updates';
 });
