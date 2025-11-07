@@ -199,7 +199,7 @@ window.openGallery = function(postId, encodedMediaUrlsJson, startIndex = 0) {
     <div id="gallery-overlay" style="position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.9); z-index: 9999; display: flex; align-items: center; justify-content: center; padding: 20px; flex-direction: column;">
       <div class="gallery-container" style="position: relative; max-width: 90vw; max-height: 85vh; width: 100%; display: flex; flex-direction: column; align-items: center; justify-content: center; flex: 1;">
         <button 
-          onclick="closeGallery()" 
+          onclick="closeGallery(event)" 
           style="
             position: absolute;
             top: 20px;
@@ -326,7 +326,10 @@ window.openGallery = function(postId, encodedMediaUrlsJson, startIndex = 0) {
   document.addEventListener('keydown', handleKeyDown);
 
   // ✅ SIMPLE & ROBUST CLOSE FUNCTION
-  window.closeGallery = function() {
+  window.closeGallery = function(event) {
+    if (event) {
+      event.stopPropagation();
+    }
     const overlay = document.getElementById('gallery-overlay');
     if (overlay) {
       // Clean up event listeners
@@ -400,12 +403,6 @@ window.galleryPrev = function() {
   if (!currentGalleryState) return;
   const newIndex = (currentGalleryState.currentIndex - 1 + currentGalleryState.mediaUrls.length) % currentGalleryState.mediaUrls.length;
   showGallerySlide(newIndex);
-};
-
-window.closeGallery = function() {
-  const overlay = document.getElementById('gallery-overlay');
-  if (overlay) overlay.remove();
-  currentGalleryState = null;
 };
 
 // Auth helper (moved here to avoid duplication)
