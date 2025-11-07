@@ -22,42 +22,50 @@ document.addEventListener('DOMContentLoaded', async () => {
   memoryBody.addEventListener('input', autoResize);
   autoResize();
 
-  // Post handler (NEW - talks to 'progress_updates' table)
   postButton.addEventListener('click', async () => {
-    console.log('1. Post button clicked!'); // Debug log
-    const user = await checkAuth();
-    console.log('2. User:', user); // Debug log
-    if (!user) {
-      console.log('3. No user, returning'); // Debug log
-      return;
-    }
+  console.log('1. Post button clicked!');
+  
+  const user = await checkAuth();
+  console.log('2. User:', user);
+  if (!user) return;
 
-    let body = memoryBody.value.trim();
-    console.log('4. Body text:', body); // Debug log
+  let body = memoryBody.value.trim();
+  console.log('3. Body text:', body);
 
-    // Append media markdown (managed by media.js)
+  // Check if media files exist
+  console.log('4. window.currentMediaFiles:', window.currentMediaFiles);
+  console.log('5. Type of window.currentMediaFiles:', typeof window.currentMediaFiles);
+  console.log('6. Length of window.currentMediaFiles:', window.currentMediaFiles?.length || 0);
+
+  // Append media markdown (managed by media.js)
+  if (window.currentMediaFiles && window.currentMediaFiles.length > 0) {
+    console.log('7. Adding media files...');
     for (const media of window.currentMediaFiles) {
-      console.log('5. Adding media:', media); // Debug log
+      console.log('8. Media item:', media);
       body += `\n\n![${media.name}](${media.url})`;
     }
-    console.log('6. Final body with media:', body); // Debug log
+  } else {
+    console.log('9. No media files to add');
+  }
 
-    if (!body) {
-      console.log('7. No body content, showing alert'); // Debug log
-      alert('Please write something or attach media first.');
-      return;
-    }
+  console.log('10. Final body:', body);
 
-    console.log('8. About to insert into progress_updates table'); // Debug log
-    console.log('8a. Insert data:', {
-      user_id: user.id,
-      title: 'Progress Update',
-      body: body
-    }); // Debug log
+  if (!body) {
+    console.log('11. No body content, showing alert');
+    alert('Please write something or attach media first.');
+    return;
+  }
 
-    // INSERT INTO progress_updates table
+  console.log('12. About to insert into progress_updates table');
+  console.log('13. Insert data:', {
+    user_id: user.id,
+    title: 'Progress Update',
+    body: body
+  });
+
+  try {
     const { data, error } = await supabase
-      .from('progress_updates') // ← NEW TABLE
+      .from('progress_updates')
       .insert({
         user_id: user.id,
         title: 'Progress Update',
@@ -65,12 +73,12 @@ document.addEventListener('DOMContentLoaded', async () => {
       });
 
     if (error) {
-      console.error('9. Insert error:', error); // Debug log
+      console.error('14. Insert error:', error);
       alert('Failed to post progress: ' + error.message);
       return;
     }
 
-    console.log('10. Insert successful:', data); // Debug log
+    console.log('15. Insert successful:', data);
 
     // Clear state
     memoryBody.value = '';
@@ -79,11 +87,15 @@ document.addEventListener('DOMContentLoaded', async () => {
       window.clearMediaPreviews();
     }
 
-    console.log('11. About to reload posts'); // Debug log
-    // Reload posts
+    console.log('16. About to reload posts');
     loadUserProgress();
-    console.log('12. Posts reloaded'); // Debug log
-  });
+    console.log('17. Posts reloaded');
+
+  } catch (err) {
+    console.error('18. Unexpected error:', err);
+    alert('An unexpected error occurred: ' + err.message);
+  }
+});
 
   // Load progress posts (NEW - from 'progress_updates' table)
   async function loadUserProgress() {
