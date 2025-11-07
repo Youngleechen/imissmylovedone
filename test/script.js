@@ -449,11 +449,11 @@ window.openGallery = function(postId, encodedMediaUrlsJson) {
   
   document.body.insertAdjacentHTML('beforeend', galleryHtml);
   
-  // Initialize gallery
-  window.galleryCurrentIndex = 0;
-  showGallerySlide(0);
+  // Initialize gallery starting from the second image (index 1), or first if only one image
+  window.galleryCurrentIndex = mediaUrls.length > 1 ? 1 : 0;
+  showGallerySlide(window.galleryCurrentIndex);
   
-  // Add swipe/touch support
+  // Add swipe/touch support with proper variable scoping
   const swiper = document.getElementById('gallery-swiper');
   let startX = 0;
   let endX = 0;
