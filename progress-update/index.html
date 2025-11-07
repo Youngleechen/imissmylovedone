@@ -1,0 +1,417 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Progress Updates</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            background-color: #f8fafc;
+            color: #1e293b;
+            line-height: 1.6;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+            overflow: hidden;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 24px;
+            text-align: center;
+        }
+
+        .header h1 {
+            font-size: 2rem;
+            font-weight: 600;
+            margin-bottom: 8px;
+        }
+
+        .header p {
+            opacity: 0.9;
+            font-size: 1rem;
+        }
+
+        .post-form {
+            padding: 24px;
+            border-bottom: 1px solid #e2e8f0;
+            background: #f8fafc;
+        }
+
+        .thought-box {
+            position: relative;
+            margin-bottom: 16px;
+        }
+
+        .thought-box textarea {
+            width: 100%;
+            min-height: 120px;
+            padding: 16px;
+            border: 2px solid #e2e8f0;
+            border-radius: 8px;
+            font-size: 16px;
+            resize: none;
+            font-family: inherit;
+            transition: border-color 0.2s ease;
+        }
+
+        .thought-box textarea:focus {
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+
+        .thought-actions {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 16px;
+        }
+
+        .thought-actions button {
+            background: none;
+            border: none;
+            padding: 8px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 18px;
+            color: #64748b;
+            transition: all 0.2s ease;
+        }
+
+        .thought-actions button:hover {
+            background: #f1f5f9;
+            color: #475569;
+        }
+
+        .emoji-picker-wrapper {
+            position: absolute;
+            z-index: 1000;
+            display: none;
+        }
+
+        .emoji-picker-wrapper.show {
+            display: block;
+        }
+
+        .upload-progress {
+            display: none;
+            margin-bottom: 16px;
+            background: #f8fafc;
+            padding: 12px;
+            border-radius: 8px;
+            border: 1px solid #e2e8f0;
+        }
+
+        .progress-bar {
+            width: 100%;
+            height: 8px;
+            background: #e2e8f0;
+            border-radius: 4px;
+            overflow: hidden;
+            margin: 8px 0;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: #667eea;
+            width: 0%;
+            transition: width 0.3s ease;
+        }
+
+        .media-preview-container {
+            display: none;
+            margin-bottom: 16px;
+        }
+
+        .media-preview-item {
+            position: relative;
+            display: inline-block;
+            margin: 5px;
+            border-radius: 8px;
+            overflow: hidden;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+
+        .media-preview-item img,
+        .media-preview-item video {
+            max-width: 100px;
+            height: 100px;
+            object-fit: cover;
+            border-radius: 8px;
+        }
+
+        .remove-media-btn {
+            position: absolute;
+            top: 5px;
+            right: 5px;
+            background: rgba(0, 0, 0, 0.7);
+            color: white;
+            border: none;
+            border-radius: 50%;
+            width: 20px;
+            height: 20px;
+            cursor: pointer;
+            font-weight: bold;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .post-button {
+            background: #667eea;
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: background 0.2s ease;
+        }
+
+        .post-button:hover {
+            background: #5a67d8;
+        }
+
+        .post-button:disabled {
+            background: #cbd5e1;
+            cursor: not-allowed;
+        }
+
+        .updates-container {
+            padding: 24px;
+        }
+
+        .post-item {
+            background: white;
+            padding: 20px;
+            border-radius: 12px;
+            margin-bottom: 20px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+            border: 1px solid #e2e8f0;
+        }
+
+        .post-content {
+            margin-bottom: 12px;
+            line-height: 1.7;
+        }
+
+        .post-content p {
+            margin-bottom: 8px;
+        }
+
+        .media-grid {
+            position: relative;
+            width: 100%;
+            height: 300px;
+            margin: 15px 0;
+            border-radius: 8px;
+            overflow: hidden;
+            cursor: pointer;
+        }
+
+        .media-grid-item {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+        }
+
+        .media-grid-item img,
+        .media-grid-item video {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        .media-grid-overlay {
+            position: absolute;
+            bottom: 10px;
+            right: 10px;
+            width: 80px;
+            height: 80px;
+            cursor: pointer;
+        }
+
+        .second-thumbnail {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            border-radius: 8px;
+            overflow: hidden;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+        }
+
+        .second-thumbnail img,
+        .second-thumbnail video {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        .more-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.5);
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .more-text {
+            color: white;
+            font-size: 16px;
+            font-weight: bold;
+        }
+
+        .post-meta {
+            display: block;
+            color: #64748b;
+            font-size: 14px;
+            margin-top: 12px;
+            padding-top: 12px;
+            border-top: 1px solid #e2e8f0;
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 60px 20px;
+            color: #64748b;
+        }
+
+        .empty-state p {
+            font-size: 18px;
+            margin-bottom: 8px;
+        }
+
+        .empty-state small {
+            color: #94a3b8;
+        }
+
+        @media (max-width: 768px) {
+            body {
+                padding: 10px;
+            }
+
+            .header {
+                padding: 20px 16px;
+            }
+
+            .header h1 {
+                font-size: 1.5rem;
+            }
+
+            .post-form,
+            .updates-container {
+                padding: 16px;
+            }
+
+            .media-grid {
+                height: 200px;
+            }
+
+            .media-grid-overlay {
+                width: 60px;
+                height: 60px;
+            }
+
+            .more-text {
+                font-size: 14px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>Progress Updates</h1>
+            <p>Share your development journey with your community</p>
+        </div>
+
+        <div class="post-form">
+            <div class="thought-box">
+                <textarea 
+                    id="update-body" 
+                    placeholder="What progress have you made today? Share your wins, challenges, or insights..."
+                    maxlength="280"
+                ></textarea>
+            </div>
+
+            <div class="thought-actions">
+                <button id="emojiButton" type="button" title="Add emoji">
+                    😊
+                </button>
+                <button id="mediaButton" type="button" title="Add photo/video">
+                    📷
+                </button>
+                <input type="file" id="mediaInput" accept="image/*,video/*" multiple style="display: none;">
+            </div>
+
+            <div id="emojiPicker" class="emoji-picker-wrapper"></div>
+
+            <div id="uploadProgress" class="upload-progress">
+                <div id="progressText">Uploading...</div>
+                <div class="progress-bar">
+                    <div id="progressFill" class="progress-fill"></div>
+                </div>
+            </div>
+
+            <div id="mediaPreviewContainer" class="media-preview-container"></div>
+
+            <button id="postButton" class="post-button">
+                Post Update
+            </button>
+        </div>
+
+        <div class="updates-container" id="updatesContainer">
+            <!-- Updates will be loaded here -->
+            <div class="empty-state">
+                <p>No progress updates yet</p>
+                <small>Be the first to share your journey!</small>
+            </div>
+        </div>
+    </div>
+
+    <!-- Supabase Client Library -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    
+    <!-- Emoji Picker -->
+    <script src="https://cdn.jsdelivr.net/npm/emoji-picker-element@1" async></script>
+
+    <!-- Your progress updater script -->
+    <script src="path/to/your/progress-updater-script.js"></script>
+
+    <script>
+        // Initialize Supabase client
+        const supabase = supabase.createClient(
+            'YOUR_SUPABASE_URL',
+            'YOUR_SUPABASE_ANON_KEY'
+        );
+
+        // Make Supabase client available globally for your script
+        window.supabaseClient = supabase;
+    </script>
+</body>
+</html>
