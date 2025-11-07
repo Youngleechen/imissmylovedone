@@ -20,7 +20,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   let currentMediaFiles = [];
 
   async function checkAuth() {
-    const {  { user } } = await supabase.auth.getUser();
+    const { data: { user } } = await supabase.auth.getUser();
     if (!user) {
       window.location.href = 'signin.html';
       return null;
@@ -165,7 +165,7 @@ document.addEventListener('DOMContentLoaded', async () => {
       }
 
       // Get public URL
-      const {  { publicUrl } } = supabase.storage
+      const { data: { publicUrl } } = supabase.storage
         .from('memories')
         .getPublicUrl(fileName);
 
