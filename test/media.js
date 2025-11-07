@@ -325,20 +325,22 @@ window.openGallery = function(postId, encodedMediaUrlsJson, startIndex = 0) {
   };
   document.addEventListener('keydown', handleKeyDown);
 
-  const cleanupListeners = () => {
-    swiper.removeEventListener('touchstart', handleTouchStart);
-    swiper.removeEventListener('touchend', handleTouchEnd);
-    swiper.removeEventListener('mousedown', handleMouseDown);
-    window.removeEventListener('mouseup', handleMouseUp);
-    overlay.removeEventListener('click', () => {});
-    document.removeEventListener('keydown', handleKeyDown);
-  };
-
-  const originalCloseGallery = window.closeGallery;
+  // ✅ SIMPLE & ROBUST CLOSE FUNCTION
   window.closeGallery = function() {
-    cleanupListeners();
-    if (originalCloseGallery) originalCloseGallery();
-    if (overlay) overlay.remove();
+    const overlay = document.getElementById('gallery-overlay');
+    if (overlay) {
+      // Clean up event listeners
+      if (swiper) {
+        swiper.removeEventListener('touchstart', handleTouchStart);
+        swiper.removeEventListener('touchend', handleTouchEnd);
+        swiper.removeEventListener('mousedown', handleMouseDown);
+      }
+      window.removeEventListener('mouseup', handleMouseUp);
+      document.removeEventListener('keydown', handleKeyDown);
+
+      // Remove the overlay
+      overlay.remove();
+    }
     currentGalleryState = null;
   };
 };
