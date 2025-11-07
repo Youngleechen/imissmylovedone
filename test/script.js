@@ -1,6 +1,9 @@
+Okay, here is the *full* script with all the original functionality, including the fixes for the gallery swipe and the ability to start at a specific index. The key changes are in the gallery functions and the `loadUserPosts` function where the `onclick` handlers are generated.
+
+```javascript
 document.addEventListener('DOMContentLoaded', async () => {
   const supabase = window.supabase.createClient(
-    'https://ccetnqdqfrsitooestbh.supabase.co   ',
+    'https://ccetnqdqfrsitooestbh.supabase.co',
     'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImNjZXRucWRxZnJzaXRvb2VzdGJoIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjIzMTE4MjksImV4cCI6MjA3Nzg4NzgyOX0.1NjRZZrgsPOg-2z_r2kRELWn9IVXNEQNpSxK6CktJRY'
   );
 
@@ -296,7 +299,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         const isFirstVideo = firstUrl.includes('.mp4') || firstUrl.includes('.webm') || firstUrl.includes('.mov');
         
         mediaGridHtml += `
-          <div class="media-grid-item large" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; cursor: pointer;" onclick="openGallery('${post.id}', '${encodeURIComponent(JSON.stringify(mediaMatches.map(m => m[2])))}')">
+          <div class="media-grid-item large" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; cursor: pointer;" onclick="openGallery('${post.id}', '${encodeURIComponent(JSON.stringify(mediaMatches.map(m => m[2])))}', 0)">
             ${isFirstVideo ? 
               `<video muted playsinline style="width: 100%; height: 100%; object-fit: cover;">
                  <source src="${firstUrl}" type="video/mp4">
@@ -313,7 +316,7 @@ document.addEventListener('DOMContentLoaded', async () => {
           const isSecondVideo = secondUrl.includes('.mp4') || secondUrl.includes('.webm') || secondUrl.includes('.mov');
           
           mediaGridHtml += `
-            <div class="media-grid-overlay" style="position: absolute; bottom: 10px; right: 10px; width: 80px; height: 80px; cursor: pointer;" onclick="openGallery('${post.id}', '${encodeURIComponent(JSON.stringify(mediaMatches.map(m => m[2])))}')">
+            <div class="media-grid-overlay" style="position: absolute; bottom: 10px; right: 10px; width: 80px; height: 80px; cursor: pointer;" onclick="openGallery('${post.id}', '${encodeURIComponent(JSON.stringify(mediaMatches.map(m => m[2])))}', 1)">
               <div class="second-thumbnail" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; border-radius: 8px; overflow: hidden; box-shadow: 0 2px 4px rgba(0,0,0,0.3);">
                 ${isSecondVideo ? 
                   `<video muted playsinline style="width: 100%; height: 100%; object-fit: cover;">
@@ -408,20 +411,38 @@ document.addEventListener('DOMContentLoaded', async () => {
   });
 });
 
-// Gallery functions
-window.galleryCurrentIndex = 0;
+// --- REMOVED GLOBAL DECLARATION ---
+// window.galleryCurrentIndex = 0; // This is now handled within the gallery state object
 
-window.openGallery = function(postId, encodedMediaUrlsJson) {
+// --- NEW GLOBAL VARIABLE ---
+// Object to hold the current gallery state (media URLs, current index)
+let currentGalleryState = null;
+
+// --- FIXED GALLERY FUNCTIONS ---
+/**
+ * Opens the gallery overlay.
+ * @param {string} postId - The ID of the post (not used directly here, but passed from the HTML).
+ * @param {string} encodedMediaUrlsJson - The JSON string containing media URLs, URL-encoded.
+ * @param {number} [startIndex=0] - The index of the media item to start viewing (default is 0).
+ */
+window.openGallery = function(postId, encodedMediaUrlsJson, startIndex = 0) {
+  // Parse the media URLs once when the gallery opens
   const mediaUrls = JSON.parse(decodeURIComponent(encodedMediaUrlsJson));
-  
+
+  // Store the state for easy access by other functions
+  currentGalleryState = {
+    mediaUrls: mediaUrls,
+    currentIndex: startIndex // Use the provided startIndex (default to 0)
+  };
+
   // Create gallery HTML with swiping capability
   const galleryHtml = `
     <div id="gallery-overlay" style="position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.9); z-index: 9999; display: flex; align-items: center; justify-content: center; padding: 20px;">
       <div class="gallery-container" style="position: relative; max-width: 90vw; max-height: 90vh; width: 100%; height: 100%; display: flex; align-items: center; justify-content: center;">
         <button onclick="closeGallery()" style="position: absolute; top: 20px; right: 20px; background: rgba(255,255,255,0.2); border: none; border-radius: 50%; width: 40px; height: 40px; font-size: 24px; cursor: pointer; color: white; z-index: 10000;">×</button>
-        
+
         <div id="gallery-swiper" style="width: 100%; height: 100%; display: flex; align-items: center; justify-content: center;">
-          ${mediaUrls.map((url, index) => {
+          ${currentGalleryState.mediaUrls.map((url, index) => {
             const isVideo = url.includes('.mp4') || url.includes('.webm') || url.includes('.mov');
             return `
               <div class="gallery-slide" style="position: absolute; width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; opacity: 0; transition: opacity 0.3s ease;" data-index="${index}">
@@ -436,12 +457,12 @@ window.openGallery = function(postId, encodedMediaUrlsJson) {
             `;
           }).join('')}
         </div>
-        
+
         <button id="gallery-prev" onclick="galleryPrev()" style="position: absolute; left: 20px; background: rgba(255,255,255,0.2); border: none; border-radius: 50%; width: 50px; height: 50px; font-size: 24px; cursor: pointer; color: white; z-index: 10000;">‹</button>
         <button id="gallery-next" onclick="galleryNext()" style="position: absolute; right: 20px; background: rgba(255,255,255,0.2); border: none; border-radius: 50%; width: 50px; height: 50px; font-size: 24px; cursor: pointer; color: white; z-index: 10000;">›</button>
-        
+
         <div id="gallery-counter" style="position: absolute; bottom: 20px; left: 50%; transform: translateX(-50%); color: white; font-size: 16px; z-index: 10000;">
-          <span id="current-index">1</span> / ${mediaUrls.length}
+          <span id="current-index">${currentGalleryState.currentIndex + 1}</span> / ${currentGalleryState.mediaUrls.length}
         </div>
       </div>
     </div>
@@ -449,69 +470,137 @@ window.openGallery = function(postId, encodedMediaUrlsJson) {
   
   document.body.insertAdjacentHTML('beforeend', galleryHtml);
   
-  // Initialize gallery starting from the second image (index 1), or first if only one image
-  window.galleryCurrentIndex = mediaUrls.length > 1 ? 1 : 0;
-  showGallerySlide(window.galleryCurrentIndex);
+  // Initialize gallery display based on the starting index
+  showGallerySlide(currentGalleryState.currentIndex);
   
-  // Add swipe/touch support with proper variable scoping
+  // Add swipe/touch support
   const swiper = document.getElementById('gallery-swiper');
-  let startX = 0;
+  let startX = 0; // Local variable within the openGallery scope
+  let startY = 0; // For potential vertical swipe rejection
   let endX = 0;
-  
-  swiper.addEventListener('touchstart', (e) => {
+  let endY = 0;
+
+  const handleTouchStart = (e) => {
     startX = e.touches[0].clientX;
-  });
-  
-  swiper.addEventListener('touchend', (e) => {
+    startY = e.touches[0].clientY;
+  };
+
+  const handleTouchEnd = (e) => {
     endX = e.changedTouches[0].clientX;
-    handleSwipe();
-  });
-  
-  swiper.addEventListener('mousedown', (e) => {
+    endY = e.changedTouches[0].clientY;
+    handleSwipe(startX, startY, endX, endY);
+  };
+
+  const handleMouseDown = (e) => {
     startX = e.clientX;
-  });
-  
-  swiper.addEventListener('mouseup', (e) => {
+    startY = e.clientY;
+  };
+
+  const handleMouseUp = (e) => {
     endX = e.clientX;
-    handleSwipe();
-  });
+    endY = e.clientY;
+    handleSwipe(startX, startY, endX, endY);
+  };
+
+  swiper.addEventListener('touchstart', handleTouchStart);
+  swiper.addEventListener('touchend', handleTouchEnd);
+  swiper.addEventListener('mousedown', handleMouseDown);
+  // Listen for mouseup on the window to capture release even if outside swiper
+  window.addEventListener('mouseup', handleMouseUp);
+
+  // Optional: Remove listeners when gallery closes
+  const cleanupListeners = () => {
+    swiper.removeEventListener('touchstart', handleTouchStart);
+    swiper.removeEventListener('touchend', handleTouchEnd);
+    swiper.removeEventListener('mousedown', handleMouseDown);
+    window.removeEventListener('mouseup', handleMouseUp);
+  };
+
+  // Add cleanup to closeGallery
+  const originalCloseGallery = window.closeGallery;
+  window.closeGallery = function() {
+    cleanupListeners();
+    if (originalCloseGallery) originalCloseGallery();
+    const overlay = document.getElementById('gallery-overlay');
+    if (overlay) overlay.remove();
+    // Reset the state when closed
+    currentGalleryState = null;
+  };
 };
 
-function handleSwipe() {
-  const threshold = 50;
-  const diff = startX - endX;
-  
-  if (Math.abs(diff) > threshold) {
-    if (diff > 0) {
-      galleryNext(); // Swipe left - next
+/**
+ * Handles the swipe logic based on start and end coordinates.
+ * @param {number} startX - Starting X coordinate.
+ * @param {number} startY - Starting Y coordinate.
+ * @param {number} endX - Ending X coordinate.
+ * @param {number} endY - Ending Y coordinate.
+ */
+function handleSwipe(startX, startY, endX, endY) {
+  const threshold = 50; // Minimum distance to consider a swipe
+  const verticalThreshold = 30; // Threshold to ignore vertical movement
+
+  const diffX = startX - endX;
+  const diffY = startY - endY;
+
+  // Check if the horizontal movement is significant enough and vertical movement is low enough
+  if (Math.abs(diffX) > threshold && Math.abs(diffY) < verticalThreshold) {
+    if (diffX > 0) {
+      galleryNext(); // Swipe left - go to next image
     } else {
-      galleryPrev(); // Swipe right - prev
+      galleryPrev(); // Swipe right - go to previous image
     }
   }
 }
 
+/**
+ * Displays the slide at the given index.
+ * @param {number} index - The index of the slide to show.
+ */
 function showGallerySlide(index) {
+  if (!currentGalleryState || index < 0 || index >= currentGalleryState.mediaUrls.length) return;
+
   const slides = document.querySelectorAll('.gallery-slide');
   slides.forEach((slide, i) => {
     slide.style.opacity = i === index ? '1' : '0';
   });
   
-  document.getElementById('current-index').textContent = index + 1;
+  // Update the counter display
+  const counterElement = document.getElementById('current-index');
+  if (counterElement) {
+    counterElement.textContent = index + 1;
+  }
+
+  // Update the state's current index
+  currentGalleryState.currentIndex = index;
 }
 
+/**
+ * Navigates to the next image in the gallery.
+ */
 window.galleryNext = function() {
-  const mediaUrls = JSON.parse(decodeURIComponent(document.querySelector('[onclick*="openGallery"]').getAttribute('onclick').match(/'([^']+)'/)[1]));
-  window.galleryCurrentIndex = (window.galleryCurrentIndex + 1) % mediaUrls.length;
-  showGallerySlide(window.galleryCurrentIndex);
+  if (!currentGalleryState) return;
+  const newIndex = (currentGalleryState.currentIndex + 1) % currentGalleryState.mediaUrls.length;
+  showGallerySlide(newIndex);
 };
 
+/**
+ * Navigates to the previous image in the gallery.
+ */
 window.galleryPrev = function() {
-  const mediaUrls = JSON.parse(decodeURIComponent(document.querySelector('[onclick*="openGallery"]').getAttribute('onclick').match(/'([^']+)'/)[1]));
-  window.galleryCurrentIndex = (window.galleryCurrentIndex - 1 + mediaUrls.length) % mediaUrls.length;
-  showGallerySlide(window.galleryCurrentIndex);
+  if (!currentGalleryState) return;
+  const newIndex = (currentGalleryState.currentIndex - 1 + currentGalleryState.mediaUrls.length) % currentGalleryState.mediaUrls.length;
+  showGallerySlide(newIndex);
 };
 
+/**
+ * Closes the gallery overlay and cleans up event listeners.
+ */
 window.closeGallery = function() {
+  // Cleanup logic is now handled in openGallery
+  // This function can still exist as a placeholder if called elsewhere
   const overlay = document.getElementById('gallery-overlay');
   if (overlay) overlay.remove();
+  currentGalleryState = null; // Clear the state
 };
+
+```
