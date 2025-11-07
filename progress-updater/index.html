@@ -3,16 +3,13 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Progress Updater</title>
+  <title>Progress Updates</title>
 
-  <!-- Reuse Supabase client from test folder -->
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script type="module" src="https://cdn.jsdelivr.net/npm/emoji-picker-element@^1/index.js"></script>
   <link rel="stylesheet" href="../test/style.css" />
 
-  <!-- Initialize Supabase client (same as in test/index.html) -->
   <script>
-    // Initialize Supabase client once globally
     window.supabaseClient = window.supabase.createClient(
       'https://ccetnqdqfrsitooestbh.supabase.co',
       'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImNjZXRucWRxZnJzaXRvb2VzdGJoIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjIzMTE4MjksImV4cCI6MjA3Nzg4NzgyOX0.1NjRZZrgsPOg-2z_r2kRELWn9IVXNEQNpSxK6CktJRY'
@@ -21,11 +18,11 @@
 </head>
 <body>
   <div class="thought-box">
-    <textarea id="memory-body" placeholder="What's your progress update?"></textarea>
+    <textarea id="memory-body" placeholder="How are you progressing today?"></textarea>
     <div class="thought-actions">
       <button id="mediaButton">➕</button>
       <button id="emojiButton">🙂</button>
-      <button id="postButton">Post Update</button>
+      <button id="postButton">Share Progress</button>
     </div>
     <div id="emojiPicker"></div>
     
@@ -40,15 +37,15 @@
   </div>
 
   <div class="posts-section">
-    <h2>Your Progress Updates</h2>
+    <h2>Your Progress Journey</h2>
     <div id="postsContainer"></div>
   </div>
 
   <input type="file" id="mediaInput" accept="image/*,video/*" style="display:none;" multiple />
 
-  <!-- Load main script first -->
-  <script type="module" src="../test/script.js"></script>
-  <!-- Then load media logic -->
+  <!-- Load media.js first (for upload, previews, gallery) -->
   <script type="module" src="../test/media.js"></script>
+  <!-- Load progress-specific script (handles post/load for progress table) -->
+  <script type="module" src="progress-updater-script.js"></script>
 </body>
 </html>
