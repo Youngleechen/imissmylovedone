@@ -1,13 +1,6 @@
 // script.js - Main application logic
 
 document.addEventListener('DOMContentLoaded', async () => {
-  // Check if Supabase client is available
-  if (!window.supabaseClient) {
-    console.error('Supabase client not initialized! Please ensure it is set up before loading this script.');
-    alert('Application not properly initialized. Please refresh the page or contact support.');
-    return;
-  }
-
   const supabase = window.supabaseClient; // ✅ Use global client
   const memoryBody = document.getElementById('memory-body');
   const emojiButton = document.getElementById('emojiButton');
@@ -19,24 +12,12 @@ document.addEventListener('DOMContentLoaded', async () => {
   window.currentMediaFiles = [];
 
   async function checkAuth() {
-    try {
-      const { data: { user }, error } = await supabase.auth.getUser();
-      if (error) {
-        console.error('Auth error:', error.message);
-        window.location.href = 'signin.html';
-        return null;
-      }
-      if (!user) {
-        console.warn('No user found, redirecting to sign in.');
-        window.location.href = 'signin.html';
-        return null;
-      }
-      return user;
-    } catch (err) {
-      console.error('Unexpected auth error:', err);
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) {
       window.location.href = 'signin.html';
       return null;
     }
+    return user;
   }
 
   // Auto-resize textarea
@@ -137,7 +118,6 @@ document.addEventListener('DOMContentLoaded', async () => {
       });
 
     if (error) {
-      console.error('Insert error:', error);
       alert('Failed to post: ' + error.message);
       return;
     }
@@ -153,7 +133,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     }
 
     // Reload posts
-    await loadUserPosts(); // Wait for posts to reload
+    loadUserPosts();
   });
 
   // Load posts
@@ -181,19 +161,19 @@ document.addEventListener('DOMContentLoaded', async () => {
     postsContainer.innerHTML = data.map(post => {
       // Extract media URLs from post body
       const mediaMatches = [...post.body.matchAll(/!\[([^\]]*)\]\s*\(\s*([^)]+)\s*\)/g)];
-
+      
       if (mediaMatches.length > 0) {
         let mediaGridHtml = '<div class="media-grid" style="position: relative; width: 100%; height: 300px; margin: 10px 0;">';
-
+        
         // Show first media item as large
         const firstMedia = mediaMatches[0];
         const firstAlt = firstMedia[1] || 'Media';
         const firstUrl = firstMedia[2].trim();
         const isFirstVideo = firstUrl.includes('.mp4') || firstUrl.includes('.webm') || firstUrl.includes('.mov');
-
+        
         mediaGridHtml += `
           <div class="media-grid-item large" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; cursor: pointer;" onclick="openGallery('${post.id}', '${encodeURIComponent(JSON.stringify(mediaMatches.map(m => m[2])))}', 0)">
-            ${isFirstVideo ?
+            ${isFirstVideo ? 
               `<video muted playsinline style="width: 100%; height: 100%; object-fit: cover;">
                  <source src="${firstUrl}" type="video/mp4">
                </video>` :
@@ -201,17 +181,17 @@ document.addEventListener('DOMContentLoaded', async () => {
             }
           </div>
         `;
-
+        
         // If there are more media items, show the +N overlay
         if (mediaMatches.length > 1) {
           const secondMedia = mediaMatches[1];
           const secondUrl = secondMedia[2].trim();
           const isSecondVideo = secondUrl.includes('.mp4') || secondUrl.includes('.webm') || secondUrl.includes('.mov');
-
+          
           mediaGridHtml += `
             <div class="media-grid-overlay" style="position: absolute; bottom: 10px; right: 10px; width: 80px; height: 80px; cursor: pointer;" onclick="openGallery('${post.id}', '${encodeURIComponent(JSON.stringify(mediaMatches.map(m => m[2])))}', 1)">
               <div class="second-thumbnail" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; border-radius: 8px; overflow: hidden; box-shadow: 0 2px 4px rgba(0,0,0,0.3);">
-                ${isSecondVideo ?
+                ${isSecondVideo ? 
                   `<video muted playsinline style="width: 100%; height: 100%; object-fit: cover;">
                      <source src="${secondUrl}" type="video/mp4">
                    </video>` :
@@ -224,13 +204,13 @@ document.addEventListener('DOMContentLoaded', async () => {
             </div>
           `;
         }
-
+        
         mediaGridHtml += '</div>';
 
         // Remove media markdown from text body
         let textOnlyBody = post.body.replace(/!\[([^\]]*)\]\s*\(\s*([^)]+)\s*\)/g, '');
         textOnlyBody = textOnlyBody.replace(/\n/g, '<br>');
-
+        
         return `
           <div class="post-item" style="background: white; padding: 15px; border-radius: 8px; margin-bottom: 15px; box-shadow: 0 1px 3px rgba(0,0,0,0.1);">
             <p style="margin: 0; line-height: 1.6;">${textOnlyBody}</p>
