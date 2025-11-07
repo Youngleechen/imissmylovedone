@@ -5,30 +5,26 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>My Thoughts</title>
 
-  <!-- Supabase -->
+  <!-- Supabase Client (loaded first) -->
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
-  <!-- Emoji Picker -->
+  <!-- Emoji Picker (module) -->
   <script type="module" src="https://cdn.jsdelivr.net/npm/emoji-picker-element@^1/index.js"></script>
 
   <!-- Styles -->
   <link rel="stylesheet" href="style.css" />
 
-  <!-- ✅ INITIALIZE SUPABASE CLIENT BEFORE OTHER SCRIPTS -->
+  <!-- 👇 CREATE SUPABASE CLIENT ONCE, GLOBALLY, BEFORE ANY MODULES -->
   <script>
-    // Initialize Supabase client globally
-    const supabaseUrl = 'YOUR_SUPABASE_PROJECT_URL'; // ← REPLACE WITH YOUR URL
-    const supabaseKey = 'YOUR_SUPABASE_ANON_KEY';     // ← REPLACE WITH YOUR KEY
-
-    window.supabaseClient = supabase.createClient(supabaseUrl, supabaseKey);
-
-    // Optional: Log for debugging
-    console.log('Supabase client initialized:', window.supabaseClient);
+    window.supabaseClient = window.supabase.createClient(
+      'https://ccetnqdqfrsitooestbh.supabase.co',
+      'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImNjZXRucWRxZnJzaXRvb2VzdGJoIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjIzMTE4MjksImV4cCI6MjA3Nzg4NzgyOX0.1NjRZZrgsPOg-2z_r2kRELWn9IVXNEQNpSxK6CktJRY'
+    );
   </script>
 </head>
 <body>
   <div class="thought-box">
-    <textarea id="memory-body" placeholder="what's on your mind?"></textarea>
+    <textarea id="memory-body" placeholder="what's going on?"></textarea>
     <div class="thought-actions">
       <button id="mediaButton">➕</button>
       <button id="emojiButton">🙂</button>
@@ -36,16 +32,14 @@
     </div>
     <div id="emojiPicker"></div>
     
-    <!-- Add this missing upload progress container -->
     <div id="uploadProgress" style="display:none; margin-top: 10px;">
       <div class="progress-bar" style="height: 4px; background: #e2e8f0; border-radius: 2px; overflow: hidden;">
         <div id="progressFill" style="height: 100%; background: #5a67d8; width: 0%; transition: width 0.3s ease;"></div>
       </div>
       <span id="progressText" style="display: block; margin-top: 5px; font-size: 14px; color: #4a5568;">Uploading...</span>
     </div>
-
-    <!-- Media Preview Container -->
-    <div id="mediaPreviewContainer" style="display: none; margin-top: 10px; padding: 10px; border: 1px solid #e2e8f0; border-radius: 8px; background: #f7fafc;"></div>
+    
+    <div id="mediaPreviewContainer" style="margin-top: 12px; padding: 8px; background: #f9f9f9; border-radius: 8px; display: none;"></div>
   </div>
 
   <div class="posts-section">
@@ -53,12 +47,11 @@
     <div id="postsContainer"></div>
   </div>
 
-  <!-- Hidden file input -->
-  <input type="file" id="mediaInput" accept="image/*,video/*" style="display:none;" />
+  <input type="file" id="mediaInput" accept="image/*,video/*" style="display:none;" multiple />
 
-  <!-- Load media.js first (it initializes handlers that depend on supabase) -->
-  <script type="module" src="media.js"></script>
-  <!-- Then load main script -->
+  <!-- Load main logic first -->
   <script type="module" src="script.js"></script>
+  <!-- Then load media handling (depends on global supabaseClient) -->
+  <script type="module" src="media.js"></script>
 </body>
 </html>
