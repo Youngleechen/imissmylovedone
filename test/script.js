@@ -1,6 +1,14 @@
 // script.js - Main application logic
 
 document.addEventListener('DOMContentLoaded', async () => {
+  // ✅ SAFETY CHECK: Ensure supabaseClient exists
+  if (!window.supabaseClient) {
+    console.error('Supabase client not initialized!');
+    alert('Application failed to load. Please refresh or contact support.');
+    window.location.href = 'signin.html'; // Fallback redirect
+    return;
+  }
+
   const supabase = window.supabaseClient; // ✅ Use global client
   const memoryBody = document.getElementById('memory-body');
   const emojiButton = document.getElementById('emojiButton');
@@ -12,12 +20,19 @@ document.addEventListener('DOMContentLoaded', async () => {
   window.currentMediaFiles = [];
 
   async function checkAuth() {
-    const { data: { user } } = await supabase.auth.getUser();
-    if (!user) {
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) {
+        window.location.href = 'signin.html';
+        return null;
+      }
+      return user;
+    } catch (error) {
+      console.error('Auth check failed:', error);
+      alert('Authentication error. Redirecting to sign in...');
       window.location.href = 'signin.html';
       return null;
     }
-    return user;
   }
 
   // Auto-resize textarea
