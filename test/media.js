@@ -25,6 +25,10 @@ export function initializeMediaHandlers(supabase) {
     const files = Array.from(e.target.files);
     if (!files.length) return;
 
+    // Determine bucket based on current page context
+    const bucketName = getCurrentBucketName();
+    console.log('Using bucket:', bucketName); // Debug line
+
     // Validate all files
     for (const currentFile of files) {
       const allowedTypes = ['image/jpeg', 'image/png', 'image/gif', 'image/webp', 'video/mp4', 'video/webm', 'video/quicktime'];
@@ -52,7 +56,7 @@ export function initializeMediaHandlers(supabase) {
 
       // Upload to Supabase storage
       const { error: uploadError } = await supabase.storage
-        .from('memories')
+        .from(bucketName) // ← DYNAMIC BUCKET
         .upload(fileName, currentFile, {
           upsert: false,
           onUploadProgress: (progressEvent) => {
@@ -77,7 +81,7 @@ export function initializeMediaHandlers(supabase) {
 
       // Get public URL
       const { data: { publicUrl } } = supabase.storage
-        .from('memories')
+        .from(bucketName) // ← DYNAMIC BUCKET
         .getPublicUrl(fileName);
 
       // Add to media files array
@@ -97,6 +101,36 @@ export function initializeMediaHandlers(supabase) {
     }
     mediaInput.value = '';
   });
+}
+
+// ✅ NEW: Dynamic bucket selection function
+function getCurrentBucketName() {
+  const currentPath = window.location.pathname;
+  
+  // Map page paths to bucket names
+  const bucketMap = {
+    '/test/index.html': 'memories',
+    '/test/': 'memories', // default for test folder
+    '/progress-updater/': 'progress-updates',
+    '/development-updater/': 'dev-updates-media',
+    '/admin/': 'admin-media',
+    // Add more as needed
+  };
+
+  // Check for exact matches first
+  if (bucketMap[currentPath]) {
+    return bucketMap[currentPath];
+  }
+
+  // Check for partial path matches
+  for (const [path, bucket] of Object.entries(bucketMap)) {
+    if (currentPath.includes(path.replace('/', '')) || currentPath.startsWith(path)) {
+      return bucket;
+    }
+  }
+
+  // Default bucket if no match found
+  return 'memories'; // or throw error if you prefer
 }
 
 // Helper function to show media preview
@@ -407,7 +441,7 @@ window.galleryPrev = function() {
 
 // Auth helper (moved here to avoid duplication)
 async function checkAuth() {
-  const { data: { user } } = await window.supabaseClient.auth.getUser();
+  const {  { user } } = await window.supabaseClient.auth.getUser();
   if (!user) {
     window.location.href = 'signin.html';
     return null;
