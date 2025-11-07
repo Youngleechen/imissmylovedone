@@ -267,7 +267,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     const { data, error } = await supabase
       .from('memories')
-      .select('body, created_at')
+      .select('id, body, created_at')
       .eq('user_id', user.id)
       .order('created_at', { ascending: false });
 
@@ -283,33 +283,69 @@ document.addEventListener('DOMContentLoaded', async () => {
     }
 
     postsContainer.innerHTML = data.map(post => {
-      let processedBody = post.body;
+      // Extract media URLs from post body
+      const mediaMatches = [...post.body.matchAll(/!\[([^\]]*)\]\s*\(\s*([^)]+)\s*\)/g)];
+      
+      if (mediaMatches.length > 0) {
+        // Create media grid HTML
+        let mediaGridHtml = '<div class="media-grid">';
+        
+        // Show first 4 media items as thumbnails
+        const visibleMedia = mediaMatches.slice(0, 4);
+        visibleMedia.forEach((match, index) => {
+          const alt = match[1] || 'Media';
+          const url = match[2].trim();
+          const isVideo = url.includes('.mp4') || url.includes('.webm') || url.includes('.mov');
+          
+          mediaGridHtml += `
+            <div class="media-grid-item ${isVideo ? 'video' : 'image'}">
+              ${isVideo ? 
+                `<video muted playsinline>
+                   <source src="${url}" type="video/mp4">
+                 </video>` :
+                `<img src="${url}" alt="${alt}">`
+              }
+            </div>
+          `;
+        });
 
-      // Convert markdown media syntax to HTML
-      processedBody = processedBody.replace(/!\[([^\]]*)\]\s*\(\s*([^)]+)\s*\)/g, (match, alt, url) => {
-        const cleanUrl = url.trim();
-        const safeUrl = cleanUrl.replace(/"/g, '&quot;').replace(/'/g, '&#39;');
-
-        if (safeUrl.includes('.mp4') || safeUrl.includes('.webm') || safeUrl.includes('.mov')) {
-          return `<video controls style="max-width:100%; height:auto; border-radius:8px; margin:10px 0;">
-                    <source src="${safeUrl}" type="video/mp4">
-                    Your browser does not support the video tag.
-                  </video>`;
-        } else {
-          return `<img src="${safeUrl}" alt="${alt || 'Uploaded media'}" style="max-width:100%; height:auto; border-radius:8px; margin:10px 0;">`;
+        // Add "+N more" if there are more than 4
+        if (mediaMatches.length > 4) {
+          const mediaUrlsJson = JSON.stringify(mediaMatches.map(m => m[2]));
+          mediaGridHtml += `
+            <div class="media-grid-item more-count" onclick="openGallery('${post.id}', '${mediaUrlsJson}')">
+              +${mediaMatches.length - 4} more
+            </div>
+          `;
         }
-      });
 
-      processedBody = processedBody.replace(/\n/g, '<br>');
+        mediaGridHtml += '</div>';
 
-      return `
-        <div class="post-item" style="background: white; padding: 15px; border-radius: 8px; margin-bottom: 15px; box-shadow: 0 1px 3px rgba(0,0,0,0.1);">
-          <p style="margin: 0; line-height: 1.6;">${processedBody}</p>
-          <small style="display: block; color: #718096; font-size: 12px; margin-top: 8px;">
-            ${new Date(post.created_at).toLocaleString()}
-          </small>
-        </div>
-      `;
+        // Remove media markdown from text body
+        let textOnlyBody = post.body.replace(/!\[([^\]]*)\]\s*\(\s*([^)]+)\s*\)/g, '');
+        textOnlyBody = textOnlyBody.replace(/\n/g, '<br>');
+        
+        return `
+          <div class="post-item" style="background: white; padding: 15px; border-radius: 8px; margin-bottom: 15px; box-shadow: 0 1px 3px rgba(0,0,0,0.1);">
+            <p style="margin: 0; line-height: 1.6;">${textOnlyBody}</p>
+            ${mediaGridHtml}
+            <small style="display: block; color: #718096; font-size: 12px; margin-top: 8px;">
+              ${new Date(post.created_at).toLocaleString()}
+            </small>
+          </div>
+        `;
+      } else {
+        // Handle posts without media
+        let processedBody = post.body.replace(/\n/g, '<br>');
+        return `
+          <div class="post-item" style="background: white; padding: 15px; border-radius: 8px; margin-bottom: 15px; box-shadow: 0 1px 3px rgba(0,0,0,0.1);">
+            <p style="margin: 0; line-height: 1.6;">${processedBody}</p>
+            <small style="display: block; color: #718096; font-size: 12px; margin-top: 8px;">
+              ${new Date(post.created_at).toLocaleString()}
+            </small>
+          </div>
+        `;
+      }
     }).join('');
   }
 
@@ -361,3 +397,39 @@ document.addEventListener('DOMContentLoaded', async () => {
     }
   });
 });
+
+// Gallery functions
+window.openGallery = function(postId, mediaUrlsJson) {
+  const mediaUrls = JSON.parse(mediaUrlsJson);
+  const galleryHtml = `
+    <div id="gallery-overlay" style="position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.9); z-index: 9999; display: flex; align-items: center; justify-content: center; padding: 20px;">
+      <div class="gallery-container" style="background: white; border-radius: 12px; max-width: 90vw; max-height: 90vh; overflow-y: auto; padding: 20px; position: relative;">
+        <button onclick="closeGallery()" style="position: absolute; top: 10px; right: 10px; background: #f1f3f4; border: none; border-radius: 50%; width: 30px; height: 30px; font-size: 18px; cursor: pointer;">×</button>
+        <h3 style="margin-top: 0; margin-bottom: 15px; text-align: center;">Gallery</h3>
+        <div class="gallery-items" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 10px;">
+          ${mediaUrls.map(url => {
+            const isVideo = url.includes('.mp4') || url.includes('.webm') || url.includes('.mov');
+            return `
+              <div class="gallery-item" style="border-radius: 8px; overflow: hidden; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
+                ${isVideo ? 
+                  `<video controls style="width: 100%; height: auto;">
+                     <source src="${url}" type="video/mp4">
+                   </video>` :
+                  `<img src="${url}" alt="Gallery item" style="width: 100%; height: auto; object-fit: cover;">
+                 `
+                }
+              </div>
+            `;
+          }).join('')}
+        </div>
+      </div>
+    </div>
+  `;
+  
+  document.body.insertAdjacentHTML('beforeend', galleryHtml);
+};
+
+window.closeGallery = function() {
+  const overlay = document.getElementById('gallery-overlay');
+  if (overlay) overlay.remove();
+};
