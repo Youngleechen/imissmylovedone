@@ -27,13 +27,13 @@ document.addEventListener('DOMContentLoaded', async () => {
   const editProgressFill = document.getElementById('editProgressFill');
   const editProgressText = document.getElementById('editProgressText');
 
-  // Track media files for this session
+  // Track media files for this session (for new posts)
   let currentMediaFiles = [];
 
   // NEW: Track edited post and media
   let currentEditPostId = null;
   let currentEditMedia = []; // {url, name, type, isExisting: true/false, isDeleted: true/false}
-  let newMediaFiles = []; // For newly added files
+  let newMediaFiles = []; // For newly added files in edit mode
 
   async function checkAuth() {
     const { data: { user } } = await supabase.auth.getUser();
@@ -116,7 +116,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     }
   });
 
-  // Media upload handler
+  // Media upload handler (for new posts)
   mediaButton.addEventListener('click', async () => {
     const user = await checkAuth();
     if (!user) return;
@@ -157,7 +157,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
       // Upload to dev-updates-media bucket
       const { error: uploadError } = await supabase.storage
-        .from('dev-updates-media') // ✅ NEW BUCKET
+        .from('dev-updates-media')
         .upload(fileName, currentFile, {
           upsert: false,
           onUploadProgress: (progressEvent) => {
@@ -182,7 +182,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
       // Get public URL
       const { data: { publicUrl } } = supabase.storage
-        .from('dev-updates-media') // ✅ NEW BUCKET
+        .from('dev-updates-media')
         .getPublicUrl(fileName);
 
       // Add to media files array
@@ -203,7 +203,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     mediaInput.value = '';
   });
 
-  // Helper: Show media preview
+  // Helper: Show media preview (for new posts)
   function showMediaPreview(url, filename, fileType) {
     const previewItem = document.createElement('div');
     previewItem.className = 'media-preview-item';
@@ -269,7 +269,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     mediaPreviewContainer.style.display = 'block';
   }
 
-  // Helper: Remove media preview
+  // Helper: Remove media preview (for new posts)
   function removeMediaPreview(previewItem, url) {
     previewItem.remove();
     currentMediaFiles = currentMediaFiles.filter(item => item.url !== url);
@@ -278,7 +278,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     }
   }
 
-  // Post handler
+  // Post handler (for new posts)
   postButton.addEventListener('click', async () => {
     const user = await checkAuth();
     if (!user) return;
@@ -392,7 +392,11 @@ document.addEventListener('DOMContentLoaded', async () => {
   });
 
   function addMediaPreviewToEdit(url, filename, fileType, isExisting) {
+    // Create a unique ID for this preview element to avoid duplication
+    const previewId = `edit-media-${Date.now()}-${Math.random().toString(36).substr(2,9)}`;
+    
     const previewItem = document.createElement('div');
+    previewItem.id = previewId;
     previewItem.className = 'media-preview-item';
     previewItem.style.cssText = `
       position: relative;
@@ -469,16 +473,27 @@ document.addEventListener('DOMContentLoaded', async () => {
     if (!user) return;
 
     currentEditPostId = postId;
-    editBody.value = currentBody;
+    
+    // ✅ FIX 1: Extract only text content for editing, remove media markdown
+    let textOnlyBody = currentBody.replace(/!\[([^\]]*)\]\s*\(\s*([^)]+)\s*\)/g, '');
+    editBody.value = textOnlyBody.trim(); // Set only the text content
 
     // Extract and populate existing media
     const mediaMatches = [...currentBody.matchAll(/!\[([^\]]*)\]\s*\(\s*([^)]+)\s*\)/g)];
-    currentEditMedia = mediaMatches.map(m => ({ url: m[2], name: m[1], isExisting: true, isDeleted: false }));
+    currentEditMedia = mediaMatches.map(m => ({ 
+      url: m[2], 
+      name: m[1] || 'Media', 
+      isExisting: true, 
+      isDeleted: false 
+    }));
     newMediaFiles = [];
 
+    // ✅ FIX 2: Clear the container before adding previews to prevent duplicates
     editMediaContainer.innerHTML = '';
+
+    // Add previews for existing media
     currentEditMedia.forEach(media => {
-      addMediaPreviewToEdit(media.url, media.name || 'Media', getMediaType(media.url), true);
+      addMediaPreviewToEdit(media.url, media.name, getMediaType(media.url), true);
     });
 
     editModal.style.display = 'flex';
