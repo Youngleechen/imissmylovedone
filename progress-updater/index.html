@@ -5,13 +5,13 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Progress Updates</title>
 
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-  <script type="module" src="https://cdn.jsdelivr.net/npm/emoji-picker-element@^1/index.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2  "></script>
+  <script type="module" src="https://cdn.jsdelivr.net/npm/emoji-picker-element@  ^1/index.js"></script>
   <link rel="stylesheet" href="../test/style.css" />
 
   <script>
     window.supabaseClient = window.supabase.createClient(
-      'https://ccetnqdqfrsitooestbh.supabase.co',
+      'https://ccetnqdqfrsitooestbh.supabase.co  ',
       'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImNjZXRucWRxZnJzaXRvb2VzdGJoIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjIzMTE4MjksImV4cCI6MjA3Nzg4NzgyOX0.1NjRZZrgsPOg-2z_r2kRELWn9IVXNEQNpSxK6CktJRY'
     );
 
@@ -48,7 +48,33 @@
 
   <!-- Load media.js first (for upload, previews, gallery) -->
   <script type="module" src="../test/media.js"></script>
-  <!-- Load progress-specific script (handles post/load for progress table) -->
-  <script type="module" src="progress-updater-script.js"></script>
+  
+  <!-- Embedded script for progress updates -->
+  <script type="module">
+    console.log('✅ progress-updater-script loaded!');
+    
+    document.addEventListener('DOMContentLoaded', function() {
+      // Get the post button element
+      const postButton = document.getElementById('postButton');
+
+      if (!postButton) {
+          console.error('❌ Post button not found! Check your HTML.');
+          return;
+      }
+
+      // Add click event listener to the post button
+      postButton.addEventListener('click', function() {
+          console.log('🎉 Share Progress button clicked');
+
+          // Getting the text from the textarea
+          const memoryBody = document.getElementById('memory-body');
+          const progressText = memoryBody?.value || '';
+          console.log('📝 Progress text:', progressText);
+
+          // You can add more functionality here, such as:
+          // postProgress(progressText);
+      });
+    });
+  </script>
 </body>
 </html>
