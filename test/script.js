@@ -1,3 +1,5 @@
+// script.js - Main application logic
+
 document.addEventListener('DOMContentLoaded', async () => {
   const supabase = window.supabase.createClient(
     'https://ccetnqdqfrsitooestbh.supabase.co',
@@ -9,15 +11,9 @@ document.addEventListener('DOMContentLoaded', async () => {
   const emojiPicker = document.getElementById('emojiPicker');
   const postButton = document.getElementById('postButton');
   const postsContainer = document.getElementById('postsContainer');
-  const mediaButton = document.getElementById('mediaButton');
-  const mediaInput = document.getElementById('mediaInput');
-  const uploadProgress = document.getElementById('uploadProgress');
-  const progressFill = document.getElementById('progressFill');
-  const progressText = document.getElementById('progressText');
-  const mediaPreviewContainer = document.getElementById('mediaPreviewContainer');
 
-  // Track multiple media files
-  let currentMediaFiles = [];
+  // Global state for current media files (managed by media.js)
+  window.currentMediaFiles = [];
 
   async function checkAuth() {
     const { data: { user } } = await supabase.auth.getUser();
@@ -100,165 +96,45 @@ document.addEventListener('DOMContentLoaded', async () => {
     }
   });
 
-  // Media upload handler
-  mediaButton.addEventListener('click', async () => {
-    const user = await checkAuth();
-    if (!user) return;
-    mediaInput.click();
-  });
-
-  mediaInput.addEventListener('change', async (e) => {
+  // Post handler
+  postButton.addEventListener('click', async () => {
     const user = await checkAuth();
     if (!user) return;
 
-    const files = Array.from(e.target.files);
-    if (!files.length) return;
+    let body = memoryBody.value.trim();
 
-    // Validate all files
-    for (const currentFile of files) {
-      const allowedTypes = ['image/jpeg', 'image/png', 'image/gif', 'image/webp', 'video/mp4', 'video/webm', 'video/quicktime'];
-      if (!allowedTypes.includes(currentFile.type)) {
-        alert(`File ${currentFile.name} is not an allowed type.`);
-        return;
-      }
-      if (currentFile.size > 50 * 1024 * 1024) {
-        alert(`File ${currentFile.name} exceeds 50MB limit.`);
-        return;
-      }
+    // Append media markdown from global state (managed by media.js)
+    for (const media of window.currentMediaFiles) {
+      body += `\n\n![${media.name}](${media.url})`;
     }
 
-    // Process each file
-    for (const currentFile of files) {
-      const fileExt = currentFile.name.split('.').pop();
-      const fileName = `${user.id}/${Date.now()}-${Math.random().toString(36).substring(2, 15)}.${fileExt}`;
+    if (!body) {
+      alert('Please write something or attach media first.');
+      return;
+    }
 
-      // Show upload progress
-      if (uploadProgress && progressFill && progressText) {
-        uploadProgress.style.display = 'block';
-        progressFill.style.width = '0%';
-        progressText.textContent = `Uploading ${currentFile.name}...`;
-      }
-
-      // Upload to Supabase storage
-      const { error: uploadError } = await supabase.storage
-        .from('memories')
-        .upload(fileName, currentFile, {
-          upsert: false,
-          onUploadProgress: (progressEvent) => {
-            const percentCompleted = Math.round((progressEvent.loaded * 100) / progressEvent.total);
-            if (progressFill) {
-              progressFill.style.width = percentCompleted + '%';
-            }
-            if (progressText) {
-              progressText.textContent = `Uploading ${currentFile.name}... ${percentCompleted}%`;
-            }
-          }
-        });
-
-      if (uploadError) {
-        console.error('Upload error:', uploadError);
-        alert('Upload failed: ' + uploadError.message);
-        if (uploadProgress) {
-          uploadProgress.style.display = 'none';
-        }
-        return;
-      }
-
-      // Get public URL
-      const { data: { publicUrl } } = supabase.storage
-        .from('memories')
-        .getPublicUrl(fileName);
-
-      // Add to media files array
-      currentMediaFiles.push({
-        url: publicUrl,
-        name: currentFile.name,
-        type: currentFile.type
+    const { error } = await supabase
+      .from('memories')
+      .insert({
+        user_id: user.id,
+        title: 'Untitled',
+        body
       });
 
-      // Show preview
-      showMediaPreview(publicUrl, currentFile.name, currentFile.type);
+    if (error) {
+      alert('Failed to post: ' + error.message);
+      return;
     }
 
-    // Hide progress
-    if (uploadProgress) {
-      uploadProgress.style.display = 'none';
-    }
-    mediaInput.value = '';
+    // Clear state
+    memoryBody.value = '';
+    autoResize();
+    window.currentMediaFiles = []; // Reset media files
+    // Note: The preview container will be cleared by media.js via its API
+
+    // Reload posts
+    loadUserPosts();
   });
-
-  function showMediaPreview(url, filename, fileType) {
-    const previewItem = document.createElement('div');
-    previewItem.className = 'media-preview-item';
-    previewItem.style.cssText = `
-      position: relative;
-      display: inline-block;
-      margin: 5px;
-      border-radius: 8px;
-      overflow: hidden;
-      box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-    `;
-
-    let previewElement;
-    if (fileType.startsWith('image')) {
-      previewElement = document.createElement('img');
-      previewElement.src = url;
-      previewElement.alt = filename;
-      previewElement.style.cssText = `
-        max-width: 100px;
-        height: 100px;
-        object-fit: cover;
-        border-radius: 8px;
-      `;
-    } else if (fileType.startsWith('video')) {
-      previewElement = document.createElement('video');
-      previewElement.controls = false;
-      previewElement.style.cssText = `
-        max-width: 100px;
-        height: 100px;
-        object-fit: cover;
-        border-radius: 8px;
-      `;
-      const source = document.createElement('source');
-      source.src = url;
-      source.type = fileType;
-      previewElement.appendChild(source);
-    }
-
-    // Remove button
-    const removeBtn = document.createElement('button');
-    removeBtn.textContent = '×';
-    removeBtn.style.cssText = `
-      position: absolute;
-      top: 5px;
-      right: 5px;
-      background: rgba(0,0,0,0.7);
-      color: white;
-      border: none;
-      border-radius: 50%;
-      width: 20px;
-      height: 20px;
-      cursor: pointer;
-      font-weight: bold;
-    `;
-    removeBtn.onclick = (e) => {
-      e.stopPropagation();
-      removeMediaPreview(previewItem, url);
-    };
-
-    previewItem.appendChild(previewElement);
-    previewItem.appendChild(removeBtn);
-    mediaPreviewContainer.appendChild(previewItem);
-    mediaPreviewContainer.style.display = 'block';
-  }
-
-  function removeMediaPreview(previewItem, url) {
-    previewItem.remove();
-    currentMediaFiles = currentMediaFiles.filter(item => item.url !== url);
-    if (currentMediaFiles.length === 0) {
-      mediaPreviewContainer.style.display = 'none';
-    }
-  }
 
   // Load posts
   async function loadUserPosts() {
@@ -359,47 +235,6 @@ document.addEventListener('DOMContentLoaded', async () => {
     }).join('');
   }
 
-  // Post handler
-  postButton.addEventListener('click', async () => {
-    const user = await checkAuth();
-    if (!user) return;
-
-    let body = memoryBody.value.trim();
-
-    // Append media markdown
-    for (const media of currentMediaFiles) {
-      body += `\n\n![${media.name}](${media.url})`;
-    }
-
-    if (!body) {
-      alert('Please write something or attach media first.');
-      return;
-    }
-
-    const { error } = await supabase
-      .from('memories')
-      .insert({
-        user_id: user.id,
-        title: 'Untitled',
-        body
-      });
-
-    if (error) {
-      alert('Failed to post: ' + error.message);
-      return;
-    }
-
-    // Clear state
-    memoryBody.value = '';
-    autoResize();
-    currentMediaFiles = [];
-    mediaPreviewContainer.innerHTML = '';
-    mediaPreviewContainer.style.display = 'none';
-
-    // Reload posts
-    loadUserPosts();
-  });
-
   // Initialize
   checkAuth().then(user => {
     if (user) {
@@ -407,239 +242,3 @@ document.addEventListener('DOMContentLoaded', async () => {
     }
   });
 });
-
-// --- REMOVED GLOBAL DECLARATION ---
-// window.galleryCurrentIndex = 0; // This is now handled within the gallery state object
-
-// --- NEW GLOBAL VARIABLE ---
-// Object to hold the current gallery state (media URLs, current index)
-let currentGalleryState = null;
-
-// --- FIXED GALLERY FUNCTIONS ---
-/**
- * Opens the gallery overlay.
- * @param {string} postId - The ID of the post (not used directly here, but passed from the HTML).
- * @param {string} encodedMediaUrlsJson - The JSON string containing media URLs, URL-encoded.
- * @param {number} [startIndex=0] - The index of the media item to start viewing (default is 0).
- */
-window.openGallery = function(postId, encodedMediaUrlsJson, startIndex = 0) {
-  // Parse the media URLs once when the gallery opens
-  const mediaUrls = JSON.parse(decodeURIComponent(encodedMediaUrlsJson));
-
-  // Store the state for easy access by other functions
-  currentGalleryState = {
-    mediaUrls: mediaUrls,
-    currentIndex: startIndex // Use the provided startIndex (default to 0)
-  };
-
-  // Create gallery HTML with swiping capability and thumbnails
-  const galleryHtml = `
-    <div id="gallery-overlay" style="position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.9); z-index: 9999; display: flex; align-items: center; justify-content: center; padding: 20px; flex-direction: column;">
-      <div class="gallery-container" style="position: relative; max-width: 90vw; max-height: 85vh; width: 100%; display: flex; flex-direction: column; align-items: center; justify-content: center; flex: 1;">
-        <button onclick="closeGallery()" style="position: absolute; top: 20px; right: 20px; background: rgba(255,255,255,0.2); border: none; border-radius: 50%; width: 40px; height: 40px; font-size: 24px; cursor: pointer; color: white; z-index: 10000;">×</button>
-
-        <div id="gallery-swiper" style="width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; flex: 1;">
-          ${currentGalleryState.mediaUrls.map((url, index) => {
-            const isVideo = url.includes('.mp4') || url.includes('.webm') || url.includes('.mov');
-            return `
-              <div class="gallery-slide" style="position: absolute; width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; opacity: 0; transition: opacity 0.3s ease;" data-index="${index}">
-                ${isVideo ? 
-                  `<video controls style="max-width: 90vw; max-height: 80vh; width: auto; height: auto;">
-                     <source src="${url}" type="video/mp4">
-                   </video>` :
-                  `<img src="${url}" alt="Gallery item" style="max-width: 90vw; max-height: 80vh; object-fit: contain;">
-                 `
-                }
-              </div>
-            `;
-          }).join('')}
-        </div>
-
-        <button id="gallery-prev" onclick="galleryPrev()" style="position: absolute; left: 20px; background: rgba(255,255,255,0.2); border: none; border-radius: 50%; width: 50px; height: 50px; font-size: 24px; cursor: pointer; color: white; z-index: 10000;">‹</button>
-        <button id="gallery-next" onclick="galleryNext()" style="position: absolute; right: 20px; background: rgba(255,255,255,0.2); border: none; border-radius: 50%; width: 50px; height: 50px; font-size: 24px; cursor: pointer; color: white; z-index: 10000;">›</button>
-
-        <div id="gallery-counter" style="position: absolute; bottom: 60px; left: 50%; transform: translateX(-50%); color: white; font-size: 16px; z-index: 10000;">
-          <span id="current-index">${currentGalleryState.currentIndex + 1}</span> / ${currentGalleryState.mediaUrls.length}
-        </div>
-      </div>
-
-      <!-- Thumbnail Strip -->
-      <div id="thumbnail-strip" style="display: flex; gap: 10px; padding: 15px 0; max-width: 90vw; overflow-x: auto; justify-content: center; align-items: center;">
-        ${currentGalleryState.mediaUrls.map((url, index) => {
-          const isVideo = url.includes('.mp4') || url.includes('.webm') || url.includes('.mov');
-          return `
-            <div 
-              class="thumbnail-item" 
-              style="width: 60px; height: 60px; border-radius: 8px; overflow: hidden; cursor: pointer; border: ${index === currentGalleryState.currentIndex ? '3px solid white' : '3px solid transparent'}; transition: border 0.3s;"
-              onclick="galleryGoToIndex(${index})"
-            >
-              ${isVideo ? 
-                `<video muted playsinline style="width: 100%; height: 100%; object-fit: cover;">
-                   <source src="${url}" type="video/mp4">
-                 </video>` :
-                `<img src="${url}" alt="Thumbnail ${index + 1}" style="width: 100%; height: 100%; object-fit: cover;">
-               `
-              }
-            </div>
-          `;
-        }).join('')}
-      </div>
-    </div>
-  `;
-  
-  document.body.insertAdjacentHTML('beforeend', galleryHtml);
-  
-  // Initialize gallery display based on the starting index
-  showGallerySlide(currentGalleryState.currentIndex);
-  
-  // Add swipe/touch support
-  const swiper = document.getElementById('gallery-swiper');
-  let startX = 0; // Local variable within the openGallery scope
-  let startY = 0; // For potential vertical swipe rejection
-  let endX = 0;
-  let endY = 0;
-
-  const handleTouchStart = (e) => {
-    startX = e.touches[0].clientX;
-    startY = e.touches[0].clientY;
-  };
-
-  const handleTouchEnd = (e) => {
-    endX = e.changedTouches[0].clientX;
-    endY = e.changedTouches[0].clientY;
-    handleSwipe(startX, startY, endX, endY);
-  };
-
-  const handleMouseDown = (e) => {
-    startX = e.clientX;
-    startY = e.clientY;
-  };
-
-  const handleMouseUp = (e) => {
-    endX = e.clientX;
-    endY = e.clientY;
-    handleSwipe(startX, startY, endX, endY);
-  };
-
-  swiper.addEventListener('touchstart', handleTouchStart);
-  swiper.addEventListener('touchend', handleTouchEnd);
-  swiper.addEventListener('mousedown', handleMouseDown);
-  // Listen for mouseup on the window to capture release even if outside swiper
-  window.addEventListener('mouseup', handleMouseUp);
-
-  // Optional: Remove listeners when gallery closes
-  const cleanupListeners = () => {
-    swiper.removeEventListener('touchstart', handleTouchStart);
-    swiper.removeEventListener('touchend', handleTouchEnd);
-    swiper.removeEventListener('mousedown', handleMouseDown);
-    window.removeEventListener('mouseup', handleMouseUp);
-  };
-
-  // Add cleanup to closeGallery
-  const originalCloseGallery = window.closeGallery;
-  window.closeGallery = function() {
-    cleanupListeners();
-    if (originalCloseGallery) originalCloseGallery();
-    const overlay = document.getElementById('gallery-overlay');
-    if (overlay) overlay.remove();
-    // Reset the state when closed
-    currentGalleryState = null;
-  };
-};
-
-/**
- * Handles the swipe logic based on start and end coordinates.
- * @param {number} startX - Starting X coordinate.
- * @param {number} startY - Starting Y coordinate.
- * @param {number} endX - Ending X coordinate.
- * @param {number} endY - Ending Y coordinate.
- */
-function handleSwipe(startX, startY, endX, endY) {
-  const threshold = 50; // Minimum distance to consider a swipe
-  const verticalThreshold = 30; // Threshold to ignore vertical movement
-
-  const diffX = startX - endX;
-  const diffY = startY - endY;
-
-  // Check if the horizontal movement is significant enough and vertical movement is low enough
-  if (Math.abs(diffX) > threshold && Math.abs(diffY) < verticalThreshold) {
-    if (diffX > 0) {
-      galleryNext(); // Swipe left - go to next image
-    } else {
-      galleryPrev(); // Swipe right - go to previous image
-    }
-  }
-}
-
-/**
- * Displays the slide at the given index.
- * @param {number} index - The index of the slide to show.
- */
-function showGallerySlide(index) {
-  if (!currentGalleryState || index < 0 || index >= currentGalleryState.mediaUrls.length) return;
-
-  const slides = document.querySelectorAll('.gallery-slide');
-  slides.forEach((slide, i) => {
-    slide.style.opacity = i === index ? '1' : '0';
-  });
-  
-  // Update the counter display
-  const counterElement = document.getElementById('current-index');
-  if (counterElement) {
-    counterElement.textContent = index + 1;
-  }
-
-  // Update the state's current index
-  currentGalleryState.currentIndex = index;
-
-  // Update thumbnail borders
-  updateThumbnailBorders();
-}
-
-/**
- * Updates the border of thumbnail items to reflect the current image
- */
-function updateThumbnailBorders() {
-  const thumbnailItems = document.querySelectorAll('.thumbnail-item');
-  thumbnailItems.forEach((item, index) => {
-    item.style.border = index === currentGalleryState.currentIndex ? '3px solid white' : '3px solid transparent';
-  });
-}
-
-/**
- * Navigates to the specified image index
- * @param {number} index - The index of the image to navigate to
- */
-window.galleryGoToIndex = function(index) {
-  if (!currentGalleryState || index < 0 || index >= currentGalleryState.mediaUrls.length) return;
-  showGallerySlide(index);
-};
-
-/**
- * Navigates to the next image in the gallery.
- */
-window.galleryNext = function() {
-  if (!currentGalleryState) return;
-  const newIndex = (currentGalleryState.currentIndex + 1) % currentGalleryState.mediaUrls.length;
-  showGallerySlide(newIndex);
-};
-
-/**
- * Navigates to the previous image in the gallery.
- */
-window.galleryPrev = function() {
-  if (!currentGalleryState) return;
-  const newIndex = (currentGalleryState.currentIndex - 1 + currentGalleryState.mediaUrls.length) % currentGalleryState.mediaUrls.length;
-  showGallerySlide(newIndex);
-};
-
-/**
- * Closes the gallery overlay and cleans up event listeners.
- */
-window.closeGallery = function() {
-  // Cleanup logic is now handled in openGallery
-  // This function can still exist as a placeholder if called elsewhere
-  const overlay = document.getElementById('gallery-overlay');
-  if (overlay) overlay.remove();
-  currentGalleryState = null; // Clear the state
-};
