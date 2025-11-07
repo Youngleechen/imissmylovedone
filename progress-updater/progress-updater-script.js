@@ -276,14 +276,16 @@ document.addEventListener('DOMContentLoaded', async () => {
       alert('Please write something or attach media first.');
       return;
     }
-const { error } = await supabase
-  .from('development_updates')
-  .insert({
-    author_id: user.id,       // ✅ Matches your column name
-    title: 'Progress Update',
-    body,
-    created_at: new Date().toISOString()
-  });
+
+    // ✅ CORRECTED: Use 'author_id' to match your Supabase table
+    const { error } = await supabase
+      .from('development_updates') // ✅ NEW TABLE
+      .insert({
+        author_id: user.id,       // ✅ Matches your column name
+        title: 'Progress Update',
+        body,
+        created_at: new Date().toISOString()
+      });
 
     if (error) {
       alert('Failed to post: ' + error.message);
@@ -306,10 +308,11 @@ const { error } = await supabase
     const user = await checkAuth();
     if (!user) return;
 
+    // ✅ CORRECTED: Query by 'author_id' to match your Supabase table
     const { data, error } = await supabase
       .from('development_updates') // ✅ NEW TABLE
       .select('id, body, created_at')
-      .eq('user_id', user.id)
+      .eq('author_id', user.id)   // ✅ Matches your column name
       .order('created_at', { ascending: false });
 
     if (error) {
