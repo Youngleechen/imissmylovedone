@@ -14,8 +14,26 @@ document.addEventListener('DOMContentLoaded', async () => {
   const progressText = document.getElementById('progressText');
   const mediaPreviewContainer = document.getElementById('mediaPreviewContainer');
 
+  // NEW: Edit modal elements
+  const editModal = document.getElementById('editModal');
+  const editBody = document.getElementById('editBody');
+  const closeEditModal = document.getElementById('closeEditModal');
+  const editMediaContainer = document.getElementById('editMediaContainer');
+  const addMoreMediaButton = document.getElementById('addMoreMediaButton');
+  const addMoreMediaInput = document.getElementById('addMoreMediaInput');
+  const saveEditButton = document.getElementById('saveEditButton');
+  const deleteEditButton = document.getElementById('deleteEditButton');
+  const editUploadProgress = document.getElementById('editUploadProgress');
+  const editProgressFill = document.getElementById('editProgressFill');
+  const editProgressText = document.getElementById('editProgressText');
+
   // Track media files for this session
   let currentMediaFiles = [];
+
+  // NEW: Track edited post and media
+  let currentEditPostId = null;
+  let currentEditMedia = []; // {url, name, type, isExisting: true/false, isDeleted: true/false}
+  let newMediaFiles = []; // For newly added files
 
   async function checkAuth() {
     const { data: { user } } = await supabase.auth.getUser();
@@ -303,16 +321,238 @@ document.addEventListener('DOMContentLoaded', async () => {
     loadUpdates();
   });
 
+  // NEW: Edit Modal Functions
+  closeEditModal.addEventListener('click', () => {
+    editModal.style.display = 'none';
+    currentEditPostId = null;
+    currentEditMedia = [];
+    newMediaFiles = [];
+  });
+
+  addMoreMediaButton.addEventListener('click', () => {
+    addMoreMediaInput.click();
+  });
+
+  addMoreMediaInput.addEventListener('change', async (e) => {
+    const user = await checkAuth();
+    if (!user) return;
+
+    const files = Array.from(e.target.files);
+    if (!files.length) return;
+
+    for (const file of files) {
+      const allowedTypes = ['image/jpeg', 'image/png', 'image/gif', 'image/webp', 'video/mp4', 'video/webm', 'video/quicktime'];
+      if (!allowedTypes.includes(file.type)) {
+        alert(`File ${file.name} is not an allowed type.`);
+        continue;
+      }
+      if (file.size > 50 * 1024 * 1024) {
+        alert(`File ${file.name} exceeds 50MB limit.`);
+        continue;
+      }
+
+      // Upload new file
+      const fileExt = file.name.split('.').pop();
+      const fileName = `${user.id}/${Date.now()}-${Math.random().toString(36).substring(2, 15)}.${fileExt}`;
+
+      if (editUploadProgress) {
+        editUploadProgress.style.display = 'block';
+        editProgressFill.style.width = '0%';
+        editProgressText.textContent = `Uploading ${file.name}...`;
+      }
+
+      const { error: uploadError } = await supabase.storage
+        .from('dev-updates-media')
+        .upload(fileName, file, {
+          upsert: false,
+          onUploadProgress: (progressEvent) => {
+            const percentCompleted = Math.round((progressEvent.loaded * 100) / progressEvent.total);
+            if (editProgressFill) editProgressFill.style.width = percentCompleted + '%';
+            if (editProgressText) editProgressText.textContent = `Uploading ${file.name}... ${percentCompleted}%`;
+          }
+        });
+
+      if (uploadError) {
+        console.error('Upload error:', uploadError);
+        alert('Upload failed: ' + uploadError.message);
+        if (editUploadProgress) editUploadProgress.style.display = 'none';
+        return;
+      }
+
+      const { data: { publicUrl } } = supabase.storage
+        .from('dev-updates-media')
+        .getPublicUrl(fileName);
+
+      newMediaFiles.push({ url: publicUrl, name: file.name, type: file.type });
+      addMediaPreviewToEdit(publicUrl, file.name, file.type, false);
+    }
+
+    if (editUploadProgress) editUploadProgress.style.display = 'none';
+    addMoreMediaInput.value = '';
+  });
+
+  function addMediaPreviewToEdit(url, filename, fileType, isExisting) {
+    const previewItem = document.createElement('div');
+    previewItem.className = 'media-preview-item';
+    previewItem.style.cssText = `
+      position: relative;
+      display: inline-block;
+      margin: 5px;
+      border-radius: 8px;
+      overflow: hidden;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    `;
+
+    let previewElement;
+    if (fileType.startsWith('image')) {
+      previewElement = document.createElement('img');
+      previewElement.src = url;
+      previewElement.alt = filename;
+      previewElement.style.cssText = `
+        max-width: 100px;
+        height: 100px;
+        object-fit: cover;
+        border-radius: 8px;
+      `;
+    } else if (fileType.startsWith('video')) {
+      previewElement = document.createElement('video');
+      previewElement.controls = false;
+      previewElement.style.cssText = `
+        max-width: 100px;
+        height: 100px;
+        object-fit: cover;
+        border-radius: 8px;
+      `;
+      const source = document.createElement('source');
+      source.src = url;
+      source.type = fileType;
+      previewElement.appendChild(source);
+    }
+
+    const removeBtn = document.createElement('button');
+    removeBtn.textContent = '×';
+    removeBtn.style.cssText = `
+      position: absolute;
+      top: 5px;
+      right: 5px;
+      background: rgba(0,0,0,0.7);
+      color: white;
+      border: none;
+      border-radius: 50%;
+      width: 20px;
+      height: 20px;
+      cursor: pointer;
+      font-weight: bold;
+    `;
+    removeBtn.onclick = (e) => {
+      e.stopPropagation();
+      removeMediaPreviewFromEdit(previewItem, url, isExisting);
+    };
+
+    previewItem.appendChild(previewElement);
+    previewItem.appendChild(removeBtn);
+    editMediaContainer.appendChild(previewItem);
+  }
+
+  function removeMediaPreviewFromEdit(previewItem, url, isExisting) {
+    previewItem.remove();
+    if (isExisting) {
+      const existingMedia = currentEditMedia.find(m => m.url === url);
+      if (existingMedia) existingMedia.isDeleted = true;
+    } else {
+      newMediaFiles = newMediaFiles.filter(f => f.url !== url);
+    }
+  }
+
+  async function openEditModal(postId, currentBody) {
+    const user = await checkAuth();
+    if (!user) return;
+
+    currentEditPostId = postId;
+    editBody.value = currentBody;
+
+    // Extract and populate existing media
+    const mediaMatches = [...currentBody.matchAll(/!\[([^\]]*)\]\s*\(\s*([^)]+)\s*\)/g)];
+    currentEditMedia = mediaMatches.map(m => ({ url: m[2], name: m[1], isExisting: true, isDeleted: false }));
+    newMediaFiles = [];
+
+    editMediaContainer.innerHTML = '';
+    currentEditMedia.forEach(media => {
+      addMediaPreviewToEdit(media.url, media.name || 'Media', getMediaType(media.url), true);
+    });
+
+    editModal.style.display = 'flex';
+  }
+
+  function getMediaType(url) {
+    if (url.includes('.mp4') || url.includes('.webm') || url.includes('.mov')) return 'video/mp4';
+    return 'image/jpeg'; // Default to image
+  }
+
+  saveEditButton.addEventListener('click', async () => {
+    if (!currentEditPostId) return;
+
+    const user = await checkAuth();
+    if (!user) return;
+
+    let body = editBody.value.trim();
+    const allMedia = [
+      ...currentEditMedia.filter(m => !m.isDeleted),
+      ...newMediaFiles
+    ];
+
+    // Append non-deleted media to body
+    for (const media of allMedia) {
+      body += `\n\n![${media.name || 'Media'}](${media.url})`;
+    }
+
+    const { error } = await supabase
+      .from('development_updates')
+      .update({ body })
+      .eq('id', currentEditPostId)
+      .eq('author_id', user.id); // Ensure user owns the post
+
+    if (error) {
+      alert('Failed to update: ' + error.message);
+      return;
+    }
+
+    editModal.style.display = 'none';
+    loadUpdates(); // Reload posts to reflect changes
+  });
+
+  deleteEditButton.addEventListener('click', async () => {
+    if (!currentEditPostId) return;
+
+    if (!confirm('Are you sure you want to delete this post?')) return;
+
+    const user = await checkAuth();
+    if (!user) return;
+
+    const { error } = await supabase
+      .from('development_updates')
+      .delete()
+      .eq('id', currentEditPostId)
+      .eq('author_id', user.id); // Ensure user owns the post
+
+    if (error) {
+      alert('Failed to delete: ' + error.message);
+      return;
+    }
+
+    editModal.style.display = 'none';
+    loadUpdates(); // Reload posts
+  });
+
   // Load updates
   async function loadUpdates() {
     const user = await checkAuth();
     if (!user) return;
 
-    // ✅ CORRECTED: Query by 'author_id' to match your Supabase table
     const { data, error } = await supabase
-      .from('development_updates') // ✅ NEW TABLE
+      .from('development_updates')
       .select('id, body, created_at')
-      .eq('author_id', user.id)   // ✅ Matches your column name
+      .eq('author_id', user.id)
       .order('created_at', { ascending: false });
 
     if (error) {
@@ -327,13 +567,14 @@ document.addEventListener('DOMContentLoaded', async () => {
     }
 
     updatesContainer.innerHTML = data.map(post => {
-      // Extract media URLs from post body
       const mediaMatches = [...post.body.matchAll(/!\[([^\]]*)\]\s*\(\s*([^)]+)\s*\)/g)];
+      
+      let mediaHtml = '';
+      let bodyHtml = '';
       
       if (mediaMatches.length > 0) {
         let mediaGridHtml = '<div class="media-grid" style="position: relative; width: 100%; height: 300px; margin: 10px 0;">';
         
-        // Show first media item as large
         const firstMedia = mediaMatches[0];
         const firstAlt = firstMedia[1] || 'Media';
         const firstUrl = firstMedia[2].trim();
@@ -351,7 +592,6 @@ document.addEventListener('DOMContentLoaded', async () => {
           </div>
         `;
         
-        // If there are more media items, show the +N overlay
         if (mediaMatches.length > 1) {
           const secondMedia = mediaMatches[1];
           const secondUrl = secondMedia[2].trim();
@@ -377,31 +617,29 @@ document.addEventListener('DOMContentLoaded', async () => {
         
         mediaGridHtml += '</div>';
 
-        // Remove media markdown from text body
         let textOnlyBody = post.body.replace(/!\[([^\]]*)\]\s*\(\s*([^)]+)\s*\)/g, '');
         textOnlyBody = textOnlyBody.replace(/\n/g, '<br>');
         
-        return `
-          <div class="post-item" style="background: white; padding: 15px; border-radius: 8px; margin-bottom: 15px; box-shadow: 0 1px 3px rgba(0,0,0,0.1);">
-            <p style="margin: 0; line-height: 1.6;">${textOnlyBody}</p>
-            ${mediaGridHtml}
-            <small style="display: block; color: #718096; font-size: 12px; margin-top: 8px;">
-              ${new Date(post.created_at).toLocaleString()}
-            </small>
-          </div>
-        `;
+        mediaHtml = mediaGridHtml;
+        bodyHtml = textOnlyBody;
       } else {
-        // Handle posts without media
-        let processedBody = post.body.replace(/\n/g, '<br>');
-        return `
-          <div class="post-item" style="background: white; padding: 15px; border-radius: 8px; margin-bottom: 15px; box-shadow: 0 1px 3px rgba(0,0,0,0.1);">
-            <p style="margin: 0; line-height: 1.6;">${processedBody}</p>
-            <small style="display: block; color: #718096; font-size: 12px; margin-top: 8px;">
-              ${new Date(post.created_at).toLocaleString()}
-            </small>
-          </div>
-        `;
+        bodyHtml = post.body.replace(/\n/g, '<br>');
       }
+
+      // NEW: Add edit/delete buttons
+      return `
+        <div class="post-item" style="background: white; padding: 15px; border-radius: 8px; margin-bottom: 15px; box-shadow: 0 1px 3px rgba(0,0,0,0.1);">
+          <p style="margin: 0; line-height: 1.6;">${bodyHtml}</p>
+          ${mediaHtml}
+          <small style="display: block; color: #718096; font-size: 12px; margin-top: 8px;">
+            ${new Date(post.created_at).toLocaleString()}
+          </small>
+          <!-- NEW: Edit/Delete Buttons -->
+          <div style="margin-top: 10px;">
+            <button onclick="openEditModal('${post.id}', \`${post.body.replace(/`/g, '&#96;')}\`)" style="background: #4299e1; color: white; border: none; padding: 5px 10px; border-radius: 4px; cursor: pointer; font-size: 12px;">Edit</button>
+          </div>
+        </div>
+      `;
     }).join('');
   }
 
@@ -592,7 +830,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   }
 
   window.galleryGoToIndex = function(index) {
-    if (!currentGalleryState || index < 0 || index >= currentGalleryState.mediaUrls.length) return;
+    if (!currentGalleryState) return;
     showGallerySlide(index);
   };
 
@@ -613,4 +851,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     if (overlay) overlay.remove();
     currentGalleryState = null;
   };
+
+  // Make openEditModal available globally for inline onclick
+  window.openEditModal = openEditModal;
 });
