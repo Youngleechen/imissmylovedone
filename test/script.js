@@ -1,11 +1,7 @@
 // script.js - Main application logic
 
 document.addEventListener('DOMContentLoaded', async () => {
-  const supabase = window.supabase.createClient(
-    'https://ccetnqdqfrsitooestbh.supabase.co',
-    'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImNjZXRucWRxZnJzaXRvb2VzdGJoIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjIzMTE4MjksImV4cCI6MjA3Nzg4NzgyOX0.1NjRZZrgsPOg-2z_r2kRELWn9IVXNEQNpSxK6CktJRY'
-  );
-
+  const supabase = window.supabaseClient; // ✅ Use global client
   const memoryBody = document.getElementById('memory-body');
   const emojiButton = document.getElementById('emojiButton');
   const emojiPicker = document.getElementById('emojiPicker');
