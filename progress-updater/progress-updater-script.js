@@ -276,15 +276,14 @@ document.addEventListener('DOMContentLoaded', async () => {
       alert('Please write something or attach media first.');
       return;
     }
-
-    const { error } = await supabase
-      .from('development_updates') // ✅ NEW TABLE
-      .insert({
-        user_id: user.id,
-        title: 'Progress Update',
-        body,
-        created_at: new Date().toISOString()
-      });
+const { error } = await supabase
+  .from('development_updates')
+  .insert({
+    author_id: user.id,       // ✅ Matches your column name
+    title: 'Progress Update',
+    body,
+    created_at: new Date().toISOString()
+  });
 
     if (error) {
       alert('Failed to post: ' + error.message);
