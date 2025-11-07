@@ -1,11 +1,9 @@
 document.addEventListener('DOMContentLoaded', async () => {
-  // Initialize Supabase
   const supabase = window.supabase.createClient(
-    'https://ccetnqdqfrsitooestbh.supabase.co  ',
+    'https://ccetnqdqfrsitooestbh.supabase.co',
     'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImNjZXRucWRxZnJzaXRvb2VzdGJoIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjIzMTE4MjksImV4cCI6MjA3Nzg4NzgyOX0.1NjRZZrgsPOg-2z_r2kRELWn9IVXNEQNpSxK6CktJRY'
   );
 
-  // DOM elements
   const memoryBody = document.getElementById('memory-body');
   const emojiButton = document.getElementById('emojiButton');
   const emojiPicker = document.getElementById('emojiPicker');
@@ -16,51 +14,33 @@ document.addEventListener('DOMContentLoaded', async () => {
   const uploadProgress = document.getElementById('uploadProgress');
   const progressFill = document.getElementById('progressFill');
   const progressText = document.getElementById('progressText');
-  // Removed: const mediaPreviewContainer = document.getElementById('mediaPreviewContainer');
+  const mediaPreviewContainer = document.getElementById('mediaPreviewContainer');
 
-  // Create media preview container if it doesn't exist
-  let mediaPreviewContainerEl = document.createElement('div');
-  mediaPreviewContainerEl.id = 'mediaPreviewContainer';
-  mediaPreviewContainerEl.style.cssText = `
-    margin-top: 12px;
-    padding: 8px;
-    background: #f9f9f9;
-    border-radius: 8px;
-    display: none;
-  `;
-  memoryBody.parentNode.insertBefore(mediaPreviewContainerEl, mediaButton.parentNode.nextSibling);
+  // Track multiple media files
+  let currentMediaFiles = [];
 
-  // Track uploaded media URL and filename
-  let currentMediaUrl = null;
-  let currentMediaFilename = null;
-
-  // Check if user is authenticated
   async function checkAuth() {
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) {
-      // Redirect to login if not authenticated
       window.location.href = 'signin.html';
       return null;
     }
     return user;
   }
 
-  // === AUTO-RESIZE ===
+  // Auto-resize textarea
   const autoResize = () => {
     memoryBody.style.height = 'auto';
     const newHeight = Math.min(memoryBody.scrollHeight, 300);
     memoryBody.style.height = newHeight + 'px';
   };
-
   memoryBody.addEventListener('input', autoResize);
   autoResize();
 
-  // === EMOJI PICKER ===
+  // Emoji picker
   let pickerInstance = null;
-
   emojiButton.addEventListener('click', (e) => {
     e.stopPropagation();
-
     if (!pickerInstance) {
       pickerInstance = document.createElement('emoji-picker');
       pickerInstance.setAttribute('id', 'actual-emoji-picker');
@@ -82,7 +62,6 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     const isShowing = emojiPicker.classList.contains('show');
     emojiPicker.classList.remove('show');
-
     if (isShowing) return;
 
     const wrapper = emojiButton.closest('.thought-actions') || emojiButton.closest('.thought-box');
@@ -111,7 +90,6 @@ document.addEventListener('DOMContentLoaded', async () => {
     emojiPicker.classList.add('show');
   });
 
-  // Close picker on outside click
   document.addEventListener('click', (e) => {
     if (
       !emojiButton.contains(e.target) &&
@@ -122,11 +100,10 @@ document.addEventListener('DOMContentLoaded', async () => {
     }
   });
 
-  // === MEDIA UPLOAD ===
+  // Media upload handler
   mediaButton.addEventListener('click', async () => {
     const user = await checkAuth();
     if (!user) return;
-
     mediaInput.click();
   });
 
@@ -134,80 +111,93 @@ document.addEventListener('DOMContentLoaded', async () => {
     const user = await checkAuth();
     if (!user) return;
 
-    const file = e.target.files[0];
-    if (!file) return;
+    const files = Array.from(e.target.files);
+    if (!files.length) return;
 
-    // Validate file type
-    const allowedTypes = ['image/jpeg', 'image/png', 'image/gif', 'image/webp', 'video/mp4', 'video/webm', 'video/quicktime'];
-    if (!allowedTypes.includes(file.type)) {
-      alert('Only images and videos are allowed.');
-      return;
+    // Validate all files
+    for (const file of files) {
+      const allowedTypes = ['image/jpeg', 'image/png', 'image/gif', 'image/webp', 'video/mp4', 'video/webm', 'video/quicktime'];
+      if (!allowedTypes.includes(file.type)) {
+        alert(`File ${file.name} is not an allowed type.`);
+        return;
+      }
+      if (file.size > 50 * 1024 * 1024) {
+        alert(`File ${file.name} exceeds 50MB limit.`);
+        return;
+      }
     }
 
-    // Validate file size (50MB limit)
-    if (file.size > 50 * 1024 * 1024) {
-      alert('File size must be under 50MB.');
-      return;
-    }
+    // Process each file
+    for (const file of files) {
+      const fileExt = file.name.split('.').pop();
+      const fileName = `${user.id}/${Date.now()}-${Math.random().toString(36).substring(2, 15)}.${fileExt}`;
 
-    // Generate unique filename
-    const fileExt = file.name.split('.').pop();
-    const fileName = `${user.id}/${Date.now()}-${Math.random().toString(36).substring(2, 15)}.${fileExt}`;
+      // Show upload progress
+      if (uploadProgress && progressFill && progressText) {
+        uploadProgress.style.display = 'block';
+        progressFill.style.width = '0%';
+        progressText.textContent = `Uploading ${file.name}...`;
+      }
 
-    // Show upload progress
-    if (uploadProgress && progressFill && progressText) {
-      uploadProgress.style.display = 'block';
-      progressFill.style.width = '0%';
-      progressText.textContent = 'Uploading...';
-    }
-
-    // Upload to Supabase storage
-    const { error: uploadError } = await supabase.storage
-      .from('memories')
-      .upload(fileName, file, {
-        upsert: false,
-        onUploadProgress: (progressEvent) => {
-          const percentCompleted = Math.round((progressEvent.loaded * 100) / progressEvent.total);
-          if (progressFill) {
-            progressFill.style.width = percentCompleted + '%';
+      // Upload to Supabase storage
+      const { error: uploadError } = await supabase.storage
+        .from('memories')
+        .upload(fileName, file, {
+          upsert: false,
+          onUploadProgress: (progressEvent) => {
+            const percentCompleted = Math.round((progressEvent.loaded * 100) / progressEvent.total);
+            if (progressFill) {
+              progressFill.style.width = percentCompleted + '%';
+            }
+            if (progressText) {
+              progressText.textContent = `Uploading ${file.name}... ${percentCompleted}%`;
+            }
           }
-          if (progressText) {
-            progressText.textContent = `Uploading... ${percentCompleted}%`;
-          }
+        });
+
+      if (uploadError) {
+        console.error('Upload error:', uploadError);
+        alert('Upload failed: ' + uploadError.message);
+        if (uploadProgress) {
+          uploadProgress.style.display = 'none';
         }
+        return;
+      }
+
+      // Get public URL
+      const { data: { publicUrl } } = supabase.storage
+        .from('memories')
+        .getPublicUrl(fileName);
+
+      // Add to media files array
+      currentMediaFiles.push({
+        url: publicUrl,
+        name: file.name,
+        type: file.type
       });
 
-    if (uploadError) {
-      console.error('Upload error:', uploadError);
-      alert('Upload failed: ' + uploadError.message);
-      if (uploadProgress) {
-        uploadProgress.style.display = 'none';
-      }
-      return;
+      // Show preview
+      showMediaPreview(publicUrl, file.name, file.type);
     }
 
-    // Get public URL
-    const { data: { publicUrl } } = supabase.storage
-      .from('memories')
-      .getPublicUrl(fileName);
-
-    // Store for preview and posting
-    currentMediaUrl = publicUrl;
-    currentMediaFilename = file.name;
-
-    // Show preview
-    showMediaPreview(publicUrl, file.name, file.type);
-
-    // Hide progress and clear input
+    // Hide progress
     if (uploadProgress) {
       uploadProgress.style.display = 'none';
     }
     mediaInput.value = '';
   });
 
-  // === SHOW MEDIA PREVIEW ===
   function showMediaPreview(url, filename, fileType) {
-    mediaPreviewContainerEl.innerHTML = '';
+    const previewItem = document.createElement('div');
+    previewItem.className = 'media-preview-item';
+    previewItem.style.cssText = `
+      position: relative;
+      display: inline-block;
+      margin: 5px;
+      border-radius: 8px;
+      overflow: hidden;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    `;
 
     let previewElement;
     if (fileType.startsWith('image')) {
@@ -215,21 +205,19 @@ document.addEventListener('DOMContentLoaded', async () => {
       previewElement.src = url;
       previewElement.alt = filename;
       previewElement.style.cssText = `
-        max-width: 100%;
-        height: auto;
+        max-width: 100px;
+        height: 100px;
+        object-fit: cover;
         border-radius: 8px;
-        margin-bottom: 8px;
-        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
       `;
     } else if (fileType.startsWith('video')) {
       previewElement = document.createElement('video');
-      previewElement.controls = true;
+      previewElement.controls = false;
       previewElement.style.cssText = `
-        max-width: 100%;
-        height: auto;
+        max-width: 100px;
+        height: 100px;
+        object-fit: cover;
         border-radius: 8px;
-        margin-bottom: 8px;
-        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
       `;
       const source = document.createElement('source');
       source.src = url;
@@ -237,32 +225,42 @@ document.addEventListener('DOMContentLoaded', async () => {
       previewElement.appendChild(source);
     }
 
-    const filenameSpan = document.createElement('span');
-    filenameSpan.textContent = filename;
-    filenameSpan.style.cssText = `
-      display: block;
-      font-size: 12px;
-      color: #4a5568;
-      margin-top: 4px;
-      overflow: hidden;
-      text-overflow: ellipsis;
-      white-space: nowrap;
+    // Remove button
+    const removeBtn = document.createElement('button');
+    removeBtn.textContent = '×';
+    removeBtn.style.cssText = `
+      position: absolute;
+      top: 5px;
+      right: 5px;
+      background: rgba(0,0,0,0.7);
+      color: white;
+      border: none;
+      border-radius: 50%;
+      width: 20px;
+      height: 20px;
+      cursor: pointer;
+      font-weight: bold;
     `;
+    removeBtn.onclick = (e) => {
+      e.stopPropagation();
+      removeMediaPreview(previewItem, url);
+    };
 
-    mediaPreviewContainerEl.appendChild(previewElement);
-    mediaPreviewContainerEl.appendChild(filenameSpan);
-    mediaPreviewContainerEl.style.display = 'block';
+    previewItem.appendChild(previewElement);
+    previewItem.appendChild(removeBtn);
+    mediaPreviewContainer.appendChild(previewItem);
+    mediaPreviewContainer.style.display = 'block';
   }
 
-  // === CLEAR MEDIA PREVIEW ===
-  function clearMediaPreview() {
-    mediaPreviewContainerEl.innerHTML = '';
-    mediaPreviewContainerEl.style.display = 'none';
-    currentMediaUrl = null;
-    currentMediaFilename = null;
+  function removeMediaPreview(previewItem, url) {
+    previewItem.remove();
+    currentMediaFiles = currentMediaFiles.filter(item => item.url !== url);
+    if (currentMediaFiles.length === 0) {
+      mediaPreviewContainer.style.display = 'none';
+    }
   }
 
-  // === LOADING POSTS (with proper media rendering) ===
+  // Load posts
   async function loadUserPosts() {
     const user = await checkAuth();
     if (!user) return;
@@ -287,10 +285,9 @@ document.addEventListener('DOMContentLoaded', async () => {
     postsContainer.innerHTML = data.map(post => {
       let processedBody = post.body;
 
-      // Convert markdown image/video syntax to HTML
+      // Convert markdown media syntax to HTML
       processedBody = processedBody.replace(/!\[([^\]]*)\]\s*\(\s*([^)]+)\s*\)/g, (match, alt, url) => {
         const cleanUrl = url.trim();
-        // For safety, encode the URL for HTML attributes
         const safeUrl = cleanUrl.replace(/"/g, '&quot;').replace(/'/g, '&#39;');
 
         if (safeUrl.includes('.mp4') || safeUrl.includes('.webm') || safeUrl.includes('.mov')) {
@@ -303,7 +300,6 @@ document.addEventListener('DOMContentLoaded', async () => {
         }
       });
 
-      // Replace newlines with <br> for text formatting
       processedBody = processedBody.replace(/\n/g, '<br>');
 
       return `
@@ -317,16 +313,16 @@ document.addEventListener('DOMContentLoaded', async () => {
     }).join('');
   }
 
-  // === POSTING (with media support) ===
+  // Post handler
   postButton.addEventListener('click', async () => {
     const user = await checkAuth();
     if (!user) return;
 
     let body = memoryBody.value.trim();
 
-    // If there's a media file attached, append its Markdown to the body
-    if (currentMediaUrl && currentMediaFilename) {
-      body += `\n\n![${currentMediaFilename}](${currentMediaUrl})`;
+    // Append media markdown
+    for (const media of currentMediaFiles) {
+      body += `\n\n![${media.name}](${media.url})`;
     }
 
     if (!body) {
@@ -347,14 +343,12 @@ document.addEventListener('DOMContentLoaded', async () => {
       return;
     }
 
-    // Clear textarea and preview
+    // Clear state
     memoryBody.value = '';
     autoResize();
-    clearMediaPreview();
-
-    // Clear media state
-    currentMediaUrl = null;
-    currentMediaFilename = null;
+    currentMediaFiles = [];
+    mediaPreviewContainer.innerHTML = '';
+    mediaPreviewContainer.style.display = 'none';
 
     // Reload posts
     loadUserPosts();
