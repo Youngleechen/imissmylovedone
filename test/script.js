@@ -1,4 +1,3 @@
-Okay, here is the *full* script with all the original functionality, including the fixes for the gallery swipe and the ability to start at a specific index. The key changes are in the gallery functions and the `loadUserPosts` function where the `onclick` handlers are generated.
 
 ```javascript
 document.addEventListener('DOMContentLoaded', async () => {
@@ -604,3 +603,4 @@ window.closeGallery = function() {
 };
 
 ```
+
