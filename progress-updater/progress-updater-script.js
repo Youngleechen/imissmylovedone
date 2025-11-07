@@ -24,23 +24,39 @@ document.addEventListener('DOMContentLoaded', async () => {
 
   // Post handler (NEW - talks to 'progress_updates' table)
   postButton.addEventListener('click', async () => {
+    console.log('1. Post button clicked!'); // Debug log
     const user = await checkAuth();
-    if (!user) return;
+    console.log('2. User:', user); // Debug log
+    if (!user) {
+      console.log('3. No user, returning'); // Debug log
+      return;
+    }
 
     let body = memoryBody.value.trim();
+    console.log('4. Body text:', body); // Debug log
 
     // Append media markdown (managed by media.js)
     for (const media of window.currentMediaFiles) {
+      console.log('5. Adding media:', media); // Debug log
       body += `\n\n![${media.name}](${media.url})`;
     }
+    console.log('6. Final body with media:', body); // Debug log
 
     if (!body) {
+      console.log('7. No body content, showing alert'); // Debug log
       alert('Please write something or attach media first.');
       return;
     }
 
+    console.log('8. About to insert into progress_updates table'); // Debug log
+    console.log('8a. Insert data:', {
+      user_id: user.id,
+      title: 'Progress Update',
+      body: body
+    }); // Debug log
+
     // INSERT INTO progress_updates table
-    const { error } = await supabase
+    const { data, error } = await supabase
       .from('progress_updates') // ← NEW TABLE
       .insert({
         user_id: user.id,
@@ -49,9 +65,12 @@ document.addEventListener('DOMContentLoaded', async () => {
       });
 
     if (error) {
+      console.error('9. Insert error:', error); // Debug log
       alert('Failed to post progress: ' + error.message);
       return;
     }
+
+    console.log('10. Insert successful:', data); // Debug log
 
     // Clear state
     memoryBody.value = '';
@@ -60,15 +79,20 @@ document.addEventListener('DOMContentLoaded', async () => {
       window.clearMediaPreviews();
     }
 
+    console.log('11. About to reload posts'); // Debug log
     // Reload posts
     loadUserProgress();
+    console.log('12. Posts reloaded'); // Debug log
   });
 
   // Load progress posts (NEW - from 'progress_updates' table)
   async function loadUserProgress() {
+    console.log('LoadUserProgress called'); // Debug log
     const user = await checkAuth();
+    console.log('LoadUserProgress user:', user); // Debug log
     if (!user) return;
 
+    console.log('About to fetch from progress_updates table'); // Debug log
     const { data, error } = await supabase
       .from('progress_updates') // ← NEW TABLE
       .select('id, body, created_at')
@@ -76,10 +100,12 @@ document.addEventListener('DOMContentLoaded', async () => {
       .order('created_at', { ascending: false });
 
     if (error) {
-      console.error('Load progress error:', error);
+      console.error('Load progress error:', error); // Debug log
       postsContainer.innerHTML = '<p>Could not load your progress updates.</p>';
       return;
     }
+
+    console.log('Fetched data:', data); // Debug log
 
     if (data.length === 0) {
       postsContainer.innerHTML = '<p>You haven’t shared any progress yet.</p>';
@@ -160,8 +186,11 @@ document.addEventListener('DOMContentLoaded', async () => {
   }
 
   // Initialize
+  console.log('About to check auth and load posts'); // Debug log
   checkAuth().then(user => {
+    console.log('Initial auth check result:', user); // Debug log
     if (user) {
+      console.log('User authenticated, loading posts'); // Debug log
       loadUserProgress();
     }
   });
