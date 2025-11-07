@@ -1,161 +1,199 @@
 // progress-updater-script.js
-import { uploadMedia, displayMediaPreview, clearMediaPreview } from '../test/media.js';
+import { clearMediaPreviews } from './media.js';
 
-// Initialize Supabase client
-const supabase = window.supabaseClient;
+document.addEventListener('DOMContentLoaded', async () => {
+  const supabase = window.supabaseClient;
+  const postButton = document.getElementById('postButton');
+  const memoryBody = document.getElementById('memory-body');
 
-// DOM elements
-const memoryBody = document.getElementById('memory-body');
-const postButton = document.getElementById('postButton');
-const postsContainer = document.getElementById('postsContainer');
-
-// Current user (you'll need to implement authentication)
-let currentUser = null;
-
-// Get current user session
-async function getCurrentUser() {
-  const { data: { session }, error } = await supabase.auth.getSession();
-  if (error) {
-    console.error('Error getting session:', error);
-    return null;
+  if (postButton) {
+    postButton.addEventListener('click', async (e) => {
+      e.preventDefault();
+      await handlePostProgress(supabase);
+    });
   }
-  return session?.user || null;
-}
 
-// Function to create progress update
-async function createProgressUpdate() {
+  // Load existing progress updates
+  await loadProgressUpdates(supabase);
+
+  // Initialize emoji picker
+  initializeEmojiPicker();
+});
+
+async function handlePostProgress(supabase) {
+  const user = await checkAuth();
+  if (!user) return;
+
+  const memoryBody = document.getElementById('memory-body');
   const content = memoryBody.value.trim();
-  
+
   if (!content) {
-    alert('Please enter some progress update content');
+    alert('Please enter some progress to share.');
     return;
   }
 
+  // Show upload progress if there are media files
+  const uploadProgress = document.getElementById('uploadProgress');
+  const progressFill = document.getElementById('progressFill');
+  const progressText = document.getElementById('progressText');
+  
+  if (window.currentMediaFiles && window.currentMediaFiles.length > 0) {
+    if (uploadProgress) {
+      uploadProgress.style.display = 'block';
+      progressFill.style.width = '100%';
+      progressText.textContent = 'Saving progress update...';
+    }
+  }
+
   try {
-    // Show upload progress if there are media files
-    const mediaFiles = Array.from(document.getElementById('mediaInput').files);
-    
-    // Upload media files if any
-    let mediaUrls = [];
-    if (mediaFiles.length > 0) {
-      document.getElementById('uploadProgress').style.display = 'block';
-      mediaUrls = await uploadMedia(mediaFiles, 'progress-updates'); // Use the correct bucket
-      document.getElementById('uploadProgress').style.display = 'none';
-    }
+    // Get media URLs if any
+    const mediaUrls = window.currentMediaFiles ? window.currentMediaFiles.map(file => file.url) : [];
 
-    // Get current user
-    const user = await getCurrentUser();
-    if (!user) {
-      alert('Please log in to share progress');
-      return;
-    }
-
-    // Insert progress update into database
-    const { data, error } = await supabase
+    // Insert progress update into the progress_updates table
+    const { data: progressData, error: insertError } = await supabase
       .from('progress_updates')
       .insert([{
         user_id: user.id,
         content: content,
-        media_urls: mediaUrls,
+        media_urls: mediaUrls.length > 0 ? mediaUrls : null,
         created_at: new Date().toISOString()
-      }]);
+      }])
+      .select()
+      .single();
 
-    if (error) {
-      console.error('Error creating progress update:', error);
-      alert('Error saving progress update: ' + error.message);
+    if (insertError) {
+      console.error('Insert error:', insertError);
+      alert('Failed to save progress update: ' + insertError.message);
       return;
     }
 
-    console.log('Progress update created:', data);
+    console.log('Progress update saved:', progressData);
 
-    // Clear the input and media preview
+    // Clear the form
     memoryBody.value = '';
-    clearMediaPreview();
-    
-    // Reload posts to show the new one
-    loadProgressUpdates();
+    clearMediaPreviews();
+
+    // Hide progress
+    if (uploadProgress) {
+      uploadProgress.style.display = 'none';
+    }
+
+    // Reload progress updates to show the new one
+    await loadProgressUpdates(supabase);
 
   } catch (error) {
-    console.error('Error in createProgressUpdate:', error);
-    alert('Error sharing progress: ' + error.message);
+    console.error('Error posting progress:', error);
+    alert('An error occurred while saving your progress update.');
   }
 }
 
-// Function to load progress updates
-async function loadProgressUpdates() {
+async function loadProgressUpdates(supabase) {
   try {
-    const { data, error } = await supabase
+    const { data: updates, error } = await supabase
       .from('progress_updates')
-      .select(`
-        *,
-        profiles (username, avatar_url)
-      `)
-      .order('created_at', { ascending: false });
+      .select('*')
+      .order('created_at', { ascending: false })
+      .limit(50);
 
     if (error) {
-      console.error('Error loading progress updates:', error);
+      console.error('Load error:', error);
       return;
     }
 
-    // Clear existing posts
-    postsContainer.innerHTML = '';
-
-    // Render posts
-    data.forEach(post => {
-      const postElement = createPostElement(post);
-      postsContainer.appendChild(postElement);
-    });
-
+    displayProgressUpdates(updates || []);
   } catch (error) {
     console.error('Error loading progress updates:', error);
   }
 }
 
-// Function to create post element
-function createPostElement(post) {
-  const postDiv = document.createElement('div');
-  postDiv.className = 'post';
+function displayProgressUpdates(updates) {
+  const container = document.getElementById('postsContainer');
+  if (!container) return;
 
-  const user = post.profiles || { username: 'Unknown User', avatar_url: '' };
-  const mediaHtml = post.media_urls && post.media_urls.length > 0 
-    ? post.media_urls.map(url => {
-        const ext = url.split('.').pop().toLowerCase();
-        if (['jpg', 'jpeg', 'png', 'gif'].includes(ext)) {
-          return `<img src="${url}" alt="Progress media" style="max-width: 100%; border-radius: 8px; margin-top: 8px;" />`;
-        } else if (['mp4', 'webm', 'ogg'].includes(ext)) {
-          return `<video controls style="max-width: 100%; border-radius: 8px; margin-top: 8px;"><source src="${url}" type="video/${ext}">Your browser does not support the video tag.</video>`;
-        }
-        return `<a href="${url}" target="_blank">View Media</a>`;
-      }).join('')
-    : '';
+  container.innerHTML = '';
 
-  postDiv.innerHTML = `
-    <div class="post-header">
-      <div class="user-info">
-        <img src="${user.avatar_url || '/default-avatar.png'}" alt="Avatar" class="avatar" />
-        <div class="user-details">
-          <strong>${user.username}</strong>
-          <small>${new Date(post.created_at).toLocaleString()}</small>
-        </div>
-      </div>
-    </div>
-    <div class="post-content">
-      <p>${post.content}</p>
-      ${mediaHtml}
-    </div>
-  `;
+  if (updates.length === 0) {
+    container.innerHTML = '<p style="text-align: center; color: #666; padding: 20px;">No progress updates yet. Be the first to share!</p>';
+    return;
+  }
 
-  return postDiv;
+  updates.forEach(update => {
+    const updateElement = createProgressUpdateElement(update);
+    container.appendChild(updateElement);
+  });
 }
 
-// Event listeners
-postButton.addEventListener('click', createProgressUpdate);
+function createProgressUpdateElement(update) {
+  const div = document.createElement('div');
+  div.className = 'post-item';
+  div.style.cssText = `
+    background: white;
+    border: 1px solid #e2e8f0;
+    border-radius: 12px;
+    padding: 16px;
+    margin-bottom: 16px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+  `;
 
-// Initialize the page
-document.addEventListener('DOMContentLoaded', async () => {
-  // Load existing progress updates
-  await loadProgressUpdates();
-  
-  // Set the correct bucket for progress updates
-  window.CURRENT_BUCKET_OVERRIDE = 'progress-updates';
-});
+  let mediaHtml = '';
+  if (update.media_urls && update.media_urls.length > 0) {
+    mediaHtml = `
+      <div class="media-container" style="margin-top: 12px;">
+        ${update.media_urls.map((url, index) => {
+          const isVideo = url.includes('.mp4') || url.includes('.webm') || url.includes('.mov');
+          return `
+            <div style="display: inline-block; margin: 5px; position: relative;">
+              ${isVideo ? 
+                `<video controls style="max-width: 200px; max-height: 200px; border-radius: 8px; object-fit: cover;">
+                   <source src="${url}" type="video/mp4">
+                 </video>` :
+                `<img src="${url}" alt="Progress media" style="max-width: 200px; max-height: 200px; border-radius: 8px; object-fit: cover; cursor: pointer;" onclick="openGallery('${update.id}', '${encodeURIComponent(JSON.stringify(update.media_urls))}', ${index})">`
+              }
+            </div>
+          `;
+        }).join('')}
+      </div>
+    `;
+  }
+
+  div.innerHTML = `
+    <div class="post-header" style="margin-bottom: 8px;">
+      <strong style="color: #2d3748;">Your Progress</strong>
+      <span style="color: #718096; font-size: 12px; margin-left: 8px;">${new Date(update.created_at).toLocaleString()}</span>
+    </div>
+    <div class="post-content" style="color: #4a5568; line-height: 1.5; white-space: pre-wrap;">${update.content}</div>
+    ${mediaHtml}
+  `;
+
+  return div;
+}
+
+function initializeEmojiPicker() {
+  const emojiButton = document.getElementById('emojiButton');
+  const emojiPicker = document.getElementById('emojiPicker');
+  const memoryBody = document.getElementById('memory-body');
+
+  if (emojiButton && emojiPicker && memoryBody) {
+    const picker = document.createElement('emoji-picker');
+    emojiPicker.appendChild(picker);
+
+    emojiButton.addEventListener('click', () => {
+      emojiPicker.style.display = emojiPicker.style.display === 'block' ? 'none' : 'block';
+    });
+
+    picker.addEventListener('emoji-click', (e) => {
+      const { detail: { emoji } } = e;
+      memoryBody.value += emoji;
+      memoryBody.focus();
+    });
+  }
+}
+
+async function checkAuth() {
+  const { data: { user } } = await window.supabaseClient.auth.getUser();
+  if (!user) {
+    window.location.href = '../signin.html';
+    return null;
+  }
+  return user;
+}
