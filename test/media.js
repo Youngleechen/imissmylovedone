@@ -285,18 +285,35 @@ window.openGallery = function(postId, encodedMediaUrlsJson, startIndex = 0) {
   swiper.addEventListener('mousedown', handleMouseDown);
   window.addEventListener('mouseup', handleMouseUp);
 
+  // ✅ Close gallery when clicking outside
+  const overlay = document.getElementById('gallery-overlay');
+  overlay.addEventListener('click', (e) => {
+    if (e.target === overlay) {
+      closeGallery();
+    }
+  });
+
+  // ✅ Close gallery when pressing ESC
+  const handleKeyDown = (e) => {
+    if (e.key === 'Escape') {
+      closeGallery();
+    }
+  };
+  document.addEventListener('keydown', handleKeyDown);
+
   const cleanupListeners = () => {
     swiper.removeEventListener('touchstart', handleTouchStart);
     swiper.removeEventListener('touchend', handleTouchEnd);
     swiper.removeEventListener('mousedown', handleMouseDown);
     window.removeEventListener('mouseup', handleMouseUp);
+    overlay.removeEventListener('click', () => {});
+    document.removeEventListener('keydown', handleKeyDown);
   };
 
   const originalCloseGallery = window.closeGallery;
   window.closeGallery = function() {
     cleanupListeners();
     if (originalCloseGallery) originalCloseGallery();
-    const overlay = document.getElementById('gallery-overlay');
     if (overlay) overlay.remove();
     currentGalleryState = null;
   };
@@ -367,7 +384,7 @@ window.closeGallery = function() {
 
 // Auth helper (moved here to avoid duplication)
 async function checkAuth() {
-  const { data: { user } } = await window.supabase.auth.getUser();
+  const { data: { user } } = await window.supabaseClient.auth.getUser();
   if (!user) {
     window.location.href = 'signin.html';
     return null;
@@ -377,12 +394,6 @@ async function checkAuth() {
 
 // Initialize when this module loads
 document.addEventListener('DOMContentLoaded', async () => {
-  // Create Supabase client here since it's needed for uploads
-  const supabase = window.supabase.createClient(
-    'https://ccetnqdqfrsitooestbh.supabase.co',
-    'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImNjZXRucWRxZnJzaXRvb2VzdGJoIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjIzMTE4MjksImV4cCI6MjA3Nzg4NzgyOX0.1NjRZZrgsPOg-2z_r2kRELWn9IVXNEQNpSxK6CktJRY'
-  );
-
-  // Initialize media handlers
-  initializeMediaHandlers(supabase);
+  // Initialize media handlers using the global client
+  initializeMediaHandlers(window.supabaseClient);
 });
