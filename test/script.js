@@ -20,7 +20,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   let currentMediaFiles = [];
 
   async function checkAuth() {
-    const { data: { user } } = await supabase.auth.getUser();
+    const {  { user } } = await supabase.auth.getUser();
     if (!user) {
       window.location.href = 'signin.html';
       return null;
@@ -415,7 +415,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 // Object to hold the current gallery state (media URLs, current index)
 let currentGalleryState = null;
 
-// --- FIXED GALLERY FUNCTIONS ---
+// --- FIXED GALLERY FUNCTIONS WITH THUMBNAILS ---
 /**
  * Opens the gallery overlay.
  * @param {string} postId - The ID of the post (not used directly here, but passed from the HTML).
@@ -432,13 +432,13 @@ window.openGallery = function(postId, encodedMediaUrlsJson, startIndex = 0) {
     currentIndex: startIndex // Use the provided startIndex (default to 0)
   };
 
-  // Create gallery HTML with swiping capability
+  // Create gallery HTML with swiping capability and thumbnails
   const galleryHtml = `
     <div id="gallery-overlay" style="position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.9); z-index: 9999; display: flex; align-items: center; justify-content: center; padding: 20px;">
-      <div class="gallery-container" style="position: relative; max-width: 90vw; max-height: 90vh; width: 100%; height: 100%; display: flex; align-items: center; justify-content: center;">
+      <div class="gallery-container" style="position: relative; max-width: 90vw; max-height: 90vh; width: 100%; height: 100%; display: flex; flex-direction: column; align-items: center; justify-content: center;">
         <button onclick="closeGallery()" style="position: absolute; top: 20px; right: 20px; background: rgba(255,255,255,0.2); border: none; border-radius: 50%; width: 40px; height: 40px; font-size: 24px; cursor: pointer; color: white; z-index: 10000;">×</button>
 
-        <div id="gallery-swiper" style="width: 100%; height: 100%; display: flex; align-items: center; justify-content: center;">
+        <div id="gallery-swiper" style="width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; flex-grow: 1;">
           ${currentGalleryState.mediaUrls.map((url, index) => {
             const isVideo = url.includes('.mp4') || url.includes('.webm') || url.includes('.mov');
             return `
@@ -455,11 +455,31 @@ window.openGallery = function(postId, encodedMediaUrlsJson, startIndex = 0) {
           }).join('')}
         </div>
 
-        <button id="gallery-prev" onclick="galleryPrev()" style="position: absolute; left: 20px; background: rgba(255,255,255,0.2); border: none; border-radius: 50%; width: 50px; height: 50px; font-size: 24px; cursor: pointer; color: white; z-index: 10000;">‹</button>
-        <button id="gallery-next" onclick="galleryNext()" style="position: absolute; right: 20px; background: rgba(255,255,255,0.2); border: none; border-radius: 50%; width: 50px; height: 50px; font-size: 24px; cursor: pointer; color: white; z-index: 10000;">›</button>
+        <!-- Thumbnail Container -->
+        <div id="thumbnail-container" style="display: flex; flex-wrap: wrap; justify-content: center; gap: 5px; margin-top: 10px; max-width: 100%; overflow-x: auto; padding: 10px; background: rgba(0,0,0,0.7); border-radius: 8px;">
+          ${currentGalleryState.mediaUrls.map((url, index) => {
+            const isVideo = url.includes('.mp4') || url.includes('.webm') || url.includes('.mov');
+            return `
+              <div class="thumbnail-item" style="position: relative; width: 60px; height: 60px; border-radius: 4px; overflow: hidden; cursor: pointer; border: 2px solid transparent; transition: border-color 0.2s;" data-index="${index}" onclick="goToSlide(${index})">
+                ${isVideo ? 
+                  `<video muted playsinline style="width: 100%; height: 100%; object-fit: cover;">
+                     <source src="${url}" type="video/mp4">
+                   </video>` :
+                  `<img src="${url}" alt="Thumbnail ${index + 1}" style="width: 100%; height: 100%; object-fit: cover;">
+                 `
+                }
+              </div>
+            `;
+          }).join('')}
+        </div>
 
-        <div id="gallery-counter" style="position: absolute; bottom: 20px; left: 50%; transform: translateX(-50%); color: white; font-size: 16px; z-index: 10000;">
-          <span id="current-index">${currentGalleryState.currentIndex + 1}</span> / ${currentGalleryState.mediaUrls.length}
+        <!-- Navigation Buttons -->
+        <div style="display: flex; align-items: center; justify-content: space-between; width: 100%; margin-top: 10px;">
+          <button id="gallery-prev" onclick="galleryPrev()" style="background: rgba(255,255,255,0.2); border: none; border-radius: 50%; width: 50px; height: 50px; font-size: 24px; cursor: pointer; color: white; z-index: 10000;">‹</button>
+          <div id="gallery-counter" style="color: white; font-size: 16px; z-index: 10000;">
+            <span id="current-index">${currentGalleryState.currentIndex + 1}</span> / ${currentGalleryState.mediaUrls.length}
+          </div>
+          <button id="gallery-next" onclick="galleryNext()" style="background: rgba(255,255,255,0.2); border: none; border-radius: 50%; width: 50px; height: 50px; font-size: 24px; cursor: pointer; color: white; z-index: 10000;">›</button>
         </div>
       </div>
     </div>
@@ -569,6 +589,20 @@ function showGallerySlide(index) {
 
   // Update the state's current index
   currentGalleryState.currentIndex = index;
+
+  // Update thumbnail highlights
+  updateThumbnailHighlights(index);
+}
+
+/**
+ * Updates the visual highlight of the active thumbnail.
+ * @param {number} activeIndex - The index of the currently active slide.
+ */
+function updateThumbnailHighlights(activeIndex) {
+  const thumbnails = document.querySelectorAll('.thumbnail-item');
+  thumbnails.forEach((thumb, index) => {
+    thumb.style.borderColor = index === activeIndex ? 'white' : 'transparent';
+  });
 }
 
 /**
@@ -587,6 +621,15 @@ window.galleryPrev = function() {
   if (!currentGalleryState) return;
   const newIndex = (currentGalleryState.currentIndex - 1 + currentGalleryState.mediaUrls.length) % currentGalleryState.mediaUrls.length;
   showGallerySlide(newIndex);
+};
+
+/**
+ * Jumps to a specific slide in the gallery.
+ * @param {number} index - The index of the slide to jump to.
+ */
+window.goToSlide = function(index) {
+  if (!currentGalleryState || index < 0 || index >= currentGalleryState.mediaUrls.length) return;
+  showGallerySlide(index);
 };
 
 /**
