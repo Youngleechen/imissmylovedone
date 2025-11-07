@@ -126,7 +126,11 @@ document.addEventListener('DOMContentLoaded', async () => {
     memoryBody.value = '';
     autoResize();
     window.currentMediaFiles = []; // Reset media files
-    // Note: The preview container will be cleared by media.js via its API
+
+    // 👇 Explicitly clear the preview container via media.js
+    if (typeof window.clearMediaPreviews === 'function') {
+      window.clearMediaPreviews();
+    }
 
     // Reload posts
     loadUserPosts();
