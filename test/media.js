@@ -103,8 +103,14 @@ export function initializeMediaHandlers(supabase) {
   });
 }
 
-// ✅ NEW: Dynamic bucket selection function
+// ✅ NEW: Dynamic bucket selection function with override support
 function getCurrentBucketName() {
+  // Check for override first
+  if (window.CURRENT_BUCKET_OVERRIDE) {
+    console.log('Using overridden bucket:', window.CURRENT_BUCKET_OVERRIDE);
+    return window.CURRENT_BUCKET_OVERRIDE;
+  }
+
   const currentPath = window.location.pathname;
   
   // Map page paths to bucket names
@@ -130,6 +136,7 @@ function getCurrentBucketName() {
   }
 
   // Default bucket if no match found
+  console.log('No matching path found, using default bucket: memories');
   return 'memories'; // or throw error if you prefer
 }
 
