@@ -667,7 +667,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
   // --- GALLERY FUNCTIONS ---
   // Reused from main app, but scoped to this page
-  let currentGalleryState = null;
+   let currentGalleryState = null;
 
   window.openGallery = function(postId, encodedMediaUrlsJson, startIndex = 0) {
     const mediaUrls = JSON.parse(decodeURIComponent(encodedMediaUrlsJson));
@@ -680,7 +680,8 @@ document.addEventListener('DOMContentLoaded', async () => {
     const galleryHtml = `
       <div id="gallery-overlay" style="position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.9); z-index: 9999; display: flex; align-items: center; justify-content: center; padding: 20px; flex-direction: column;">
         <div class="gallery-container" style="position: relative; max-width: 90vw; max-height: 85vh; width: 100%; display: flex; flex-direction: column; align-items: center; justify-content: center; flex: 1;">
-          <button onclick="closeGallery()" style="position: absolute; top: 20px; right: 20px; background: rgba(255,255,255,0.8); border: none; border-radius: 50%; width: 40px; height: 40px; font-size: 24px; cursor: pointer; color: #333; z-index: 10000; box-shadow: 0 2px 4px rgba(0,0,0,0.2); display: flex; align-items: center; justify-content: center; transition: background 0.2s ease;" onmouseover="this.style.background='rgba(255,255,255,1)';" onmouseout="this.style.background='rgba(255,255,255,0.8)';">×</button>
+          <!-- Close Button -->
+          <button onclick="window.closeGallery()" style="position: absolute; top: 20px; right: 20px; background: rgba(255,255,255,0.8); border: none; border-radius: 50%; width: 40px; height: 40px; font-size: 24px; cursor: pointer; color: #333; z-index: 10000; box-shadow: 0 2px 4px rgba(0,0,0,0.2); display: flex; align-items: center; justify-content: center; transition: background 0.2s ease;" onmouseover="this.style.background='rgba(255,255,255,1)';" onmouseout="this.style.background='rgba(255,255,255,0.8)';">×</button>
 
           <div id="gallery-swiper" style="width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; flex: 1;">
             ${currentGalleryState.mediaUrls.map((url, index) => {
@@ -772,19 +773,19 @@ document.addEventListener('DOMContentLoaded', async () => {
     const overlay = document.getElementById('gallery-overlay');
     overlay.addEventListener('click', (e) => {
       if (e.target === overlay) {
-        closeGallery();
+        window.closeGallery();
       }
     });
 
     // Close gallery when pressing ESC
     const handleKeyDown = (e) => {
       if (e.key === 'Escape') {
-        closeGallery();
+        window.closeGallery();
       }
     };
     document.addEventListener('keydown', handleKeyDown);
 
-    // Simple & robust close function
+    // Define closeGallery globally so it can be called from anywhere
     window.closeGallery = function() {
       const overlay = document.getElementById('gallery-overlay');
       if (overlay) {
@@ -861,12 +862,14 @@ document.addEventListener('DOMContentLoaded', async () => {
     showGallerySlide(newIndex);
   };
 
+  // Ensure closeGallery is always available globally
   window.closeGallery = function() {
     const overlay = document.getElementById('gallery-overlay');
-    if (overlay) overlay.remove();
+    if (overlay) {
+      overlay.remove();
+    }
     currentGalleryState = null;
   };
-
   // Make openEditModal available globally for inline onclick
   window.openEditModal = openEditModal;
 });
