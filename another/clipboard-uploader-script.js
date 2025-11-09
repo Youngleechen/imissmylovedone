@@ -15,21 +15,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
   // Helper function to check authentication
   async function checkAuth() {
-    const { data: { session }, error } = await window.supabaseClient.auth.getSession();
-    
-    if (error) {
-      console.error('Error getting session:', error);
-      return null;
-    }
-
-    if (session && session.user) {
-      // Return the actual authenticated user's ID
-      return { id: session.user.id };
-    } else {
-      console.warn('No authenticated user found');
-      alert('Please log in to continue');
-      return null;
-    }
+    // ✅ Hardcoded user ID for testing (replace with real auth later)
+    return { id: 'a6f0b8c1-7371-4345-8845-b7512c9f637b' };
   }
 
   // Show media preview
@@ -134,7 +121,7 @@ document.addEventListener('DOMContentLoaded', () => {
         return;
       }
 
-      // Get public URL - FIXED SYNTAX
+      // Get public URL
       const { data: { publicUrl } } = window.supabaseClient.storage
         .from('dev-updates-media')
         .getPublicUrl(fileName);
@@ -255,7 +242,7 @@ document.addEventListener('DOMContentLoaded', () => {
             return;
           }
 
-          // Get public URL - FIXED SYNTAX
+          // Get public URL
           const { data: { publicUrl } } = window.supabaseClient.storage
             .from('dev-updates-media')
             .getPublicUrl(fileName);
