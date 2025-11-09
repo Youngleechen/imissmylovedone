@@ -1,10 +1,7 @@
-document.addEventListener('DOMContentLoaded', async () => {
-    // Initialize Supabase client (replace with your URL and anon key)
-    const supabase = supabase.createClient(
-        'YOUR_SUPABASE_URL',
-        'YOUR_SUPABASE_ANON_KEY'
-    );
+// Import Supabase client from config
+import { supabase } from './config.js';
 
+document.addEventListener('DOMContentLoaded', async () => {
     const dropArea = document.getElementById('dropArea');
     const fileInput = document.getElementById('fileInput');
     const previewContainer = document.getElementById('previewContainer');
@@ -182,7 +179,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         uploadProgress.style.display = 'none';
         progressText.textContent = `Successfully uploaded ${successCount} of ${totalFiles} images!`;
         
-        // Reload updates if needed (you can call your loadUpdates function here)
+        // Reload updates if needed
     });
 
     async function checkAuth() {
