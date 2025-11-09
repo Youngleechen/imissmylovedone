@@ -1,15 +1,23 @@
 {
   "redirects": [
     {
-      "source": "/:path*",
-      "has": [
-        {
-          "type": "header",
-          "key": "x-vercel-trailing-slash",
-          "value": "false"
-        }
-      ],
-      "destination": "/:path*/",
+      "source": "/test",
+      "destination": "/test/",
+      "permanent": true
+    },
+    {
+      "source": "/memories",
+      "destination": "/memories/",
+      "permanent": true
+    },
+    {
+      "source": "/profile",
+      "destination": "/profile/",
+      "permanent": true
+    },
+    {
+      "source": "/about",
+      "destination": "/about/",
       "permanent": true
     }
   ]
