@@ -1,5 +1,7 @@
 document.addEventListener('DOMContentLoaded', async () => {
-  const supabase = window.supabaseClient;
+  console.log('✅ Script loaded. Starting initialization...');
+
+  // Get DOM elements
   const updateBody = document.getElementById('update-body');
   const mediaButton = document.getElementById('mediaButton');
   const mediaInput = document.getElementById('mediaInput');
@@ -9,26 +11,50 @@ document.addEventListener('DOMContentLoaded', async () => {
   const progressText = document.getElementById('progressText');
   const mediaPreviewContainer = document.getElementById('mediaPreviewContainer');
 
-  // Track media files for this session
-  let currentMediaFiles = [];
+  // ✅ Check if all required elements exist
+  if (!updateBody || !mediaButton || !mediaInput || !postButton || !uploadProgress || !progressFill || !progressText || !mediaPreviewContainer) {
+    console.error('❌ One or more required DOM elements are missing!');
+    console.log({
+      updateBody: !!updateBody,
+      mediaButton: !!mediaButton,
+      mediaInput: !!mediaInput,
+      postButton: !!postButton,
+      uploadProgress: !!uploadProgress,
+      progressFill: !!progressFill,
+      progressText: !!progressText,
+      mediaPreviewContainer: !!mediaPreviewContainer
+    });
+    alert('Critical error: Required UI elements not found. Please check your HTML.');
+    return;
+  }
 
-  // ✅ Add console log to verify script loaded
-  console.log('✅ Clipboard uploader script loaded.');
+  console.log('✅ All DOM elements found.');
+
+  const supabase = window.supabaseClient;
+
+  // Track media files
+  let currentMediaFiles = [];
 
   async function checkAuth() {
     console.log('🔍 Checking auth...');
-    const { data: { user } } = await supabase.auth.getUser();
-    if (!user) {
-      console.error('❌ No user signed in.');
-      alert('You must be signed in to upload. Redirecting to sign-in...');
-      window.location.href = '../signin.html';
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) {
+        console.error('❌ No user signed in.');
+        alert('You must be signed in to upload. Redirecting to sign-in...');
+        window.location.href = '../signin.html';
+        return null;
+      }
+      console.log('✅ Authenticated as:', user.id);
+      return user;
+    } catch (err) {
+      console.error('❌ Auth check failed:', err);
+      alert('Authentication failed. Please refresh.');
       return null;
     }
-    console.log('✅ Authenticated as:', user.id);
-    return user;
   }
 
-  // Media upload handler (for button click)
+  // Media button click
   mediaButton.addEventListener('click', async () => {
     console.log('📎 Media button clicked.');
     const user = await checkAuth();
@@ -36,6 +62,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     mediaInput.click();
   });
 
+  // File input change
   mediaInput.addEventListener('change', async (e) => {
     console.log('📁 File input changed. Files:', e.target.files);
     const user = await checkAuth();
@@ -51,9 +78,15 @@ document.addEventListener('DOMContentLoaded', async () => {
     mediaInput.value = '';
   });
 
-  // ✅ NEW: Listen for paste on the entire document
+  // ✅ Paste event listener on document
   document.addEventListener('paste', async (e) => {
     console.log('📋 PASTE EVENT FIRED!');
+
+    // Safety check: make sure updateBody exists
+    if (!updateBody) {
+      console.error('❌ updateBody is null!');
+      return;
+    }
 
     // Only proceed if textarea is focused
     if (document.activeElement !== updateBody) {
@@ -125,56 +158,68 @@ document.addEventListener('DOMContentLoaded', async () => {
       const fileExt = currentFile.name.split('.').pop() || 'png';
       const fileName = `${user.id}/${Date.now()}-${Math.random().toString(36).substring(2, 15)}.${fileExt}`;
 
-      // Show upload progress
+      // Show upload progress (if elements exist)
       if (uploadProgress && progressFill && progressText) {
         uploadProgress.style.display = 'block';
         progressFill.style.width = '0%';
         progressText.textContent = `Uploading ${currentFile.name}...`;
+      } else {
+        console.warn('⚠️ Progress UI elements missing.');
       }
 
-      // Upload to dev-updates-media bucket
+      // Upload to Supabase
       console.log(`🌐 Uploading to Supabase: ${fileName}`);
-      const { error: uploadError } = await supabase.storage
-        .from('dev-updates-media')
-        .upload(fileName, currentFile, {
-          upsert: false,
-          onUploadProgress: (progressEvent) => {
-            const percentCompleted = Math.round((progressEvent.loaded * 100) / progressEvent.total);
-            console.log(`📊 Upload progress: ${percentCompleted}% for ${currentFile.name}`);
-            if (progressFill) {
-              progressFill.style.width = percentCompleted + '%';
+      try {
+        const { error: uploadError } = await supabase.storage
+          .from('dev-updates-media')
+          .upload(fileName, currentFile, {
+            upsert: false,
+            onUploadProgress: (progressEvent) => {
+              const percentCompleted = Math.round((progressEvent.loaded * 100) / progressEvent.total);
+              console.log(`📊 Upload progress: ${percentCompleted}% for ${currentFile.name}`);
+              if (progressFill) {
+                progressFill.style.width = percentCompleted + '%';
+              }
+              if (progressText) {
+                progressText.textContent = `Uploading ${currentFile.name}... ${percentCompleted}%`;
+              }
             }
-            if (progressText) {
-              progressText.textContent = `Uploading ${currentFile.name}... ${percentCompleted}%`;
-            }
+          });
+
+        if (uploadError) {
+          console.error('❌ Upload error:', uploadError);
+          alert('Upload failed: ' + uploadError.message);
+          if (uploadProgress) {
+            uploadProgress.style.display = 'none';
           }
+          return;
+        }
+
+        // Get public URL
+        const { data: { publicUrl } } = supabase.storage
+          .from('dev-updates-media')
+          .getPublicUrl(fileName);
+
+        console.log(`✅ Upload successful. Public URL: ${publicUrl}`);
+
+        // Add to media files array
+        currentMediaFiles.push({
+          url: publicUrl,
+          name: currentFile.name,
+          type: currentFile.type
         });
 
-      if (uploadError) {
-        console.error('❌ Upload error:', uploadError);
-        alert('Upload failed: ' + uploadError.message);
+        // Show preview
+        showMediaPreview(publicUrl, currentFile.name, currentFile.type);
+
+      } catch (uploadErr) {
+        console.error('❌ Upload failed with exception:', uploadErr);
+        alert('Upload failed unexpectedly. Check console.');
         if (uploadProgress) {
           uploadProgress.style.display = 'none';
         }
         return;
       }
-
-      // Get public URL
-      const { data: { publicUrl } } = supabase.storage
-        .from('dev-updates-media')
-        .getPublicUrl(fileName);
-
-      console.log(`✅ Upload successful. Public URL: ${publicUrl}`);
-
-      // Add to media files array
-      currentMediaFiles.push({
-        url: publicUrl,
-        name: currentFile.name,
-        type: currentFile.type
-      });
-
-      // Show preview
-      showMediaPreview(publicUrl, currentFile.name, currentFile.type);
     }
 
     // Hide progress
@@ -249,31 +294,40 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     console.log('📝 Posting body:', body);
 
-    const { error } = await supabase
-      .from('development_updates')
-      .insert({
-        author_id: user.id,
-        title: 'Test Update',
-        body,
-        created_at: new Date().toISOString()
-      });
+    try {
+      const { error } = await supabase
+        .from('development_updates')
+        .insert({
+          author_id: user.id,
+          title: 'Test Update',
+          body,
+          created_at: new Date().toISOString()
+        });
 
-    if (error) {
-      console.error('❌ Failed to post:', error);
-      alert('Failed to post: ' + error.message);
-      return;
+      if (error) {
+        console.error('❌ Failed to post:', error);
+        alert('Failed to post: ' + error.message);
+        return;
+      }
+
+      console.log('✅ Post successful!');
+      alert('Post successful! Check your Supabase table.');
+
+      // Clear state
+      updateBody.value = '';
+      currentMediaFiles = [];
+      mediaPreviewContainer.innerHTML = '';
+      mediaPreviewContainer.style.display = 'none';
+    } catch (postErr) {
+      console.error('❌ Post failed with exception:', postErr);
+      alert('Post failed unexpectedly. Check console.');
     }
-
-    console.log('✅ Post successful!');
-    alert('Post successful! Check your Supabase table.');
-
-    // Clear state
-    updateBody.value = '';
-    currentMediaFiles = [];
-    mediaPreviewContainer.innerHTML = '';
-    mediaPreviewContainer.style.display = 'none';
   });
 
   // Initial auth check
-  checkAuth().catch(console.error);
+  try {
+    await checkAuth();
+  } catch (err) {
+    console.error('❌ Initial auth check failed:', err);
+  }
 });
