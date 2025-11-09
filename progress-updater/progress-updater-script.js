@@ -213,12 +213,12 @@ document.addEventListener('DOMContentLoaded', async () => {
     mediaInput.value = '';
   });
 
-  // NEW: Handle pasted images
+  // Handle pasted images
   updateBody.addEventListener('paste', async (e) => {
     console.log('Paste event detected!'); // LOG
     console.log('Clipboard items:', e.clipboardData?.items); // LOG
     
-    // RE-INITIALIZE mediaPreviewContainer if it's null
+    // Re-initialize mediaPreviewContainer if it's null
     if (!mediaPreviewContainer) {
       console.log('Re-initializing mediaPreviewContainer...');
       const tempContainer = document.getElementById('mediaPreviewContainer');
