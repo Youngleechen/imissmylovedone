@@ -14,16 +14,6 @@ document.addEventListener('DOMContentLoaded', async () => {
   // ✅ Check if all required elements exist
   if (!updateBody || !mediaButton || !mediaInput || !postButton || !uploadProgress || !progressFill || !progressText || !mediaPreviewContainer) {
     console.error('❌ One or more required DOM elements are missing!');
-    console.log({
-      updateBody: !!updateBody,
-      mediaButton: !!mediaButton,
-      mediaInput: !!mediaInput,
-      postButton: !!postButton,
-      uploadProgress: !!uploadProgress,
-      progressFill: !!progressFill,
-      progressText: !!progressText,
-      mediaPreviewContainer: !!mediaPreviewContainer
-    });
     alert('Critical error: Required UI elements not found. Please check your HTML.');
     return;
   }
@@ -82,7 +72,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   document.addEventListener('paste', async (e) => {
     console.log('📋 PASTE EVENT FIRED!');
 
-    // Safety check: make sure updateBody exists
+    // Safety check
     if (!updateBody) {
       console.error('❌ updateBody is null!');
       return;
@@ -100,10 +90,14 @@ document.addEventListener('DOMContentLoaded', async () => {
     if (!user) return;
 
     const items = e.clipboardData?.items || [];
-    console.log('📋 Clipboard items:', items);
+    const files = e.clipboardData?.files || []; // 👈 NEW: Check files too!
+
+    console.log(`📋 Clipboard items:`, items);
+    console.log(`📁 Clipboard files:`, files);
 
     const imageFiles = [];
 
+    // First, check items
     for (let i = 0; i < items.length; i++) {
       const item = items[i];
       console.log(`📄 Item ${i}: type=${item.type}, kind=${item.kind}`);
@@ -112,10 +106,23 @@ document.addEventListener('DOMContentLoaded', async () => {
         console.log(`🖼️ Found image item: ${item.type}`);
         const file = item.getAsFile();
         if (file) {
-          console.log(`✅ Got file: ${file.name}, size=${file.size} bytes`);
+          console.log(`✅ Got file from item: ${file.name}, size=${file.size} bytes`);
           imageFiles.push(file);
         } else {
           console.log('⚠️ Could not get file from clipboard item.');
+        }
+      }
+    }
+
+    // Then, check files (this is where screenshots often appear!)
+    if (files.length > 0) {
+      console.log(`✅ Found ${files.length} file(s) in clipboard.files.`);
+      for (const file of files) {
+        if (file.type.startsWith('image/')) {
+          console.log(`🖼️ Found image file: ${file.name}, type=${file.type}, size=${file.size}`);
+          imageFiles.push(file);
+        } else {
+          console.log(`⚠️ Non-image file in clipboard.files: ${file.name}, type=${file.type}`);
         }
       }
     }
@@ -125,7 +132,8 @@ document.addEventListener('DOMContentLoaded', async () => {
       await processFiles(imageFiles, user);
       e.preventDefault(); // Prevent default paste behavior
     } else {
-      console.log('❌ No images found in clipboard.');
+      console.log('❌ No images found in clipboard (items or files).');
+      alert('No image found in clipboard. Try copying an image from a browser or image editor.');
     }
   });
 
@@ -158,13 +166,11 @@ document.addEventListener('DOMContentLoaded', async () => {
       const fileExt = currentFile.name.split('.').pop() || 'png';
       const fileName = `${user.id}/${Date.now()}-${Math.random().toString(36).substring(2, 15)}.${fileExt}`;
 
-      // Show upload progress (if elements exist)
+      // Show upload progress
       if (uploadProgress && progressFill && progressText) {
         uploadProgress.style.display = 'block';
         progressFill.style.width = '0%';
         progressText.textContent = `Uploading ${currentFile.name}...`;
-      } else {
-        console.warn('⚠️ Progress UI elements missing.');
       }
 
       // Upload to Supabase
