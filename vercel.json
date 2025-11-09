@@ -2,7 +2,7 @@
   "trailingSlash": true,
   "redirects": [
     {
-      "source": "/signin.html",
+      "source": "/:path*/signin.html",
       "destination": "/",
       "permanent": true
     }
