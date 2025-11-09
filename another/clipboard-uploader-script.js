@@ -14,18 +14,22 @@ document.addEventListener('DOMContentLoaded', () => {
 
   // Helper function to check authentication
   async function checkAuth() {
-    try {
-      const { data: { user }, error } = await window.supabaseClient.auth.getUser();
-      if (error) throw error;
-      if (!user) {
-        alert('Please sign in to post.');
-        return null;
-      }
-      return user; // user.id will be the correct UUID
-    } catch (err) {
-      console.error('Auth error:', err);
+    // Implement actual auth logic using Supabase
+    const { data: { session }, error: sessionError } = await window.supabaseClient.auth.getSession();
+    
+    if (sessionError) {
+      console.error('Error getting session:', sessionError);
       return null;
     }
+
+    if (session && session.user) {
+      // Return the actual authenticated user's ID
+      return { id: session.user.id };
+    }
+
+    // If no session, redirect to login or handle unauthenticated state
+    // For now, returning null to indicate no authenticated user
+    return null;
   }
 
   // Show media preview
@@ -152,14 +156,7 @@ document.addEventListener('DOMContentLoaded', () => {
   updateBody.addEventListener('paste', async (e) => {
     console.log('Paste event detected!'); // LOG
     console.log('Clipboard items:', e.clipboardData?.items); // LOG
-
-    // ✅ CHECK AUTHENTICATION FIRST!
-    const user = await checkAuth();
-    if (!user) {
-      console.warn('Paste failed: No authenticated user found');
-      return; // Prevent any paste if not authenticated
-    }
-
+    
     // Re-initialize mediaPreviewContainer if it's null
     if (!mediaPreviewContainer) {
       console.log('Re-initializing mediaPreviewContainer...');
@@ -172,13 +169,13 @@ document.addEventListener('DOMContentLoaded', () => {
         return;
       }
     }
-
+    
     const items = e.clipboardData.items;
     if (!items) {
       console.warn('No clipboard items found');
       return;
     }
-
+    
     let hasImage = false;
     // First check if there are any images to avoid unnecessary auth checks
     for (let i = 0; i < items.length; i++) {
@@ -188,16 +185,22 @@ document.addEventListener('DOMContentLoaded', () => {
         break;
       }
     }
-
+    
     if (!hasImage) {
       console.log('No images found in clipboard, proceeding normally'); // LOG
-      return; // Exit early if no images, but we already checked auth
+      return; // Exit early if no images
+    }
+    
+    const user = await checkAuth();
+    if (!user) {
+      console.warn('Paste failed: No authenticated user found');
+      return;
     }
 
     for (let i = 0; i < items.length; i++) {
       if (items[i].type.indexOf('image') !== -1) {
         e.preventDefault(); // Prevent default paste behavior
-
+        
         const imageFile = items[i].getAsFile();
         if (!imageFile) {
           console.warn('Could not get image file from clipboard item');
@@ -205,14 +208,14 @@ document.addEventListener('DOMContentLoaded', () => {
         }
 
         console.log('Processing pasted image:', imageFile.name, imageFile.type, imageFile.size); // LOG
-
+        
         // Validate file type and size
         const allowedTypes = ['image/jpeg', 'image/png', 'image/gif', 'image/webp'];
         if (!allowedTypes.includes(imageFile.type)) {
           alert('Pasted item is not an allowed image type.');
           continue;
         }
-
+        
         if (imageFile.size > 50 * 1024 * 1024) {
           alert('Pasted image exceeds 50MB limit.');
           continue;
@@ -268,7 +271,7 @@ document.addEventListener('DOMContentLoaded', () => {
           console.error('Error showing preview:', previewError);
           alert('Failed to show preview for pasted image.');
         }
-
+        
         // Hide progress
         if (uploadProgress) uploadProgress.style.display = 'none';
       }
@@ -278,7 +281,7 @@ document.addEventListener('DOMContentLoaded', () => {
   // Post button handler (updated to save to Supabase)
   postButton.addEventListener('click', async () => {
     const content = updateBody.value.trim();
-
+    
     // Combine text content with media URLs in markdown format
     let postBody = content;
     if (currentMediaFiles.length > 0) {
@@ -310,7 +313,7 @@ document.addEventListener('DOMContentLoaded', () => {
       const { data, error } = await window.supabaseClient
         .from('development_updates')
         .insert([{
-          author_id: user.id, // Now uses the correct UUID
+          author_id: user.id,
           title: 'Progress Update',
           body: postBody
         }]);
@@ -321,7 +324,7 @@ document.addEventListener('DOMContentLoaded', () => {
       } else {
         console.log('Post created successfully:', data);
         alert('Post published successfully!');
-
+        
         // Clear the form
         updateBody.value = '';
         currentMediaFiles = [];
