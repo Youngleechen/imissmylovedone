@@ -17,7 +17,7 @@ document.addEventListener('DOMContentLoaded', () => {
   async function checkAuth() {
     // For testing purposes, return a real user ID from your Supabase dashboard
     // Replace with actual authenticated user ID in production
-    return { id: '0fe12c74-c079-454a-a6de-358cd488c36f' }; // Use a valid user ID from your dashboard
+    return { id: 'a6f0b8c1-7371-4345-8845-b7512c9f637b' }; // Use a valid user ID from your dashboard
   }
 
   // Show media preview
