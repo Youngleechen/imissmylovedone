@@ -12,7 +12,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   const uploadProgress = document.getElementById('uploadProgress');
   const progressFill = document.getElementById('progressFill');
   const progressText = document.getElementById('progressText');
-  let mediaPreviewContainer = document.getElementById('mediaPreviewContainer'); // Make it let so it can be reassigned
+  const mediaPreviewContainer = document.getElementById('mediaPreviewContainer');
 
   // NEW: Edit modal elements
   const editModal = document.getElementById('editModal');
@@ -126,6 +126,119 @@ document.addEventListener('DOMContentLoaded', async () => {
     }
   });
 
+  // NEW: Handle pasted images
+  updateBody.addEventListener('paste', async (e) => {
+    console.log('Paste event detected!'); // LOG
+    console.log('Clipboard items:', e.clipboardData?.items); // LOG
+    
+    const items = e.clipboardData.items;
+    if (!items) {
+      console.warn('No clipboard items found');
+      return;
+    }
+    
+    let hasImage = false;
+    // First check if there are any images to avoid unnecessary auth checks
+    for (let i = 0; i < items.length; i++) {
+      if (items[i].type.indexOf('image') !== -1) {
+        hasImage = true;
+        console.log('Found image in clipboard:', items[i].type); // LOG
+        break;
+      }
+    }
+    
+    if (!hasImage) {
+      console.log('No images found in clipboard, proceeding normally'); // LOG
+      return; // Exit early if no images
+    }
+    
+    const user = await checkAuth();
+    if (!user) {
+      console.warn('Paste failed: No authenticated user found');
+      return;
+    }
+
+    for (let i = 0; i < items.length; i++) {
+      if (items[i].type.indexOf('image') !== -1) {
+        e.preventDefault(); // Prevent default paste behavior
+        
+        const imageFile = items[i].getAsFile();
+        if (!imageFile) {
+          console.warn('Could not get image file from clipboard item');
+          continue;
+        }
+
+        console.log('Processing pasted image:', imageFile.name, imageFile.type, imageFile.size); // LOG
+        
+        // Validate file type and size
+        const allowedTypes = ['image/jpeg', 'image/png', 'image/gif', 'image/webp'];
+        if (!allowedTypes.includes(imageFile.type)) {
+          alert('Pasted item is not an allowed image type.');
+          continue;
+        }
+        
+        if (imageFile.size > 50 * 1024 * 1024) {
+          alert('Pasted image exceeds 50MB limit.');
+          continue;
+        }
+
+        // Generate filename and upload
+        const fileExt = imageFile.type.split('/')[1];
+        const fileName = `${user.id}/${Date.now()}-${Math.random().toString(36).substring(2, 15)}.${fileExt}`;
+
+        // Show upload progress
+        if (uploadProgress && progressFill && progressText) {
+          uploadProgress.style.display = 'block';
+          progressFill.style.width = '0%';
+          progressText.textContent = 'Uploading pasted image...';
+        }
+
+        // Upload to dev-updates-media bucket
+        const { error: uploadError } = await supabase.storage
+          .from('dev-updates-media')
+          .upload(fileName, imageFile, {
+            upsert: false,
+            onUploadProgress: (progressEvent) => {
+              const percentCompleted = Math.round((progressEvent.loaded * 100) / progressEvent.total);
+              if (progressFill) progressFill.style.width = percentCompleted + '%';
+              if (progressText) progressText.textContent = `Uploading pasted image... ${percentCompleted}%`;
+            }
+          });
+
+        if (uploadError) {
+          console.error('Upload error:', uploadError);
+          alert('Upload failed: ' + uploadError.message);
+          if (uploadProgress) uploadProgress.style.display = 'none';
+          return;
+        }
+
+        // Get public URL
+        const { data: { publicUrl } } = supabase.storage
+          .from('dev-updates-media')
+          .getPublicUrl(fileName);
+
+        // Add to media files array
+        currentMediaFiles.push({
+          url: publicUrl,
+          name: 'Pasted Image',
+          type: imageFile.type
+        });
+
+        // Show preview
+        try {
+          showMediaPreview(publicUrl, 'Pasted Image', imageFile.type);
+          console.log('Preview added successfully for pasted image');
+        } catch (previewError) {
+          console.error('Error showing preview:', previewError);
+          alert('Failed to show preview for pasted image.');
+        }
+        
+        // Hide progress
+        if (uploadProgress) uploadProgress.style.display = 'none';
+      }
+    }
+  });
+
   // Media upload handler (for new posts)
   mediaButton.addEventListener('click', async () => {
     const user = await checkAuth();
@@ -211,132 +324,6 @@ document.addEventListener('DOMContentLoaded', async () => {
       uploadProgress.style.display = 'none';
     }
     mediaInput.value = '';
-  });
-
-  // Handle pasted images
-  updateBody.addEventListener('paste', async (e) => {
-    console.log('Paste event detected!'); // LOG
-    console.log('Clipboard items:', e.clipboardData?.items); // LOG
-    
-    // Re-initialize mediaPreviewContainer if it's null
-    if (!mediaPreviewContainer) {
-      console.log('Re-initializing mediaPreviewContainer...');
-      const tempContainer = document.getElementById('mediaPreviewContainer');
-      if (tempContainer) {
-        mediaPreviewContainer = tempContainer;
-        console.log('mediaPreviewContainer re-initialized successfully');
-      } else {
-        console.error('mediaPreviewContainer still not found!');
-        return;
-      }
-    }
-    
-    const items = e.clipboardData.items;
-    if (!items) {
-      console.warn('No clipboard items found');
-      return;
-    }
-    
-    let hasImage = false;
-    // First check if there are any images to avoid unnecessary auth checks
-    for (let i = 0; i < items.length; i++) {
-      if (items[i].type.indexOf('image') !== -1) {
-        hasImage = true;
-        console.log('Found image in clipboard:', items[i].type); // LOG
-        break;
-      }
-    }
-    
-    if (!hasImage) {
-      console.log('No images found in clipboard, proceeding normally'); // LOG
-      return; // Exit early if no images
-    }
-    
-    const user = await checkAuth();
-    if (!user) {
-      console.warn('Paste failed: No authenticated user found');
-      return;
-    }
-
-    for (let i = 0; i < items.length; i++) {
-      if (items[i].type.indexOf('image') !== -1) {
-        e.preventDefault(); // Prevent default paste behavior
-        
-        const imageFile = items[i].getAsFile();
-        if (!imageFile) {
-          console.warn('Could not get image file from clipboard item');
-          continue;
-        }
-
-        console.log('Processing pasted image:', imageFile.name, imageFile.type, imageFile.size); // LOG
-        
-        // Validate file type and size
-        const allowedTypes = ['image/jpeg', 'image/png', 'image/gif', 'image/webp'];
-        if (!allowedTypes.includes(imageFile.type)) {
-          alert('Pasted item is not an allowed image type.');
-          continue;
-        }
-        
-        if (imageFile.size > 50 * 1024 * 1024) {
-          alert('Pasted image exceeds 50MB limit.');
-          continue;
-        }
-
-        // Generate filename and upload
-        const fileExt = imageFile.type.split('/')[1];
-        const fileName = `${user.id}/${Date.now()}-${Math.random().toString(36).substring(2, 15)}.${fileExt}`;
-
-        // Show upload progress
-        if (uploadProgress && progressFill && progressText) {
-          uploadProgress.style.display = 'block';
-          progressFill.style.width = '0%';
-          progressText.textContent = 'Uploading pasted image...';
-        }
-
-        // Upload to storage
-        const { error: uploadError } = await supabase.storage
-          .from('dev-updates-media')
-          .upload(fileName, imageFile, {
-            upsert: false,
-            onUploadProgress: (progressEvent) => {
-              const percentCompleted = Math.round((progressEvent.loaded * 100) / progressEvent.total);
-              if (progressFill) progressFill.style.width = percentCompleted + '%';
-              if (progressText) progressText.textContent = `Uploading pasted image... ${percentCompleted}%`;
-            }
-          });
-
-        if (uploadError) {
-          console.error('Upload error:', uploadError);
-          alert('Upload failed: ' + uploadError.message);
-          if (uploadProgress) uploadProgress.style.display = 'none';
-          return;
-        }
-
-        // Get public URL
-        const { data: { publicUrl } } = supabase.storage
-          .from('dev-updates-media')
-          .getPublicUrl(fileName);
-
-        // Add to media files array
-        currentMediaFiles.push({
-          url: publicUrl,
-          name: 'Pasted Image',
-          type: imageFile.type
-        });
-
-        // Show preview
-        try {
-          showMediaPreview(publicUrl, 'Pasted Image', imageFile.type);
-          console.log('Preview added successfully for pasted image');
-        } catch (previewError) {
-          console.error('Error showing preview:', previewError);
-          alert('Failed to show preview for pasted image.');
-        }
-        
-        // Hide progress
-        if (uploadProgress) uploadProgress.style.display = 'none';
-      }
-    }
   });
 
   // Helper: Show media preview (for new posts)
@@ -732,7 +719,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         const isFirstVideo = firstUrl.includes('.mp4') || firstUrl.includes('.webm') || firstUrl.includes('.mov');
         
         mediaGridHtml += `
-          <div class="media-grid-item large" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; cursor: pointer;" onclick="openGallery('${post.id}', '${encodeURIComponent(JSON.stringify(mediaMatches.map(m => m[2])))}', 0)">
+          <div class="media-grid-item large" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; cursor: pointer;" onclick="openGallery(\'${post.id}\', \'${encodeURIComponent(JSON.stringify(mediaMatches.map(m => m[2])))}\', 0)">
             ${isFirstVideo ? 
               `<video muted playsinline style="width: 100%; height: 100%; object-fit: cover;">
                  <source src="${firstUrl}" type="video/mp4">
@@ -749,7 +736,7 @@ document.addEventListener('DOMContentLoaded', async () => {
           const isSecondVideo = secondUrl.includes('.mp4') || secondUrl.includes('.webm') || secondUrl.includes('.mov');
           
           mediaGridHtml += `
-            <div class="media-grid-overlay" style="position: absolute; bottom: 10px; right: 10px; width: 80px; height: 80px; cursor: pointer;" onclick="openGallery('${post.id}', '${encodeURIComponent(JSON.stringify(mediaMatches.map(m => m[2])))}', 1)">
+            <div class="media-grid-overlay" style="position: absolute; bottom: 10px; right: 10px; width: 80px; height: 80px; cursor: pointer;" onclick="openGallery(\'${post.id}\', \'${encodeURIComponent(JSON.stringify(mediaMatches.map(m => m[2])))}\', 1)">
               <div class="second-thumbnail" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; border-radius: 8px; overflow: hidden; box-shadow: 0 2px 4px rgba(0,0,0,0.3);">
                 ${isSecondVideo ? 
                   `<video muted playsinline style="width: 100%; height: 100%; object-fit: cover;">
@@ -787,7 +774,7 @@ document.addEventListener('DOMContentLoaded', async () => {
           </small>
           <!-- NEW: Edit/Delete Buttons -->
           <div style="margin-top: 10px;">
-            <button onclick="openEditModal('${post.id}', \`${post.body.replace(/`/g, '&#96;')}\`)" style="background: #4299e1; color: white; border: none; padding: 5px 10px; border-radius: 4px; cursor: pointer; font-size: 12px;">Edit</button>
+            <button onclick="openEditModal(\'${post.id}\', \`${post.body.replace(/`/g, '&#96;')}\`)" style="background: #4299e1; color: white; border: none; padding: 5px 10px; border-radius: 4px; cursor: pointer; font-size: 12px;">Edit</button>
           </div>
         </div>
       `;
