@@ -12,7 +12,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   const uploadProgress = document.getElementById('uploadProgress');
   const progressFill = document.getElementById('progressFill');
   const progressText = document.getElementById('progressText');
-  const mediaPreviewContainer = document.getElementById('mediaPreviewContainer');
+  let mediaPreviewContainer = document.getElementById('mediaPreviewContainer'); // Make it let so it can be reassigned
 
   // NEW: Edit modal elements
   const editModal = document.getElementById('editModal');
@@ -37,7 +37,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
   async function checkAuth() {
     try {
-      const {  { user }, error } = await supabase.auth.getUser();
+      const { data: { user }, error } = await supabase.auth.getUser();
       if (error) {
         console.error('Auth error:', error);
         return null;
@@ -218,6 +218,19 @@ document.addEventListener('DOMContentLoaded', async () => {
     console.log('Paste event detected!'); // LOG
     console.log('Clipboard items:', e.clipboardData?.items); // LOG
     
+    // RE-INITIALIZE mediaPreviewContainer if it's null
+    if (!mediaPreviewContainer) {
+      console.log('Re-initializing mediaPreviewContainer...');
+      const tempContainer = document.getElementById('mediaPreviewContainer');
+      if (tempContainer) {
+        mediaPreviewContainer = tempContainer;
+        console.log('mediaPreviewContainer re-initialized successfully');
+      } else {
+        console.error('mediaPreviewContainer still not found!');
+        return;
+      }
+    }
+    
     const items = e.clipboardData.items;
     if (!items) {
       console.warn('No clipboard items found');
@@ -249,34 +262,7 @@ document.addEventListener('DOMContentLoaded', async () => {
       if (items[i].type.indexOf('image') !== -1) {
         e.preventDefault(); // Prevent default paste behavior
         
-        // Try getAsFile first
-        let imageFile = items[i].getAsFile();
-        
-        // If getAsFile() returns null, try getData() as fallback
-        if (!imageFile) {
-          console.log('getAsFile() returned null, trying getData() fallback...');
-          
-          try {
-            const blobData = await new Promise((resolve, reject) => {
-              const reader = new FileReader();
-              reader.onload = () => resolve(new Blob([reader.result], { type: items[i].type }));
-              reader.onerror = reject;
-              reader.readAsArrayBuffer(items[i]);
-            });
-            
-            // Create a File object manually
-            imageFile = new File([blobData], 'pasted-image.png', {
-              type: items[i].type,
-              lastModified: Date.now()
-            });
-            
-            console.log('Successfully created File from getData() fallback');
-          } catch (err) {
-            console.error('Fallback failed:', err);
-            continue;
-          }
-        }
-
+        const imageFile = items[i].getAsFile();
         if (!imageFile) {
           console.warn('Could not get image file from clipboard item');
           continue;
@@ -308,56 +294,53 @@ document.addEventListener('DOMContentLoaded', async () => {
         }
 
         // Upload to storage
-        try {
-          const { error: uploadError } = await supabase.storage
-            .from('dev-updates-media')
-            .upload(fileName, imageFile, {
-              upsert: false,
-              onUploadProgress: (progressEvent) => {
-                const percentCompleted = Math.round((progressEvent.loaded * 100) / progressEvent.total);
-                if (progressFill) progressFill.style.width = percentCompleted + '%';
-                if (progressText) progressText.textContent = `Uploading pasted image... ${percentCompleted}%`;
-              }
-            });
-
-          if (uploadError) {
-            console.error('Upload error:', uploadError);
-            alert('Upload failed: ' + uploadError.message);
-            if (uploadProgress) uploadProgress.style.display = 'none';
-            return;
-          }
-
-          // Get public URL
-          const {  { publicUrl } } = supabase.storage
-            .from('dev-updates-media')
-            .getPublicUrl(fileName);
-
-          // Add to media files array
-          currentMediaFiles.push({
-            url: publicUrl,
-            name: 'Pasted Image',
-            type: imageFile.type
+        const { error: uploadError } = await supabase.storage
+          .from('dev-updates-media')
+          .upload(fileName, imageFile, {
+            upsert: false,
+            onUploadProgress: (progressEvent) => {
+              const percentCompleted = Math.round((progressEvent.loaded * 100) / progressEvent.total);
+              if (progressFill) progressFill.style.width = percentCompleted + '%';
+              if (progressText) progressText.textContent = `Uploading pasted image... ${percentCompleted}%`;
+            }
           });
 
-          // Show preview
-          showMediaPreview(publicUrl, 'Pasted Image', imageFile.type);
-          
-          // Hide progress
+        if (uploadError) {
+          console.error('Upload error:', uploadError);
+          alert('Upload failed: ' + uploadError.message);
           if (uploadProgress) uploadProgress.style.display = 'none';
-          
-        } catch (uploadErr) {
-          console.error('Unexpected upload error:', uploadErr);
-          alert('An unexpected error occurred while uploading the pasted image.');
-          if (uploadProgress) uploadProgress.style.display = 'none';
+          return;
         }
+
+        // Get public URL
+        const { data: { publicUrl } } = supabase.storage
+          .from('dev-updates-media')
+          .getPublicUrl(fileName);
+
+        // Add to media files array
+        currentMediaFiles.push({
+          url: publicUrl,
+          name: 'Pasted Image',
+          type: imageFile.type
+        });
+
+        // Show preview
+        try {
+          showMediaPreview(publicUrl, 'Pasted Image', imageFile.type);
+          console.log('Preview added successfully for pasted image');
+        } catch (previewError) {
+          console.error('Error showing preview:', previewError);
+          alert('Failed to show preview for pasted image.');
+        }
+        
+        // Hide progress
+        if (uploadProgress) uploadProgress.style.display = 'none';
       }
     }
   });
 
   // Helper: Show media preview (for new posts)
   function showMediaPreview(url, filename, fileType) {
-    console.log('Creating preview for:', url, filename, fileType); // ADD THIS LOG
-    
     const previewItem = document.createElement('div');
     previewItem.className = 'media-preview-item';
     previewItem.style.cssText = `
@@ -820,86 +803,8 @@ document.addEventListener('DOMContentLoaded', async () => {
 
   // --- GALLERY FUNCTIONS ---
   // Reused from main app, but scoped to this page
-  let currentGalleryState = null;
+   let currentGalleryState = null;
 
-  // Define gallery functions globally first
-  window.closeGallery = function() {
-    const overlay = document.getElementById('gallery-overlay');
-    if (overlay) {
-      // Clean up event listeners
-      const swiper = document.getElementById('gallery-swiper');
-      if (swiper) {
-        swiper.removeEventListener('touchstart', handleTouchStart);
-        swiper.removeEventListener('touchend', handleTouchEnd);
-        swiper.removeEventListener('mousedown', handleMouseDown);
-      }
-      window.removeEventListener('mouseup', handleMouseUp);
-      document.removeEventListener('keydown', handleKeyDown);
-
-      // Remove the overlay
-      overlay.remove();
-    }
-    currentGalleryState = null;
-  };
-
-  window.galleryNext = function() {
-    if (!currentGalleryState) return;
-    const newIndex = (currentGalleryState.currentIndex + 1) % currentGalleryState.mediaUrls.length;
-    showGallerySlide(newIndex);
-  };
-
-  window.galleryPrev = function() {
-    if (!currentGalleryState) return;
-    const newIndex = (currentGalleryState.currentIndex - 1 + currentGalleryState.mediaUrls.length) % currentGalleryState.mediaUrls.length;
-    showGallerySlide(newIndex);
-  };
-
-  window.galleryGoToIndex = function(index) {
-    if (!currentGalleryState) return;
-    showGallerySlide(index);
-  };
-
-  function showGallerySlide(index) {
-    if (!currentGalleryState || index < 0 || index >= currentGalleryState.mediaUrls.length) return;
-
-    const slides = document.querySelectorAll('.gallery-slide');
-    slides.forEach((slide, i) => {
-      slide.style.opacity = i === index ? '1' : '0';
-    });
-    
-    const counterElement = document.getElementById('current-index');
-    if (counterElement) {
-      counterElement.textContent = index + 1;
-    }
-
-    currentGalleryState.currentIndex = index;
-    updateThumbnailBorders();
-  }
-
-  function updateThumbnailBorders() {
-    const thumbnailItems = document.querySelectorAll('.thumbnail-item');
-    thumbnailItems.forEach((item, index) => {
-      item.style.border = index === currentGalleryState.currentIndex ? '3px solid white' : '3px solid transparent';
-    });
-  }
-
-  function handleSwipe(startX, startY, endX, endY) {
-    const threshold = 50;
-    const verticalThreshold = 30;
-
-    const diffX = startX - endX;
-    const diffY = startY - endY;
-
-    if (Math.abs(diffX) > threshold && Math.abs(diffY) < verticalThreshold) {
-      if (diffX > 0) {
-        galleryNext();
-      } else {
-        galleryPrev();
-      }
-    }
-  }
-
-  // Open gallery function
   window.openGallery = function(postId, encodedMediaUrlsJson, startIndex = 0) {
     const mediaUrls = JSON.parse(decodeURIComponent(encodedMediaUrlsJson));
 
@@ -931,8 +836,8 @@ document.addEventListener('DOMContentLoaded', async () => {
             }).join('')}
           </div>
 
-          <button id="gallery-prev" onclick="window.galleryPrev()" style="position: absolute; left: 20px; background: rgba(255,255,255,0.2); border: none; border-radius: 50%; width: 50px; height: 50px; font-size: 24px; cursor: pointer; color: white; z-index: 10000;">‹</button>
-          <button id="gallery-next" onclick="window.galleryNext()" style="position: absolute; right: 20px; background: rgba(255,255,255,0.2); border: none; border-radius: 50%; width: 50px; height: 50px; font-size: 24px; cursor: pointer; color: white; z-index: 10000;">›</button>
+          <button id="gallery-prev" onclick="galleryPrev()" style="position: absolute; left: 20px; background: rgba(255,255,255,0.2); border: none; border-radius: 50%; width: 50px; height: 50px; font-size: 24px; cursor: pointer; color: white; z-index: 10000;">‹</button>
+          <button id="gallery-next" onclick="galleryNext()" style="position: absolute; right: 20px; background: rgba(255,255,255,0.2); border: none; border-radius: 50%; width: 50px; height: 50px; font-size: 24px; cursor: pointer; color: white; z-index: 10000;">›</button>
 
           <div id="gallery-counter" style="position: absolute; bottom: 60px; left: 50%; transform: translateX(-50%); color: white; font-size: 16px; z-index: 10000;">
             <span id="current-index">${currentGalleryState.currentIndex + 1}</span> / ${currentGalleryState.mediaUrls.length}
@@ -947,7 +852,7 @@ document.addEventListener('DOMContentLoaded', async () => {
               <div 
                 class="thumbnail-item" 
                 style="width: 60px; height: 60px; border-radius: 8px; overflow: hidden; cursor: pointer; border: ${index === currentGalleryState.currentIndex ? '3px solid white' : '3px solid transparent'}; transition: border 0.3s;"
-                onclick="window.galleryGoToIndex(${index})"
+                onclick="galleryGoToIndex(${index})"
               >
                 ${isVideo ? 
                   `<video muted playsinline style="width: 100%; height: 100%; object-fit: cover;">
@@ -1015,8 +920,92 @@ document.addEventListener('DOMContentLoaded', async () => {
       }
     };
     document.addEventListener('keydown', handleKeyDown);
+
+    // Define closeGallery globally so it can be called from anywhere
+    window.closeGallery = function() {
+      const overlay = document.getElementById('gallery-overlay');
+      if (overlay) {
+        // Clean up event listeners
+        if (swiper) {
+          swiper.removeEventListener('touchstart', handleTouchStart);
+          swiper.removeEventListener('touchend', handleTouchEnd);
+          swiper.removeEventListener('mousedown', handleMouseDown);
+        }
+        window.removeEventListener('mouseup', handleMouseUp);
+        document.removeEventListener('keydown', handleKeyDown);
+
+        // Remove the overlay
+        overlay.remove();
+      }
+      currentGalleryState = null;
+    };
   };
 
+  function handleSwipe(startX, startY, endX, endY) {
+    const threshold = 50;
+    const verticalThreshold = 30;
+
+    const diffX = startX - endX;
+    const diffY = startY - endY;
+
+    if (Math.abs(diffX) > threshold && Math.abs(diffY) < verticalThreshold) {
+      if (diffX > 0) {
+        galleryNext();
+      } else {
+        galleryPrev();
+      }
+    }
+  }
+
+  function showGallerySlide(index) {
+    if (!currentGalleryState || index < 0 || index >= currentGalleryState.mediaUrls.length) return;
+
+    const slides = document.querySelectorAll('.gallery-slide');
+    slides.forEach((slide, i) => {
+      slide.style.opacity = i === index ? '1' : '0';
+    });
+    
+    const counterElement = document.getElementById('current-index');
+    if (counterElement) {
+      counterElement.textContent = index + 1;
+    }
+
+    currentGalleryState.currentIndex = index;
+    updateThumbnailBorders();
+  }
+
+  function updateThumbnailBorders() {
+    const thumbnailItems = document.querySelectorAll('.thumbnail-item');
+    thumbnailItems.forEach((item, index) => {
+      item.style.border = index === currentGalleryState.currentIndex ? '3px solid white' : '3px solid transparent';
+    });
+  }
+
+  window.galleryGoToIndex = function(index) {
+    if (!currentGalleryState) return;
+    showGallerySlide(index);
+  };
+
+  window.galleryNext = function() {
+    if (!currentGalleryState) return;
+    const newIndex = (currentGalleryState.currentIndex + 1) % currentGalleryState.mediaUrls.length;
+    showGallerySlide(newIndex);
+  };
+
+  window.galleryPrev = function() {
+    if (!currentGalleryState) return;
+    const newIndex = (currentGalleryState.currentIndex - 1 + currentGalleryState.mediaUrls.length) % currentGalleryState.mediaUrls.length;
+    showGallerySlide(newIndex);
+  };
+
+  // Ensure closeGallery is always available globally
+  window.closeGallery = function() {
+    const overlay = document.getElementById('gallery-overlay');
+    if (overlay) {
+      overlay.remove();
+    }
+    currentGalleryState = null;
+  };
   // Make openEditModal available globally for inline onclick
   window.openEditModal = openEditModal;
 });
