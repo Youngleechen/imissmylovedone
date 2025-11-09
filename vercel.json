@@ -1,3 +1,10 @@
 {
-  "trailingSlash": true
+  "trailingSlash": true,
+  "redirects": [
+    {
+      "source": "/signin.html",
+      "destination": "/",
+      "permanent": true
+    }
+  ]
 }
