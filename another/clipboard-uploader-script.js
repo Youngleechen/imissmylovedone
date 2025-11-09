@@ -1,4 +1,4 @@
-// clipboard-uploader-script.js
+//// clipboard-uploader-script.js
 document.addEventListener('DOMContentLoaded', () => {
   // DOM Elements
   const updateBody = document.getElementById('update-body');
