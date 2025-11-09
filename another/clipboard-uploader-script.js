@@ -1,4 +1,4 @@
-//// clipboard-uploader-script.js
+// clipboard-uploader-script.js
 document.addEventListener('DOMContentLoaded', () => {
   // DOM Elements
   const updateBody = document.getElementById('update-body');
@@ -15,9 +15,23 @@ document.addEventListener('DOMContentLoaded', () => {
 
   // Helper function to check authentication
   async function checkAuth() {
-    // Placeholder - implement your auth logic
-    // This should return a user object if authenticated, null otherwise
-    return { id: 'test-user' }; // Replace with actual auth check
+    try {
+      const { data: { user }, error } = await window.supabaseClient.auth.getUser();
+      if (error) {
+        console.error('Auth error:', error);
+        return null;
+      }
+      if (!user) {
+        console.warn('No authenticated user found');
+        // Redirect to sign in page if needed
+        // window.location.href = '../signin.html';
+        return null;
+      }
+      return user;
+    } catch (err) {
+      console.error('Error checking auth:', err);
+      return null;
+    }
   }
 
   // Show media preview
@@ -266,10 +280,53 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   });
 
-  // Post button handler (for testing)
-  postButton.addEventListener('click', () => {
-    console.log('Posted content:', updateBody.value);
-    console.log('Attached media:', currentMediaFiles);
-    alert('Post functionality would be implemented here');
+  // Post button handler - SAVES TO DATABASE
+  postButton.addEventListener('click', async () => {
+    const user = await checkAuth();
+    if (!user) {
+      alert('Authentication required to post');
+      return;
+    }
+
+    let body = updateBody.value.trim();
+
+    // Append media markdown to body
+    for (const media of currentMediaFiles) {
+      body += `\n\n![${media.name}](${media.url})`;
+    }
+
+    if (!body) {
+      alert('Please write something or attach media first.');
+      return;
+    }
+
+    // Save to development_updates table
+    const { error } = await window.supabaseClient
+      .from('development_updates')
+      .insert({
+        author_id: user.id,
+        title: 'Progress Update',
+        body,
+        created_at: new Date().toISOString()
+      });
+
+    if (error) {
+      alert('Failed to post: ' + error.message);
+      console.error('Post error:', error);
+      return;
+    }
+
+    // Clear state after successful post
+    updateBody.value = '';
+    currentMediaFiles = [];
+    if (mediaPreviewContainer) {
+      mediaPreviewContainer.innerHTML = '';
+      mediaPreviewContainer.style.display = 'none';
+    }
+
+    alert('Post saved successfully!');
+    
+    // Optionally, you can reload updates or trigger a refresh
+    // loadUpdates(); // if you have this function available
   });
 });
