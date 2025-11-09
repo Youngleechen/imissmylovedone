@@ -3,10 +3,13 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Clipboard Uploader</title>
+  <title>My Thoughts & Clipboard</title>
 
   <!-- Supabase Client -->
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+  <!-- Emoji Picker (module) -->
+  <script type="module" src="https://cdn.jsdelivr.net/npm/emoji-picker-element@^1/index.js"></script>
 
   <!-- Styles -->
   <style>
@@ -27,92 +30,68 @@
       box-shadow: 0 2px 10px rgba(0,0,0,0.1);
     }
 
-    h1 {
-      text-align: center;
+    .thought-box {
       margin-bottom: 20px;
-      color: #2b6cb0;
     }
 
-    .paste-area {
-      border: 2px dashed #cbd5e0;
-      border-radius: 8px;
-      padding: 20px;
-      text-align: center;
-      background: #ebf4ff;
-      cursor: pointer;
-      transition: all 0.3s ease;
-    }
-
-    .paste-area:hover {
-      border-color: #4299e1;
-      background: #bee3f8;
-    }
-
-    .preview-container {
-      margin-top: 20px;
-      display: flex;
-      flex-wrap: wrap;
-      gap: 10px;
-    }
-
-    .preview-item {
-      position: relative;
-      width: 150px;
-      height: 150px;
-      border-radius: 8px;
-      overflow: hidden;
-      box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-    }
-
-    .preview-item img {
+    #update-body {
       width: 100%;
-      height: 100%;
-      object-fit: cover;
-    }
-
-    .preview-item .remove-btn {
-      position: absolute;
-      top: 5px;
-      right: 5px;
-      background: rgba(0,0,0,0.7);
-      color: white;
-      border: none;
-      border-radius: 50%;
-      width: 20px;
-      height: 20px;
-      cursor: pointer;
-      font-weight: bold;
-      font-size: 12px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-    }
-
-    .upload-btn {
-      display: block;
-      width: 100%;
+      min-height: 100px;
       padding: 12px;
-      margin-top: 20px;
+      border: 1px solid #cbd5e0;
+      border-radius: 6px;
+      resize: vertical;
+      font-size: 16px;
+      box-sizing: border-box;
+      outline: none;
+    }
+
+    #update-body:focus {
+      border-color: #4299e1;
+      box-shadow: 0 0 0 3px rgba(66, 153, 225, 0.1);
+    }
+
+    .thought-actions {
+      display: flex;
+      gap: 10px;
+      margin-top: 8px;
+    }
+
+    .thought-actions button {
+      padding: 8px 12px;
+      border: 1px solid #cbd5e0;
+      border-radius: 4px;
+      background: white;
+      cursor: pointer;
+      font-size: 14px;
+      transition: all 0.2s ease;
+    }
+
+    .thought-actions button:hover {
+      background: #edf2f7;
+    }
+
+    #postButton {
       background: #4299e1;
       color: white;
-      border: none;
-      border-radius: 6px;
-      cursor: pointer;
-      font-size: 16px;
-      transition: background 0.3s ease;
+      border-color: #4299e1;
     }
 
-    .upload-btn:hover {
+    #postButton:hover {
       background: #3182ce;
     }
 
-    .upload-btn:disabled {
-      background: #a0aec0;
-      cursor: not-allowed;
+    #emojiPicker {
+      display: none;
+      position: absolute;
+      z-index: 100;
     }
 
-    .progress-container {
-      display: none;
+    #emojiPicker.show {
+      display: block;
+    }
+
+    #uploadProgress {
       margin-top: 10px;
     }
 
@@ -137,66 +116,198 @@
       color: #4a5568;
     }
 
-    .url-list {
-      margin-top: 20px;
-      padding: 10px;
-      background: #f9f9f9;
-      border-radius: 6px;
-      max-height: 200px;
-      overflow-y: auto;
-    }
-
-    .url-item {
+    #mediaPreviewContainer {
+      margin-top: 12px;
       padding: 8px;
-      border-bottom: 1px solid #e2e8f0;
-      word-break: break-all;
-      font-size: 14px;
+      background: #f9f9f9;
+      border-radius: 8px;
+      display: none;
     }
 
-    .url-item:last-child {
-      border-bottom: none;
+    .media-preview-item {
+      position: relative;
+      display: inline-block;
+      margin: 5px;
+      border-radius: 8px;
+      overflow: hidden;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.1);
     }
 
-    .url-item button {
-      margin-left: 8px;
-      padding: 2px 6px;
-      font-size: 12px;
-      background: #edf2f7;
+    .media-preview-item img, .media-preview-item video {
+      max-width: 100px;
+      height: 100px;
+      object-fit: cover;
+      border-radius: 8px;
+    }
+
+    .media-preview-item .remove-btn {
+      position: absolute;
+      top: 5px;
+      right: 5px;
+      background: rgba(0,0,0,0.7);
+      color: white;
       border: none;
-      border-radius: 4px;
+      border-radius: 50%;
+      width: 20px;
+      height: 20px;
+      cursor: pointer;
+      font-weight: bold;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .posts-section h2 {
+      color: #2b6cb0;
+    }
+
+    .post-item {
+      background: white;
+      padding: 15px;
+      border-radius: 8px;
+      margin-bottom: 15px;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+    }
+
+    .post-item p {
+      margin: 0;
+      line-height: 1.6;
+    }
+
+    .post-item small {
+      display: block;
+      color: #718096;
+      font-size: 12px;
+      margin-top: 8px;
+    }
+
+    .media-grid {
+      position: relative;
+      width: 100%;
+      height: 300px;
+      margin: 10px 0;
+    }
+
+    .media-grid-item {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
       cursor: pointer;
     }
 
-    .url-item button:hover {
-      background: #e2e8f0;
+    .media-grid-item img, .media-grid-item video {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
     }
+
+    .media-grid-overlay {
+      position: absolute;
+      bottom: 10px;
+      right: 10px;
+      width: 80px;
+      height: 80px;
+      cursor: pointer;
+    }
+
+    .second-thumbnail {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      border-radius: 8px;
+      overflow: hidden;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.3);
+    }
+
+    .second-thumbnail img, .second-thumbnail video {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
+
+    .more-overlay {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(0,0,0,0.5);
+      border-radius: 8px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .more-text {
+      color: white;
+      font-size: 16px;
+      font-weight: bold;
+    }
+
+    /* Gallery Styles (same as your original script) */
+    #gallery-overlay {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(0,0,0,0.9);
+      z-index: 9999;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+      flex-direction: column;
+    }
+    .gallery-container { position: relative; max-width: 90vw; max-height: 85vh; width: 100%; display: flex; flex-direction: column; align-items: center; justify-content: center; flex: 1; }
+    #gallery-overlay button { position: absolute; background: rgba(255,255,255,0.8); border: none; border-radius: 50%; width: 40px; height: 40px; font-size: 24px; cursor: pointer; color: #333; z-index: 10000; box-shadow: 0 2px 4px rgba(0,0,0,0.2); display: flex; align-items: center; justify-content: center; transition: background 0.2s ease; }
+    #gallery-overlay button:hover { background: rgba(255,255,255,1); }
+    #gallery-prev { left: 20px; }
+    #gallery-next { right: 20px; }
+    #gallery-close { top: 20px; right: 20px; }
+    #gallery-swiper { width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; flex: 1; }
+    .gallery-slide { position: absolute; width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; opacity: 0; transition: opacity 0.3s ease; }
+    .gallery-slide img, .gallery-slide video { max-width: 90vw; max-height: 80vh; object-fit: contain; }
+    #gallery-counter { position: absolute; bottom: 60px; left: 50%; transform: translateX(-50%); color: white; font-size: 16px; z-index: 10000; }
+    #thumbnail-strip { display: flex; gap: 10px; padding: 15px 0; max-width: 90vw; overflow-x: auto; justify-content: center; align-items: center; }
+    .thumbnail-item { width: 60px; height: 60px; border-radius: 8px; overflow: hidden; cursor: pointer; border: 3px solid transparent; transition: border 0.3s; }
+    .thumbnail-item img, .thumbnail-item video { width: 100%; height: 100%; object-fit: cover; }
   </style>
 </head>
 <body>
   <div class="container">
-    <h1>📋 Clipboard Image Uploader</h1>
+    <h1>My Thoughts & Clipboard</h1>
 
-    <div class="paste-area" id="pasteArea">
-      <p>💡 Paste an image (Ctrl+V or Cmd+V) here, or click to focus.</p>
-      <p><small>Only PNG, JPG, GIF, WebP images up to 50MB are allowed.</small></p>
-    </div>
-
-    <div class="preview-container" id="previewContainer"></div>
-
-    <button class="upload-btn" id="uploadButton" disabled>Upload Selected Images</button>
-
-    <div class="progress-container" id="progressContainer">
-      <div class="progress-bar">
-        <div class="progress-fill" id="progressFill"></div>
+    <div class="thought-box">
+      <textarea id="update-body" placeholder="what's going on? (You can also paste images here!)" autofocus></textarea>
+      <div class="thought-actions">
+        <button id="mediaButton">➕</button>
+        <button id="emojiButton">🙂</button>
+        <button id="postButton">Post</button>
       </div>
-      <span class="progress-text" id="progressText">Uploading...</span>
+      <div id="emojiPicker"></div>
+
+      <div id="uploadProgress" style="display:none; margin-top: 10px;">
+        <div class="progress-bar">
+          <div id="progressFill" style="height: 100%; background: #5a67d8; width: 0%; transition: width 0.3s ease;"></div>
+        </div>
+        <span id="progressText" style="display: block; margin-top: 5px; font-size: 14px; color: #4a5568;">Uploading...</span>
+      </div>
+
+      <div id="mediaPreviewContainer" style="display: none;"></div>
     </div>
 
-    <div class="url-list" id="urlList">
-      <h3>✅ Uploaded URLs:</h3>
-      <div id="urlsContainer"></div>
+    <div class="posts-section">
+      <h2>My Posts</h2>
+      <div id="updatesContainer"></div>
     </div>
   </div>
+
+  <input type="file" id="mediaInput" accept="image/*,video/*" style="display:none;" multiple />
 
   <!-- Initialize Supabase Client -->
   <script>
@@ -206,7 +317,7 @@
     );
   </script>
 
-  <!-- Load the script -->
+  <!-- Load the new script -->
   <script type="module" src="clipboard-uploader-script.js"></script>
 </body>
 </html>
