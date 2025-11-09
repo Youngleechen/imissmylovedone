@@ -134,8 +134,8 @@ document.addEventListener('DOMContentLoaded', () => {
         return;
       }
 
-      // Get public URL
-      const {  { publicUrl } } = window.supabaseClient.storage
+      // Get public URL - FIXED SYNTAX
+      const { data: { publicUrl } } = window.supabaseClient.storage
         .from('dev-updates-media')
         .getPublicUrl(fileName);
 
@@ -255,7 +255,7 @@ document.addEventListener('DOMContentLoaded', () => {
             return;
           }
 
-          // Get public URL
+          // Get public URL - FIXED SYNTAX
           const { data: { publicUrl } } = window.supabaseClient.storage
             .from('dev-updates-media')
             .getPublicUrl(fileName);
