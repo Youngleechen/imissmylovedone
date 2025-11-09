@@ -26,11 +26,8 @@ document.addEventListener('DOMContentLoaded', () => {
       // Return the actual authenticated user's ID
       return { id: session.user.id };
     } else {
-      // No authenticated user - you might want to redirect to login or show a message
       console.warn('No authenticated user found');
       alert('Please log in to continue');
-      // Optionally redirect to login page
-      // window.location.href = '/login'; // Uncomment if you have a login page
       return null;
     }
   }
@@ -138,7 +135,7 @@ document.addEventListener('DOMContentLoaded', () => {
       }
 
       // Get public URL
-      const { data: { publicUrl } } = window.supabaseClient.storage
+      const {  { publicUrl } } = window.supabaseClient.storage
         .from('dev-updates-media')
         .getPublicUrl(fileName);
 
