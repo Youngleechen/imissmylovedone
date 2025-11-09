@@ -1,3 +1,4 @@
+// clipboard-uploader-script.js
 document.addEventListener('DOMContentLoaded', () => {
   // DOM Elements
   const updateBody = document.getElementById('update-body');
@@ -14,22 +15,9 @@ document.addEventListener('DOMContentLoaded', () => {
 
   // Helper function to check authentication
   async function checkAuth() {
-    // Implement actual auth logic using Supabase
-    const { data: { session }, error: sessionError } = await window.supabaseClient.auth.getSession();
-    
-    if (sessionError) {
-      console.error('Error getting session:', sessionError);
-      return null;
-    }
-
-    if (session && session.user) {
-      // Return the actual authenticated user's ID
-      return { id: session.user.id };
-    }
-
-    // If no session, redirect to login or handle unauthenticated state
-    // For now, returning null to indicate no authenticated user
-    return null;
+    // For testing purposes, return a real user ID from your Supabase dashboard
+    // Replace with actual authenticated user ID in production
+    return { id: '0fe12c74-c079-454a-a6de-358cd488c36f' }; // Use a valid user ID from your dashboard
   }
 
   // Show media preview
@@ -197,6 +185,13 @@ document.addEventListener('DOMContentLoaded', () => {
       return;
     }
 
+    // *** CRITICAL CHECK: Ensure supabaseClient is defined ***
+    if (!window.supabaseClient) {
+      console.error('Supabase client is not initialized!');
+      alert('Supabase client is not initialized. Please check your setup.');
+      return;
+    }
+
     for (let i = 0; i < items.length; i++) {
       if (items[i].type.indexOf('image') !== -1) {
         e.preventDefault(); // Prevent default paste behavior
@@ -255,6 +250,13 @@ document.addEventListener('DOMContentLoaded', () => {
         const { data: { publicUrl } } = window.supabaseClient.storage
           .from('dev-updates-media')
           .getPublicUrl(fileName);
+
+        if (!publicUrl) {
+          console.error('Failed to get public URL');
+          alert('Failed to get public URL for the uploaded image.');
+          if (uploadProgress) uploadProgress.style.display = 'none';
+          return;
+        }
 
         // Add to media files array
         currentMediaFiles.push({
