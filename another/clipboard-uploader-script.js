@@ -116,8 +116,13 @@ document.addEventListener('DOMContentLoaded', async () => {
     mediaInput.value = '';
   });
 
-  // NEW: Handle paste event on the textarea
-  updateBody.addEventListener('paste', async (e) => {
+  // ✅ NEW: Handle paste event on the DOCUMENT, not just the textarea
+  document.addEventListener('paste', async (e) => {
+    // Only proceed if the active element is our textarea
+    if (document.activeElement !== updateBody) {
+      return;
+    }
+
     const user = await checkAuth();
     if (!user) return;
 
@@ -128,14 +133,14 @@ document.addEventListener('DOMContentLoaded', async () => {
       if (item.type.startsWith('image/')) {
         const file = item.getAsFile();
         if (file) {
-            imageFiles.push(file);
+          imageFiles.push(file);
         }
       }
     }
 
     if (imageFiles.length > 0) {
-        await processFiles(imageFiles, user);
-        e.preventDefault(); // Prevent default paste behavior
+      await processFiles(imageFiles, user);
+      e.preventDefault(); // Prevent default paste behavior
     }
   });
 
