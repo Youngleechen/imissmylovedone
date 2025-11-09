@@ -12,7 +12,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   const uploadProgress = document.getElementById('uploadProgress');
   const progressFill = document.getElementById('progressFill');
   const progressText = document.getElementById('progressText');
-  const mediaPreviewContainer = document.getElementById('mediaPreviewContainer');
+  let mediaPreviewContainer = document.getElementById('mediaPreviewContainer'); // Make it let so it can be reassigned
 
   // NEW: Edit modal elements
   const editModal = document.getElementById('editModal');
@@ -218,6 +218,19 @@ document.addEventListener('DOMContentLoaded', async () => {
     console.log('Paste event detected!'); // LOG
     console.log('Clipboard items:', e.clipboardData?.items); // LOG
     
+    // RE-INITIALIZE mediaPreviewContainer if it's null
+    if (!mediaPreviewContainer) {
+      console.log('Re-initializing mediaPreviewContainer...');
+      const tempContainer = document.getElementById('mediaPreviewContainer');
+      if (tempContainer) {
+        mediaPreviewContainer = tempContainer;
+        console.log('mediaPreviewContainer re-initialized successfully');
+      } else {
+        console.error('mediaPreviewContainer still not found!');
+        return;
+      }
+    }
+    
     const items = e.clipboardData.items;
     if (!items) {
       console.warn('No clipboard items found');
@@ -312,7 +325,13 @@ document.addEventListener('DOMContentLoaded', async () => {
         });
 
         // Show preview
-        showMediaPreview(publicUrl, 'Pasted Image', imageFile.type);
+        try {
+          showMediaPreview(publicUrl, 'Pasted Image', imageFile.type);
+          console.log('Preview added successfully for pasted image');
+        } catch (previewError) {
+          console.error('Error showing preview:', previewError);
+          alert('Failed to show preview for pasted image.');
+        }
         
         // Hide progress
         if (uploadProgress) uploadProgress.style.display = 'none';
