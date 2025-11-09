@@ -1,194 +1,202 @@
-// Import Supabase client from config
-import { supabase } from './config.js';
-
 document.addEventListener('DOMContentLoaded', async () => {
-    const dropArea = document.getElementById('dropArea');
-    const fileInput = document.getElementById('fileInput');
-    const previewContainer = document.getElementById('previewContainer');
-    const uploadBtn = document.getElementById('uploadBtn');
-    const uploadProgress = document.getElementById('uploadProgress');
-    const progressFill = document.getElementById('progressFill');
-    const progressText = document.getElementById('progressText');
+  const supabase = window.supabaseClient;
+  const pasteArea = document.getElementById('pasteArea');
+  const previewContainer = document.getElementById('previewContainer');
+  const uploadButton = document.getElementById('uploadButton');
+  const progressContainer = document.getElementById('progressContainer');
+  const progressFill = document.getElementById('progressFill');
+  const progressText = document.getElementById('progressText');
+  const urlsContainer = document.getElementById('urlsContainer');
 
-    // Track pasted/dropped images
-    let imageFiles = [];
+  // Track clipboard images
+  let clipboardImages = [];
 
-    // Handle file input click
-    dropArea.addEventListener('click', () => {
-        fileInput.click();
-    });
+  // Focus the paste area so Ctrl+V works immediately
+  pasteArea.addEventListener('click', () => {
+    pasteArea.focus();
+  });
 
-    fileInput.addEventListener('change', (e) => {
-        handleFiles(e.target.files);
-    });
+  // Handle paste event
+  document.addEventListener('paste', async (event) => {
+    const items = event.clipboardData?.items || [];
+    const user = await checkAuth();
+    if (!user) return;
 
-    // Handle drag and drop
-    ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
-        dropArea.addEventListener(eventName, preventDefaults, false);
-    });
+    for (let item of items) {
+      if (item.type.startsWith('image/')) {
+        const file = item.getAsFile();
+        if (!file) continue;
 
-    function preventDefaults(e) {
-        e.preventDefault();
-        e.stopPropagation();
+        // Validate file type and size
+        const allowedTypes = ['image/jpeg', 'image/png', 'image/gif', 'image/webp'];
+        if (!allowedTypes.includes(file.type)) {
+          alert(`Unsupported image type: ${file.type}`);
+          continue;
+        }
+        if (file.size > 50 * 1024 * 1024) {
+          alert(`Image exceeds 50MB limit.`);
+          continue;
+        }
+
+        // Create a blob URL for preview
+        const imageUrl = URL.createObjectURL(file);
+
+        // Add to clipboard images array
+        clipboardImages.push({ file, imageUrl });
+
+        // Show preview
+        showPreview(imageUrl, file.name);
+
+        // Enable upload button
+        uploadButton.disabled = false;
+      }
     }
 
-    ['dragenter', 'dragover'].forEach(eventName => {
-        dropArea.addEventListener(eventName, highlight, false);
-    });
+    // Prevent default paste behavior
+    event.preventDefault();
+  });
 
-    ['dragleave', 'drop'].forEach(eventName => {
-        dropArea.addEventListener(eventName, unhighlight, false);
-    });
+  // Helper: Show image preview
+  function showPreview(url, filename) {
+    const previewItem = document.createElement('div');
+    previewItem.className = 'preview-item';
 
-    function highlight() {
-        dropArea.classList.add('active');
+    const img = document.createElement('img');
+    img.src = url;
+    img.alt = filename;
+
+    const removeBtn = document.createElement('button');
+    removeBtn.textContent = '×';
+    removeBtn.className = 'remove-btn';
+    removeBtn.onclick = () => {
+      removePreview(previewItem, url);
+    };
+
+    previewItem.appendChild(img);
+    previewItem.appendChild(removeBtn);
+    previewContainer.appendChild(previewItem);
+  }
+
+  // Helper: Remove preview
+  function removePreview(previewItem, url) {
+    previewItem.remove();
+    clipboardImages = clipboardImages.filter(item => item.imageUrl !== url);
+    if (clipboardImages.length === 0) {
+      uploadButton.disabled = true;
     }
+  }
 
-    function unhighlight() {
-        dropArea.classList.remove('active');
-    }
+  // Upload handler
+  uploadButton.addEventListener('click', async () => {
+    if (clipboardImages.length === 0) return;
 
-    dropArea.addEventListener('drop', handleDrop, false);
+    const user = await checkAuth();
+    if (!user) return;
 
-    function handleDrop(e) {
-        const dt = e.dataTransfer;
-        const files = dt.files;
-        handleFiles(files);
-    }
+    // Show progress container
+    progressContainer.style.display = 'block';
+    progressFill.style.width = '0%';
+    progressText.textContent = 'Preparing...';
 
-    // Handle clipboard paste
-    document.addEventListener('paste', (e) => {
-        const items = e.clipboardData.items;
-        for (const item of items) {
-            if (item.type.startsWith('image/')) {
-                const file = item.getAsFile();
-                if (file) {
-                    handleFiles([file]);
-                }
+    try {
+      for (const [index, { file, imageUrl }] of clipboardImages.entries()) {
+        progressText.textContent = `Uploading ${file.name}...`;
+
+        // Generate unique filename
+        const fileExt = file.name.split('.').pop() || 'png';
+        const fileName = `${user.id}/${Date.now()}-${Math.random().toString(36).substring(2, 15)}.${fileExt}`;
+
+        // Upload to Supabase storage
+        const { error: uploadError } = await supabase.storage
+          .from('dev-updates-media')
+          .upload(fileName, file, {
+            upsert: false,
+            onUploadProgress: (progressEvent) => {
+              const percentCompleted = Math.round((progressEvent.loaded * 100) / progressEvent.total);
+              progressFill.style.width = percentCompleted + '%';
+              progressText.textContent = `Uploading ${file.name}... ${percentCompleted}%`;
             }
-        }
-    });
+          });
 
-    // Process and preview files
-    function handleFiles(files) {
-        for (const file of files) {
-            if (!file.type.startsWith('image/')) continue;
-
-            // Create preview
-            const reader = new FileReader();
-            reader.onload = (e) => {
-                const previewItem = document.createElement('div');
-                previewItem.className = 'preview-item';
-                
-                const img = document.createElement('img');
-                img.src = e.target.result;
-                img.className = 'preview-img';
-                
-                const removeBtn = document.createElement('button');
-                removeBtn.textContent = '×';
-                removeBtn.className = 'remove-btn';
-                removeBtn.onclick = () => {
-                    previewItem.remove();
-                    imageFiles = imageFiles.filter(f => f !== file);
-                    updateUploadButton();
-                };
-                
-                previewItem.appendChild(img);
-                previewItem.appendChild(removeBtn);
-                previewContainer.appendChild(previewItem);
-            };
-            reader.readAsDataURL(file);
-            
-            imageFiles.push(file);
+        if (uploadError) {
+          throw new Error(`Upload failed: ${uploadError.message}`);
         }
-        
-        updateUploadButton();
+
+        // Get public URL
+        const { data: { publicUrl } } = supabase.storage
+          .from('dev-updates-media')
+          .getPublicUrl(fileName);
+
+        // Add to URL list
+        addUrlToDisplay(publicUrl);
+
+        // Clean up blob URL
+        URL.revokeObjectURL(imageUrl);
+      }
+
+      // Reset state
+      clipboardImages = [];
+      previewContainer.innerHTML = '';
+      uploadButton.disabled = true;
+      progressText.textContent = 'All images uploaded successfully!';
+      setTimeout(() => {
+        progressContainer.style.display = 'none';
+      }, 2000);
+
+    } catch (error) {
+      console.error('Upload error:', error);
+      alert('Upload failed: ' + error.message);
+      progressContainer.style.display = 'none';
     }
+  });
 
-    function updateUploadButton() {
-        uploadBtn.disabled = imageFiles.length === 0;
+  // Helper: Add URL to display
+  function addUrlToDisplay(url) {
+    const urlItem = document.createElement('div');
+    urlItem.className = 'url-item';
+
+    const urlLink = document.createElement('a');
+    urlLink.href = url;
+    urlLink.target = '_blank';
+    urlLink.rel = 'noopener noreferrer';
+    urlLink.textContent = url;
+    urlLink.style.color = '#2b6cb0';
+    urlLink.style.textDecoration = 'underline';
+
+    const copyBtn = document.createElement('button');
+    copyBtn.textContent = 'Copy';
+    copyBtn.onclick = async () => {
+      try {
+        await navigator.clipboard.writeText(url);
+        copyBtn.textContent = 'Copied!';
+        setTimeout(() => {
+          copyBtn.textContent = 'Copy';
+        }, 2000);
+      } catch (err) {
+        alert('Failed to copy URL. Please copy manually.');
+      }
+    };
+
+    urlItem.appendChild(urlLink);
+    urlItem.appendChild(copyBtn);
+    urlsContainer.appendChild(urlItem);
+
+    // Scroll to bottom
+    urlsContainer.scrollTop = urlsContainer.scrollHeight;
+  }
+
+  // Auth check
+  async function checkAuth() {
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) {
+      if (confirm('You must be signed in to upload images. Redirect to sign-in?')) {
+        window.location.href = '../signin.html'; // Adjust path as needed
+      }
+      return null;
     }
+    return user;
+  }
 
-    // Upload handler
-    uploadBtn.addEventListener('click', async () => {
-        const user = await checkAuth();
-        if (!user) return;
-
-        if (imageFiles.length === 0) return;
-
-        uploadBtn.disabled = true;
-        uploadProgress.style.display = 'block';
-        progressFill.style.width = '0%';
-        progressText.textContent = 'Starting upload...';
-
-        let successCount = 0;
-        const totalFiles = imageFiles.length;
-
-        for (let i = 0; i < imageFiles.length; i++) {
-            const file = imageFiles[i];
-            const fileExt = file.name.split('.').pop() || 'png';
-            const fileName = `${user.id}/${Date.now()}-${i}-${Math.random().toString(36).substring(2, 15)}.${fileExt}`;
-
-            try {
-                const { error: uploadError } = await supabase.storage
-                    .from('dev-updates-media')
-                    .upload(fileName, file, {
-                        upsert: false,
-                        onUploadProgress: (progressEvent) => {
-                            const percentCompleted = Math.round((progressEvent.loaded * 100) / progressEvent.total);
-                            const overallPercent = Math.round(((i / totalFiles) * 100) + (percentCompleted / totalFiles));
-                            progressFill.style.width = overallPercent + '%';
-                            progressText.textContent = `Uploading ${file.name}... ${overallPercent}%`;
-                        }
-                    });
-
-                if (uploadError) {
-                    throw uploadError;
-                }
-
-                // Get public URL and add to development updates
-                const { data: { publicUrl } } = supabase.storage
-                    .from('dev-updates-media')
-                    .getPublicUrl(fileName);
-
-                // Add to development updates table
-                const { error: insertError } = await supabase
-                    .from('development_updates')
-                    .insert({
-                        author_id: user.id,
-                        title: 'Image Upload',
-                        body: `![Uploaded Image](${publicUrl})`,
-                        created_at: new Date().toISOString()
-                    });
-
-                if (insertError) {
-                    console.error('Insert error:', insertError);
-                } else {
-                    successCount++;
-                }
-            } catch (error) {
-                console.error('Upload error:', error);
-                alert(`Failed to upload ${file.name}: ${error.message}`);
-            }
-        }
-
-        // Reset state
-        imageFiles = [];
-        previewContainer.innerHTML = '';
-        uploadBtn.disabled = false;
-        uploadProgress.style.display = 'none';
-        progressText.textContent = `Successfully uploaded ${successCount} of ${totalFiles} images!`;
-        
-        // Reload updates if needed
-    });
-
-    async function checkAuth() {
-        const { data: { user } } = await supabase.auth.getUser();
-        if (!user) {
-            alert('Please sign in to upload images.');
-            window.location.href = '../signin.html'; // Adjust path as needed
-            return null;
-        }
-        return user;
-    }
+  // Initial auth check
+  checkAuth().catch(console.error);
 });
