@@ -53,7 +53,7 @@
     <input type="password" id="password" placeholder="Create a password" autocomplete="new-password" />
     <input type="password" id="confirm-password" placeholder="Confirm password" autocomplete="new-password" />
     
-    <button id="auth-btn">Create My Space</button>
+    <button id="signup-btn">Create My Space</button>
     <div class="toggle-link">
       <a href="#" id="toggle-auth">Already have an account? Sign in</a>
     </div>
@@ -80,7 +80,7 @@
     const emailInput = document.getElementById('email');
     const passwordInput = document.getElementById('password');
     const confirmPasswordInput = document.getElementById('confirm-password');
-    const authBtn = document.getElementById('auth-btn');
+    const signupBtn = document.getElementById('signup-btn');
     const authForm = document.getElementById('auth-form');
     const toggleLink = document.getElementById('toggle-auth');
 
@@ -91,41 +91,24 @@
       msg.innerText = text;
     }
 
-    function updateFormState() {
-      if (isSignIn) {
-        authBtn.textContent = 'Sign In';
-        confirmPasswordInput.style.display = 'none';
-        toggleLink.textContent = 'Create new account';
-      } else {
-        authBtn.textContent = 'Create My Space';
-        confirmPasswordInput.style.display = 'block';
-        toggleLink.textContent = 'Already have an account? Sign in';
-      }
-    }
-
-    authBtn.addEventListener('click', async () => {
+    async function handleSignup() {
       const email = emailInput.value;
       const password = passwordInput.value;
+      const confirmPassword = confirmPasswordInput.value;
       
-      if (!email || !password) {
-        return showMessage('Please enter email and password', true);
+      if (!email || !password || !confirmPassword) {
+        return showMessage('Please fill in all fields', true);
+      }
+      if (password !== confirmPassword) {
+        return showMessage('Passwords do not match', true);
+      }
+      if (password.length < 6) {
+        return showMessage('Password must be at least 6 characters', true);
       }
 
-      if (!isSignIn) {
-        // Sign up flow
-        const confirmPassword = confirmPasswordInput.value;
-        if (!confirmPassword) {
-          return showMessage('Please confirm your password', true);
-        }
-        if (password !== confirmPassword) {
-          return showMessage('Passwords do not match', true);
-        }
-        if (password.length < 6) {
-          return showMessage('Password must be at least 6 characters', true);
-        }
-
-        authBtn.disabled = true;
-        
+      signupBtn.disabled = true;
+      
+      try {
         // Try to sign up
         const { data, error } = await supabase.auth.signUp({
           email,
@@ -137,21 +120,35 @@
 
         if (error) {
           showMessage(error.message, true);
-          authBtn.disabled = false;
+          signupBtn.disabled = false;
           return;
         }
 
-        // If sign up was successful, try to sign in
+        // After successful sign up, immediately sign in
         const { data: signInData, error: signInError } = await supabase.auth.signInWithPassword({
           email,
           password
         });
 
         if (signInError) {
-          // If sign in fails, they might need to confirm email
-          // For now, let's assume they can sign in
-          showMessage('Account created! Please sign in below.', false);
-          authBtn.disabled = false;
+          // If sign in fails, try one more time after a brief delay
+          setTimeout(async () => {
+            const { data: retrySignInData, error: retrySignInError } = await supabase.auth.signInWithPassword({
+              email,
+              password
+            });
+            
+            if (retrySignInError) {
+              showMessage('Account created! Please sign in below.', false);
+              signupBtn.disabled = false;
+              return;
+            }
+            
+            showMessage('Welcome! Redirecting to your space...', false);
+            setTimeout(() => {
+              window.location.href = 'test.html';
+            }, 1500);
+          }, 1000);
           return;
         }
 
@@ -159,20 +156,48 @@
         setTimeout(() => {
           window.location.href = 'test.html';
         }, 1500);
-      } else {
-        // Sign in flow
-        authBtn.disabled = true;
-        const { data, error } = await supabase.auth.signInWithPassword({ email, password });
-        authBtn.disabled = false;
+        
+      } catch (err) {
+        showMessage('An unexpected error occurred. Please try again.', true);
+        signupBtn.disabled = false;
+      }
+    }
 
+    async function handleSignin() {
+      const email = emailInput.value;
+      const password = passwordInput.value;
+      
+      if (!email || !password) {
+        return showMessage('Please enter email and password', true);
+      }
+
+      signupBtn.disabled = true;
+      
+      try {
+        const { data, error } = await supabase.auth.signInWithPassword({ email, password });
+        
         if (error) {
           showMessage(error.message, true);
-        } else {
-          showMessage('Welcome back! Redirecting...', false);
-          setTimeout(() => {
-            window.location.href = 'test.html';
-          }, 1500);
+          signupBtn.disabled = false;
+          return;
         }
+
+        showMessage('Welcome back! Redirecting...', false);
+        setTimeout(() => {
+          window.location.href = 'test.html';
+        }, 1500);
+        
+      } catch (err) {
+        showMessage('An unexpected error occurred. Please try again.', true);
+        signupBtn.disabled = false;
+      }
+    }
+
+    signupBtn.addEventListener('click', async () => {
+      if (isSignIn) {
+        await handleSignin();
+      } else {
+        await handleSignup();
       }
     });
 
@@ -180,11 +205,17 @@
     toggleLink.addEventListener('click', (e) => {
       e.preventDefault();
       isSignIn = !isSignIn;
-      updateFormState();
+      
+      if (isSignIn) {
+        signupBtn.textContent = 'Sign In';
+        confirmPasswordInput.style.display = 'none';
+        toggleLink.textContent = 'Create new account';
+      } else {
+        signupBtn.textContent = 'Create My Space';
+        confirmPasswordInput.style.display = 'block';
+        toggleLink.textContent = 'Already have an account? Sign in';
+      }
     });
-
-    // Initialize form state
-    updateFormState();
   </script>
 </body>
 </html>
