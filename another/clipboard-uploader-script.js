@@ -1,333 +1,275 @@
-document.addEventListener('DOMContentLoaded', async () => {
-  console.log('✅ Script loaded. Starting initialization...');
-
-  // Get DOM elements
+// clipboard-uploader-script.js
+document.addEventListener('DOMContentLoaded', () => {
+  // DOM Elements
   const updateBody = document.getElementById('update-body');
   const mediaButton = document.getElementById('mediaButton');
-  const mediaInput = document.getElementById('mediaInput');
   const postButton = document.getElementById('postButton');
+  const mediaInput = document.getElementById('mediaInput');
   const uploadProgress = document.getElementById('uploadProgress');
   const progressFill = document.getElementById('progressFill');
   const progressText = document.getElementById('progressText');
   const mediaPreviewContainer = document.getElementById('mediaPreviewContainer');
 
-  // ✅ Check if all required elements exist
-  if (!updateBody || !mediaButton || !mediaInput || !postButton || !uploadProgress || !progressFill || !progressText || !mediaPreviewContainer) {
-    console.error('❌ One or more required DOM elements are missing!');
-    console.log({
-      updateBody: !!updateBody,
-      mediaButton: !!mediaButton,
-      mediaInput: !!mediaInput,
-      postButton: !!postButton,
-      uploadProgress: !!uploadProgress,
-      progressFill: !!progressFill,
-      progressText: !!progressText,
-      mediaPreviewContainer: !!mediaPreviewContainer
-    });
-    alert('Critical error: Required UI elements not found. Please check your HTML.');
-    return;
-  }
-
-  console.log('✅ All DOM elements found.');
-
-  const supabase = window.supabaseClient;
-
-  // Track media files
+  // State
   let currentMediaFiles = [];
 
+  // Helper function to check authentication
   async function checkAuth() {
-    console.log('🔍 Checking auth...');
-    try {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) {
-        console.error('❌ No user signed in.');
-        alert('You must be signed in to upload. Redirecting to sign-in...');
-        window.location.href = '../signin.html';
-        return null;
-      }
-      console.log('✅ Authenticated as:', user.id);
-      return user;
-    } catch (err) {
-      console.error('❌ Auth check failed:', err);
-      alert('Authentication failed. Please refresh.');
-      return null;
-    }
+    // Placeholder - implement your auth logic
+    // This should return a user object if authenticated, null otherwise
+    return { id: 'test-user' }; // Replace with actual auth check
   }
 
-  // Media button click
-  mediaButton.addEventListener('click', async () => {
-    console.log('📎 Media button clicked.');
-    const user = await checkAuth();
-    if (!user) return;
+  // Show media preview
+  function showMediaPreview(url, name, type) {
+    if (!mediaPreviewContainer) {
+      console.error('mediaPreviewContainer not found');
+      return;
+    }
+
+    mediaPreviewContainer.style.display = 'block';
+
+    const previewItem = document.createElement('div');
+    previewItem.className = 'media-preview-item';
+    previewItem.dataset.url = url;
+
+    let mediaElement;
+    if (type.startsWith('image/')) {
+      mediaElement = document.createElement('img');
+      mediaElement.src = url;
+      mediaElement.alt = name;
+    } else {
+      mediaElement = document.createElement('video');
+      mediaElement.src = url;
+      mediaElement.controls = true;
+      mediaElement.style.width = '100px';
+      mediaElement.style.height = '100px';
+      mediaElement.style.objectFit = 'cover';
+    }
+
+    const removeBtn = document.createElement('button');
+    removeBtn.className = 'remove-btn';
+    removeBtn.textContent = '×';
+    removeBtn.onclick = () => {
+      currentMediaFiles = currentMediaFiles.filter(file => file.url !== url);
+      previewItem.remove();
+      if (currentMediaFiles.length === 0) {
+        mediaPreviewContainer.style.display = 'none';
+      }
+    };
+
+    previewItem.appendChild(mediaElement);
+    previewItem.appendChild(removeBtn);
+    mediaPreviewContainer.appendChild(previewItem);
+  }
+
+  // Handle file selection
+  mediaButton.addEventListener('click', () => {
     mediaInput.click();
   });
 
-  // File input change
   mediaInput.addEventListener('change', async (e) => {
-    console.log('📁 File input changed. Files:', e.target.files);
-    const user = await checkAuth();
-    if (!user) return;
-
     const files = Array.from(e.target.files);
-    if (!files.length) {
-      console.log('❌ No files selected.');
-      return;
-    }
-
-    await processFiles(files, user);
-    mediaInput.value = '';
-  });
-
-  // ✅ FIXED: Attach paste listener directly to the textarea
-  updateBody.addEventListener('paste', async (e) => {
-    console.log('📋 PASTE EVENT FIRED!');
-
-    // Safety check: make sure updateBody exists
-    if (!updateBody) {
-      console.error('❌ updateBody is null!');
-      return;
-    }
-
-    // Only proceed if textarea is focused (should always be true here)
-    if (document.activeElement !== updateBody) {
-      console.log('❌ Paste ignored: active element is not the textarea.');
-      return;
-    }
-
-    console.log('✅ Textarea is focused. Processing paste...');
+    if (files.length === 0) return;
 
     const user = await checkAuth();
-    if (!user) return;
-
-    const items = e.clipboardData?.items || [];
-    console.log('📋 Clipboard items:', items);
-
-    const imageFiles = [];
-
-    for (let i = 0; i < items.length; i++) {
-      const item = items[i];
-      console.log(`📄 Item ${i}: type=${item.type}, kind=${item.kind}`);
-
-      if (item.type.startsWith('image/')) {
-        console.log(`🖼️ Found image item: ${item.type}`);
-        const file = item.getAsFile();
-        if (file) {
-          console.log(`✅ Got file: ${file.name}, size=${file.size} bytes`);
-          imageFiles.push(file);
-        } else {
-          console.log('⚠️ Could not get file from clipboard item.');
-        }
-      }
+    if (!user) {
+      alert('Authentication required');
+      return;
     }
 
-    if (imageFiles.length > 0) {
-      console.log(`✅ Detected ${imageFiles.length} image(s) to upload.`);
-      await processFiles(imageFiles, user);
-      e.preventDefault(); // Prevent default paste behavior
-    } else {
-      console.log('❌ No images found in clipboard.');
-    }
-  });
-
-  // Centralized file processing function
-  async function processFiles(files, user) {
-    console.log('📦 Starting to process files...');
-
-    // Validate all files first
-    for (const currentFile of files) {
-      console.log(`🔎 Validating file: ${currentFile.name}, type=${currentFile.type}, size=${currentFile.size}`);
-
-      const allowedTypes = ['image/jpeg', 'image/png', 'image/gif', 'image/webp', 'video/mp4', 'video/webm', 'video/quicktime'];
-      if (!allowedTypes.includes(currentFile.type)) {
-        console.error(`❌ Unsupported type: ${currentFile.type}`);
-        alert(`File ${currentFile.name} is not an allowed type.`);
-        return;
+    for (const file of files) {
+      // Validate file type and size
+      const allowedTypes = [
+        'image/jpeg', 'image/png', 'image/gif', 'image/webp',
+        'video/mp4', 'video/webm', 'video/ogg'
+      ];
+      if (!allowedTypes.includes(file.type)) {
+        alert(`File type not allowed: ${file.type}`);
+        continue;
       }
-      if (currentFile.size > 50 * 1024 * 1024) {
-        console.error(`❌ File too large: ${currentFile.size} bytes`);
-        alert(`File ${currentFile.name} exceeds 50MB limit.`);
-        return;
+
+      if (file.size > 50 * 1024 * 1024) {
+        alert('File exceeds 50MB limit');
+        continue;
       }
-      console.log(`✅ File ${currentFile.name} passed validation.`);
-    }
 
-    // Process each file
-    for (const currentFile of files) {
-      console.log(`📤 Uploading file: ${currentFile.name}`);
-
-      const fileExt = currentFile.name.split('.').pop() || 'png';
+      // Generate filename and upload
+      const fileExt = file.type.split('/')[1];
       const fileName = `${user.id}/${Date.now()}-${Math.random().toString(36).substring(2, 15)}.${fileExt}`;
 
-      // Show upload progress (if elements exist)
-      if (uploadProgress && progressFill && progressText) {
-        uploadProgress.style.display = 'block';
-        progressFill.style.width = '0%';
-        progressText.textContent = `Uploading ${currentFile.name}...`;
-      } else {
-        console.warn('⚠️ Progress UI elements missing.');
+      // Show upload progress
+      uploadProgress.style.display = 'block';
+      progressFill.style.width = '0%';
+      progressText.textContent = `Uploading ${file.name}...`;
+
+      // Upload to storage
+      const { error: uploadError } = await window.supabaseClient.storage
+        .from('dev-updates-media')
+        .upload(fileName, file, {
+          upsert: false,
+          onUploadProgress: (progressEvent) => {
+            const percentCompleted = Math.round((progressEvent.loaded * 100) / progressEvent.total);
+            progressFill.style.width = percentCompleted + '%';
+            progressText.textContent = `Uploading ${file.name}... ${percentCompleted}%`;
+          }
+        });
+
+      if (uploadError) {
+        console.error('Upload error:', uploadError);
+        alert('Upload failed: ' + uploadError.message);
+        uploadProgress.style.display = 'none';
+        return;
       }
 
-      // Upload to Supabase
-      console.log(`🌐 Uploading to Supabase: ${fileName}`);
-      try {
-        const { error: uploadError } = await supabase.storage
+      // Get public URL
+      const { data: { publicUrl } } = window.supabaseClient.storage
+        .from('dev-updates-media')
+        .getPublicUrl(fileName);
+
+      // Add to media files array
+      currentMediaFiles.push({
+        url: publicUrl,
+        name: file.name,
+        type: file.type
+      });
+
+      // Show preview
+      showMediaPreview(publicUrl, file.name, file.type);
+      uploadProgress.style.display = 'none';
+    }
+  });
+
+  // Handle pasted images
+  updateBody.addEventListener('paste', async (e) => {
+    console.log('Paste event detected!'); // LOG
+    console.log('Clipboard items:', e.clipboardData?.items); // LOG
+    
+    // Re-initialize mediaPreviewContainer if it's null
+    if (!mediaPreviewContainer) {
+      console.log('Re-initializing mediaPreviewContainer...');
+      const tempContainer = document.getElementById('mediaPreviewContainer');
+      if (tempContainer) {
+        mediaPreviewContainer = tempContainer;
+        console.log('mediaPreviewContainer re-initialized successfully');
+      } else {
+        console.error('mediaPreviewContainer still not found!');
+        return;
+      }
+    }
+    
+    const items = e.clipboardData.items;
+    if (!items) {
+      console.warn('No clipboard items found');
+      return;
+    }
+    
+    let hasImage = false;
+    // First check if there are any images to avoid unnecessary auth checks
+    for (let i = 0; i < items.length; i++) {
+      if (items[i].type.indexOf('image') !== -1) {
+        hasImage = true;
+        console.log('Found image in clipboard:', items[i].type); // LOG
+        break;
+      }
+    }
+    
+    if (!hasImage) {
+      console.log('No images found in clipboard, proceeding normally'); // LOG
+      return; // Exit early if no images
+    }
+    
+    const user = await checkAuth();
+    if (!user) {
+      console.warn('Paste failed: No authenticated user found');
+      return;
+    }
+
+    for (let i = 0; i < items.length; i++) {
+      if (items[i].type.indexOf('image') !== -1) {
+        e.preventDefault(); // Prevent default paste behavior
+        
+        const imageFile = items[i].getAsFile();
+        if (!imageFile) {
+          console.warn('Could not get image file from clipboard item');
+          continue;
+        }
+
+        console.log('Processing pasted image:', imageFile.name, imageFile.type, imageFile.size); // LOG
+        
+        // Validate file type and size
+        const allowedTypes = ['image/jpeg', 'image/png', 'image/gif', 'image/webp'];
+        if (!allowedTypes.includes(imageFile.type)) {
+          alert('Pasted item is not an allowed image type.');
+          continue;
+        }
+        
+        if (imageFile.size > 50 * 1024 * 1024) {
+          alert('Pasted image exceeds 50MB limit.');
+          continue;
+        }
+
+        // Generate filename and upload
+        const fileExt = imageFile.type.split('/')[1];
+        const fileName = `${user.id}/${Date.now()}-${Math.random().toString(36).substring(2, 15)}.${fileExt}`;
+
+        // Show upload progress
+        if (uploadProgress && progressFill && progressText) {
+          uploadProgress.style.display = 'block';
+          progressFill.style.width = '0%';
+          progressText.textContent = 'Uploading pasted image...';
+        }
+
+        // Upload to storage
+        const { error: uploadError } = await window.supabaseClient.storage
           .from('dev-updates-media')
-          .upload(fileName, currentFile, {
+          .upload(fileName, imageFile, {
             upsert: false,
             onUploadProgress: (progressEvent) => {
               const percentCompleted = Math.round((progressEvent.loaded * 100) / progressEvent.total);
-              console.log(`📊 Upload progress: ${percentCompleted}% for ${currentFile.name}`);
-              if (progressFill) {
-                progressFill.style.width = percentCompleted + '%';
-              }
-              if (progressText) {
-                progressText.textContent = `Uploading ${currentFile.name}... ${percentCompleted}%`;
-              }
+              if (progressFill) progressFill.style.width = percentCompleted + '%';
+              if (progressText) progressText.textContent = `Uploading pasted image... ${percentCompleted}%`;
             }
           });
 
         if (uploadError) {
-          console.error('❌ Upload error:', uploadError);
+          console.error('Upload error:', uploadError);
           alert('Upload failed: ' + uploadError.message);
-          if (uploadProgress) {
-            uploadProgress.style.display = 'none';
-          }
+          if (uploadProgress) uploadProgress.style.display = 'none';
           return;
         }
 
         // Get public URL
-        const { data: { publicUrl } } = supabase.storage
+        const { data: { publicUrl } } = window.supabaseClient.storage
           .from('dev-updates-media')
           .getPublicUrl(fileName);
-
-        console.log(`✅ Upload successful. Public URL: ${publicUrl}`);
 
         // Add to media files array
         currentMediaFiles.push({
           url: publicUrl,
-          name: currentFile.name,
-          type: currentFile.type
+          name: 'Pasted Image',
+          type: imageFile.type
         });
 
         // Show preview
-        showMediaPreview(publicUrl, currentFile.name, currentFile.type);
-
-      } catch (uploadErr) {
-        console.error('❌ Upload failed with exception:', uploadErr);
-        alert('Upload failed unexpectedly. Check console.');
-        if (uploadProgress) {
-          uploadProgress.style.display = 'none';
+        try {
+          showMediaPreview(publicUrl, 'Pasted Image', imageFile.type);
+          console.log('Preview added successfully for pasted image');
+        } catch (previewError) {
+          console.error('Error showing preview:', previewError);
+          alert('Failed to show preview for pasted image.');
         }
-        return;
+        
+        // Hide progress
+        if (uploadProgress) uploadProgress.style.display = 'none';
       }
-    }
-
-    // Hide progress
-    if (uploadProgress) {
-      uploadProgress.style.display = 'none';
-    }
-    console.log('✅ All files processed.');
-  }
-
-  // Helper: Show media preview
-  function showMediaPreview(url, filename, fileType) {
-    console.log(`🖼️ Showing preview for: ${filename} (${url})`);
-
-    const previewItem = document.createElement('div');
-    previewItem.className = 'media-preview-item';
-
-    let previewElement;
-    if (fileType.startsWith('image')) {
-      previewElement = document.createElement('img');
-      previewElement.src = url;
-      previewElement.alt = filename;
-    } else if (fileType.startsWith('video')) {
-      previewElement = document.createElement('video');
-      previewElement.controls = false;
-      const source = document.createElement('source');
-      source.src = url;
-      source.type = fileType;
-      previewElement.appendChild(source);
-    }
-
-    const removeBtn = document.createElement('button');
-    removeBtn.textContent = '×';
-    removeBtn.className = 'remove-btn';
-    removeBtn.onclick = (e) => {
-      e.stopPropagation();
-      removeMediaPreview(previewItem, url);
-    };
-
-    previewItem.appendChild(previewElement);
-    previewItem.appendChild(removeBtn);
-    mediaPreviewContainer.appendChild(previewItem);
-    mediaPreviewContainer.style.display = 'block';
-  }
-
-  // Helper: Remove media preview
-  function removeMediaPreview(previewItem, url) {
-    console.log(`🗑️ Removing preview for URL: ${url}`);
-    previewItem.remove();
-    currentMediaFiles = currentMediaFiles.filter(item => item.url !== url);
-    if (currentMediaFiles.length === 0) {
-      mediaPreviewContainer.style.display = 'none';
-    }
-  }
-
-  // Post handler (for testing only)
-  postButton.addEventListener('click', async () => {
-    console.log('📨 Post button clicked.');
-    const user = await checkAuth();
-    if (!user) return;
-
-    let body = updateBody.value.trim();
-
-    // Append media markdown
-    for (const media of currentMediaFiles) {
-      body += `\n\n![${media.name}](${media.url})`;
-    }
-
-    if (!body) {
-      alert('Please write something or attach media first.');
-      return;
-    }
-
-    console.log('📝 Posting body:', body);
-
-    try {
-      const { error } = await supabase
-        .from('development_updates')
-        .insert({
-          author_id: user.id,
-          title: 'Test Update',
-          body,
-          created_at: new Date().toISOString()
-        });
-
-      if (error) {
-        console.error('❌ Failed to post:', error);
-        alert('Failed to post: ' + error.message);
-        return;
-      }
-
-      console.log('✅ Post successful!');
-      alert('Post successful! Check your Supabase table.');
-
-      // Clear state
-      updateBody.value = '';
-      currentMediaFiles = [];
-      mediaPreviewContainer.innerHTML = '';
-      mediaPreviewContainer.style.display = 'none';
-    } catch (postErr) {
-      console.error('❌ Post failed with exception:', postErr);
-      alert('Post failed unexpectedly. Check console.');
     }
   });
 
-  // Initial auth check
-  try {
-    await checkAuth();
-  } catch (err) {
-    console.error('❌ Initial auth check failed:', err);
-  }
+  // Post button handler (for testing)
+  postButton.addEventListener('click', () => {
+    console.log('Posted content:', updateBody.value);
+    console.log('Attached media:', currentMediaFiles);
+    alert('Post functionality would be implemented here');
+  });
 });
