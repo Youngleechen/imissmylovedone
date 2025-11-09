@@ -78,8 +78,8 @@ document.addEventListener('DOMContentLoaded', async () => {
     mediaInput.value = '';
   });
 
-  // ✅ Paste event listener on document
-  document.addEventListener('paste', async (e) => {
+  // ✅ FIXED: Attach paste listener directly to the textarea
+  updateBody.addEventListener('paste', async (e) => {
     console.log('📋 PASTE EVENT FIRED!');
 
     // Safety check: make sure updateBody exists
@@ -88,7 +88,7 @@ document.addEventListener('DOMContentLoaded', async () => {
       return;
     }
 
-    // Only proceed if textarea is focused
+    // Only proceed if textarea is focused (should always be true here)
     if (document.activeElement !== updateBody) {
       console.log('❌ Paste ignored: active element is not the textarea.');
       return;
@@ -101,7 +101,6 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     const items = e.clipboardData?.items || [];
     console.log('📋 Clipboard items:', items);
-    console.log('📋 Clipboard types:', e.clipboardData.types);
 
     const imageFiles = [];
 
@@ -127,50 +126,6 @@ document.addEventListener('DOMContentLoaded', async () => {
       e.preventDefault(); // Prevent default paste behavior
     } else {
       console.log('❌ No images found in clipboard.');
-      // Optional: show user feedback if they pasted non-image content
-      // alert('No images found in clipboard. Try dragging an image file instead.');
-    }
-  });
-
-  // ✅ Drag and drop support
-  updateBody.addEventListener('dragover', (e) => {
-    e.preventDefault();
-    e.dataTransfer.dropEffect = 'copy';
-    console.log('📁 Drag over textarea');
-    updateBody.style.borderColor = '#007bff'; // Visual feedback
-  });
-
-  updateBody.addEventListener('dragleave', (e) => {
-    e.preventDefault();
-    console.log('📁 Drag left textarea');
-    updateBody.style.borderColor = ''; // Reset border
-  });
-
-  updateBody.addEventListener('drop', async (e) => {
-    e.preventDefault();
-    console.log('📁 DROP EVENT FIRED!');
-
-    // Reset border
-    updateBody.style.borderColor = '';
-
-    const user = await checkAuth();
-    if (!user) return;
-
-    const files = Array.from(e.dataTransfer.files);
-    console.log('📁 Dropped files:', files);
-
-    if (files.length > 0) {
-      // Filter for images and videos
-      const validFiles = files.filter(file => 
-        file.type.startsWith('image/') || file.type.startsWith('video/')
-      );
-      
-      if (validFiles.length > 0) {
-        await processFiles(validFiles, user);
-      } else {
-        console.log('❌ No valid image/video files found in dropped files.');
-        alert('Please drop image or video files only.');
-      }
     }
   });
 
