@@ -3,7 +3,7 @@
   "redirects": [
     {
       "source": "/:path*/signin.html",
-      "destination": "/",
+      "destination": "/login/",
       "permanent": true
     }
   ]
