@@ -203,6 +203,83 @@ document.addEventListener('DOMContentLoaded', async () => {
     mediaInput.value = '';
   });
 
+  // NEW: Handle pasted images
+  updateBody.addEventListener('paste', async (e) => {
+    const user = await checkAuth();
+    if (!user) return;
+
+    const items = e.clipboardData.items;
+    
+    for (let i = 0; i < items.length; i++) {
+      if (items[i].type.indexOf('image') !== -1) {
+        e.preventDefault(); // Prevent default paste behavior
+        
+        const imageFile = items[i].getAsFile();
+        if (!imageFile) continue;
+
+        // Validate file type and size
+        const allowedTypes = ['image/jpeg', 'image/png', 'image/gif', 'image/webp'];
+        if (!allowedTypes.includes(imageFile.type)) {
+          alert('Pasted item is not an allowed image type.');
+          continue;
+        }
+        
+        if (imageFile.size > 50 * 1024 * 1024) {
+          alert('Pasted image exceeds 50MB limit.');
+          continue;
+        }
+
+        // Generate filename and upload
+        const fileExt = imageFile.type.split('/')[1];
+        const fileName = `${user.id}/${Date.now()}-${Math.random().toString(36).substring(2, 15)}.${fileExt}`;
+
+        // Show upload progress
+        if (uploadProgress && progressFill && progressText) {
+          uploadProgress.style.display = 'block';
+          progressFill.style.width = '0%';
+          progressText.textContent = 'Uploading pasted image...';
+        }
+
+        // Upload to storage
+        const { error: uploadError } = await supabase.storage
+          .from('dev-updates-media')
+          .upload(fileName, imageFile, {
+            upsert: false,
+            onUploadProgress: (progressEvent) => {
+              const percentCompleted = Math.round((progressEvent.loaded * 100) / progressEvent.total);
+              if (progressFill) progressFill.style.width = percentCompleted + '%';
+              if (progressText) progressText.textContent = `Uploading pasted image... ${percentCompleted}%`;
+            }
+          });
+
+        if (uploadError) {
+          console.error('Upload error:', uploadError);
+          alert('Upload failed: ' + uploadError.message);
+          if (uploadProgress) uploadProgress.style.display = 'none';
+          return;
+        }
+
+        // Get public URL
+        const { data: { publicUrl } } = supabase.storage
+          .from('dev-updates-media')
+          .getPublicUrl(fileName);
+
+        // Add to media files array
+        currentMediaFiles.push({
+          url: publicUrl,
+          name: 'Pasted Image',
+          type: imageFile.type
+        });
+
+        // Show preview
+        showMediaPreview(publicUrl, 'Pasted Image', imageFile.type);
+        
+        // Hide progress
+        if (uploadProgress) uploadProgress.style.display = 'none';
+      }
+    }
+  });
+
   // Helper: Show media preview (for new posts)
   function showMediaPreview(url, filename, fileType) {
     const previewItem = document.createElement('div');
