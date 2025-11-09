@@ -203,35 +203,39 @@ document.addEventListener('DOMContentLoaded', async () => {
     mediaInput.value = '';
   });
 
-  // NEW: Handle pasted images
+  // ✅ FIXED: Handle pasted images from clipboard
   updateBody.addEventListener('paste', async (e) => {
     const user = await checkAuth();
     if (!user) return;
 
-    const items = e.clipboardData.items;
-    
+    const items = e.clipboardData?.items;
+    if (!items) return;
+
     for (let i = 0; i < items.length; i++) {
-      if (items[i].type.indexOf('image') !== -1) {
-        e.preventDefault(); // Prevent default paste behavior
+      const item = items[i];
+      
+      // Check if it's an image
+      if (item.type.indexOf('image') !== -1) {
+        e.preventDefault(); // Prevent default paste (text/HTML)
         
-        const imageFile = items[i].getAsFile();
-        if (!imageFile) continue;
+        const blob = item.getAsFile();
+        if (!blob) {
+          alert('Could not extract image from clipboard.');
+          continue;
+        }
 
-        // Validate file type and size
+        // Validate file type
         const allowedTypes = ['image/jpeg', 'image/png', 'image/gif', 'image/webp'];
-        if (!allowedTypes.includes(imageFile.type)) {
-          alert('Pasted item is not an allowed image type.');
+        if (!allowedTypes.includes(blob.type)) {
+          alert('Only JPEG, PNG, GIF, and WebP images are allowed.');
           continue;
         }
         
-        if (imageFile.size > 50 * 1024 * 1024) {
-          alert('Pasted image exceeds 50MB limit.');
+        // Validate size
+        if (blob.size > 50 * 1024 * 1024) {
+          alert('Image exceeds 50MB limit.');
           continue;
         }
-
-        // Generate filename and upload
-        const fileExt = imageFile.type.split('/')[1];
-        const fileName = `${user.id}/${Date.now()}-${Math.random().toString(36).substring(2, 15)}.${fileExt}`;
 
         // Show upload progress
         if (uploadProgress && progressFill && progressText) {
@@ -240,10 +244,14 @@ document.addEventListener('DOMContentLoaded', async () => {
           progressText.textContent = 'Uploading pasted image...';
         }
 
-        // Upload to storage
+        // Generate unique filename
+        const fileExt = blob.type.split('/')[1] || 'png';
+        const fileName = `${user.id}/${Date.now()}-${Math.random().toString(36).substring(2, 15)}.${fileExt}`;
+
+        // Upload to Supabase Storage
         const { error: uploadError } = await supabase.storage
           .from('dev-updates-media')
-          .upload(fileName, imageFile, {
+          .upload(fileName, blob, {
             upsert: false,
             onUploadProgress: (progressEvent) => {
               const percentCompleted = Math.round((progressEvent.loaded * 100) / progressEvent.total);
@@ -268,11 +276,11 @@ document.addEventListener('DOMContentLoaded', async () => {
         currentMediaFiles.push({
           url: publicUrl,
           name: 'Pasted Image',
-          type: imageFile.type
+          type: blob.type
         });
 
         // Show preview
-        showMediaPreview(publicUrl, 'Pasted Image', imageFile.type);
+        showMediaPreview(publicUrl, 'Pasted Image', blob.type);
         
         // Hide progress
         if (uploadProgress) uploadProgress.style.display = 'none';
@@ -744,7 +752,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
   // --- GALLERY FUNCTIONS ---
   // Reused from main app, but scoped to this page
-   let currentGalleryState = null;
+  let currentGalleryState = null;
 
   window.openGallery = function(postId, encodedMediaUrlsJson, startIndex = 0) {
     const mediaUrls = JSON.parse(decodeURIComponent(encodedMediaUrlsJson));
@@ -947,6 +955,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     }
     currentGalleryState = null;
   };
+  
   // Make openEditModal available globally for inline onclick
   window.openEditModal = openEditModal;
 });
