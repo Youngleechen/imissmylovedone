@@ -1,24 +1,3 @@
 {
-  "redirects": [
-    {
-      "source": "/test",
-      "destination": "/test/",
-      "permanent": true
-    },
-    {
-      "source": "/memories",
-      "destination": "/memories/",
-      "permanent": true
-    },
-    {
-      "source": "/profile",
-      "destination": "/profile/",
-      "permanent": true
-    },
-    {
-      "source": "/about",
-      "destination": "/about/",
-      "permanent": true
-    }
-  ]
+  "trailingSlash": true
 }
