@@ -1,16 +1,103 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Login Button</title>
-  <!-- ✅ Load from /homepage/style.css -->
-  <link rel="stylesheet" href="/homepage/style.css" />
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Grief Support Community</title>
+  <style>
+    /* Basic styling for user display */
+    .users-section {
+      background: #f9f9f9;
+      padding: 20px;
+      margin-bottom: 20px;
+      border-radius: 8px;
+      text-align: center;
+    }
+    
+    .users-grid {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
+      gap: 15px;
+      margin: 15px 0;
+    }
+    
+    .user-card {
+      background: white;
+      border-radius: 8px;
+      padding: 10px;
+      width: 120px;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+    }
+    
+    .user-avatar {
+      width: 60px;
+      height: 60px;
+      border-radius: 50%;
+      object-fit: cover;
+      margin: 0 auto 8px;
+      display: block;
+    }
+    
+    .user-name {
+      font-size: 14px;
+      margin: 0;
+      word-break: break-word;
+    }
+    
+    .login-section {
+      /* Your existing login styling */
+    }
+  </style>
 </head>
 <body>
-  <button id="loginButton" class="login-btn">Login</button>
+  <!-- Users Section (Above Login) -->
+  <section class="users-section">
+    <h2>Community Members</h2>
+    <div class="users-grid" id="usersContainer">
+      <!-- User cards will be dynamically inserted here -->
+    </div>
+  </section>
 
-  <!-- ✅ Load from /homepage/script.js -->
-  <script src="/homepage/script.js"></script>
+  <!-- Your existing login section stays as is -->
+  <div class="login-section">
+    <!-- Your current login HTML -->
+  </div>
+
+  <script type="module">
+    import { createClient } from 'https://esm.sh/@supabase/supabase-js';
+    
+    // Initialize Supabase client
+    const supabaseUrl = 'YOUR_SUPABASE_URL';
+    const supabaseKey = 'YOUR_SUPABASE_KEY';
+    const supabase = createClient(supabaseUrl, supabaseKey);
+    
+    // Fetch and display users
+    async function displayUsers() {
+      const { data, error } = await supabase
+        .from('users') // Adjust table name as needed
+        .select('id, name, avatar_url') // Adjust columns as needed
+        .limit(20); // Limit to 20 users for homepage display
+
+      if (error) {
+        console.error('Error fetching users:', error);
+        return;
+      }
+
+      const container = document.getElementById('usersContainer');
+      container.innerHTML = data.map(user => `
+        <div class="user-card">
+          <img class="user-avatar" 
+               src="${user.avatar_url || 'default-avatar.png'}" 
+               alt="${user.name || 'User'}"
+               onerror="this.src='default-avatar.png'">
+          <p class="user-name">${user.name || 'Anonymous'}</p>
+        </div>
+      `).join('');
+    }
+
+    // Load users when page loads
+    document.addEventListener('DOMContentLoaded', displayUsers);
+  </script>
 </body>
 </html>
