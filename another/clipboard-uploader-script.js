@@ -1,3 +1,4 @@
+// clipboard-uploader-script.js
 document.addEventListener('DOMContentLoaded', () => {
   // DOM Elements
   const updateBody = document.getElementById('update-body');
@@ -12,22 +13,10 @@ document.addEventListener('DOMContentLoaded', () => {
   // State
   let currentMediaFiles = [];
 
-  // Helper function to get authenticated user
+  // Helper function to check authentication
   async function checkAuth() {
-    // Replace this with your actual Supabase client instance
-    if (!window.supabaseClient) {
-      console.error('Supabase client is not initialized!');
-      return null;
-    }
-    
-    const { data: { user }, error } = await window.supabaseClient.auth.getUser();
-    
-    if (error || !user) {
-      console.error('Authentication error:', error?.message || 'No user found');
-      return null;
-    }
-    
-    return { id: user.id };
+    // ✅ Hardcoded user ID for testing (replace with real auth later)
+    return { id: 'a6f0b8c1-7371-4345-8845-b7512c9f637b' };
   }
 
   // Show media preview
