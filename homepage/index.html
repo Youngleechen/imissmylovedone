@@ -1,28 +1,23 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Grief Support Platform - Homepage</title>
+  <!-- ✅ Load from /homepage/style.css -->
+  <link rel="stylesheet" href="/homepage/style.css" />
+
   <!-- Load Supabase JS client -->
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+  <!-- Optional: Add some basic styling for the posts section if your style.css doesn't cover it -->
   <style>
-    body {
-      font-family: Arial, sans-serif;
-      margin: 0;
-      padding: 20px;
-      background-color: #f0f2f5;
-    }
-    .login-section {
-      background-color: white;
-      padding: 20px;
-      border-radius: 8px;
-      box-shadow: 0 1px 3px rgba(0,0,0,0.1);
-      margin-bottom: 20px;
-      max-width: 400px;
-    }
     .posts-section {
       margin-top: 20px;
+      padding: 20px;
+      background-color: white;
+      border-radius: 8px;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.1);
     }
     .posts-section h2 {
       margin-bottom: 15px;
@@ -44,20 +39,79 @@
       font-size: 12px;
       margin-top: 8px;
     }
+    .media-grid {
+      position: relative;
+      width: 100%;
+      height: 300px;
+      margin: 10px 0;
+      background: white;
+      border-radius: 8px;
+      overflow: hidden;
+    }
+    .media-grid-item.large {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      cursor: pointer;
+    }
+    .media-grid-item.large img,
+    .media-grid-item.large video {
+      width: 100%;
+      height: 100%;
+      object-fit: contain;
+      object-position: center;
+      display: block;
+    }
+    .media-grid-overlay {
+      position: absolute;
+      bottom: 10px;
+      right: 10px;
+      width: 80px;
+      height: 80px;
+      cursor: pointer;
+    }
+    .second-thumbnail {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      border-radius: 8px;
+      overflow: hidden;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.3);
+    }
+    .second-thumbnail img,
+    .second-thumbnail video {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      object-position: center;
+      display: block;
+    }
+    .more-overlay {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(0,0,0,0.5);
+      border-radius: 8px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .more-text {
+      color: white;
+      font-size: 16px;
+      font-weight: bold;
+    }
   </style>
 </head>
 <body>
-
-  <!-- Existing Login Section -->
-  <div class="login-section">
-    <h2>Login</h2>
-    <form id="loginForm">
-      <input type="email" id="loginEmail" placeholder="Email" required><br><br>
-      <input type="password" id="loginPassword" placeholder="Password" required><br><br>
-      <button type="submit">Sign In</button>
-    </form>
-    <a href="signup.html">Don't have an account? Sign up</a>
-  </div>
+  <!-- Your existing Login Button -->
+  <button id="loginButton" class="login-btn">Login</button>
 
   <!-- New Section for All Users' Posts -->
   <div class="posts-section">
@@ -67,6 +121,10 @@
     </div>
   </div>
 
+  <!-- ✅ Load your existing script.js (handles login) -->
+  <script src="/homepage/script.js"></script>
+
+  <!-- Script to load and display all posts -->
   <script>
     // Initialize Supabase client (Replace these with your actual values)
     const supabaseUrl = 'YOUR_SUPABASE_URL'; // e.g., https://xxxxx.supabase.co
@@ -96,22 +154,94 @@
           return;
         }
 
-        // Generate simple HTML for each post
+        // Generate HTML for each post, mirroring the logic from script.js
         let postsHTML = '';
         data.forEach(post => {
-          // For now, just show the raw body text and timestamp.
-          // This avoids complex media handling for simplicity.
-          let processedBody = post.body.replace(/\n/g, '<br>'); // Convert newlines to <br>
+          // Extract media URLs from post body using the same regex
+          const mediaMatches = [...post.body.matchAll(/!\[([^\]]*)\]\s*\(\s*([^)]+)\s*\)/g)];
 
-          postsHTML += `
-            <div class="post-item">
-              <p>${processedBody}</p>
-              <small>${new Date(post.created_at).toLocaleString()}</small>
-            </div>
-          `;
+          if (mediaMatches.length > 0) {
+            let mediaGridHtml = '<div class="media-grid">';
+
+            // Show first media item as large
+            const firstMedia = mediaMatches[0];
+            const firstAlt = firstMedia[1] || 'Media';
+            const firstUrl = firstMedia[2].trim();
+            const isFirstVideo = firstUrl.includes('.mp4') || firstUrl.includes('.webm') || firstUrl.includes('.mov');
+
+            mediaGridHtml += `
+              <div class="media-grid-item large" onclick="openGallery('${post.id}', '${encodeURIComponent(JSON.stringify(mediaMatches.map(m => m[2])))}', 0)">
+                ${isFirstVideo ?
+                  `<video muted playsinline><source src="${firstUrl}" type="video/mp4"></video>` :
+                  `<img src="${firstUrl}" alt="${firstAlt}" onload="adjustImageFit(this)">`
+                }
+              </div>
+            `;
+
+            // If there are more media items, show the +N overlay
+            if (mediaMatches.length > 1) {
+              const secondMedia = mediaMatches[1];
+              const secondUrl = secondMedia[2].trim();
+              const isSecondVideo = secondUrl.includes('.mp4') || secondUrl.includes('.webm') || secondUrl.includes('.mov');
+
+              mediaGridHtml += `
+                <div class="media-grid-overlay" onclick="openGallery('${post.id}', '${encodeURIComponent(JSON.stringify(mediaMatches.map(m => m[2])))}', 1)">
+                  <div class="second-thumbnail">
+                    ${isSecondVideo ?
+                      `<video muted playsinline><source src="${secondUrl}" type="video/mp4"></video>` :
+                      `<img src="${secondUrl}" alt="Additional media" onload="adjustThumbnailFit(this)">`
+                    }
+                  </div>
+                  <div class="more-overlay">
+                    <div class="more-text">+${mediaMatches.length - 1}</div>
+                  </div>
+                </div>
+              `;
+            }
+            mediaGridHtml += '</div>';
+
+            // Remove media markdown from text body
+            let textOnlyBody = post.body.replace(/!\[([^\]]*)\]\s*\(\s*([^)]+)\s*\)/g, '');
+            textOnlyBody = textOnlyBody.replace(/\n/g, '<br>'); // Convert newlines to <br>
+
+            // Note: We don't have the username here. For now, we'll just show the post content.
+            postsHTML += `
+              <div class="post-item">
+                <p>${textOnlyBody}</p>
+                ${mediaGridHtml}
+                <small>${new Date(post.created_at).toLocaleString()}</small>
+              </div>
+            `;
+          } else {
+            // Handle posts without media
+            let processedBody = post.body.replace(/\n/g, '<br>');
+            postsHTML += `
+              <div class="post-item">
+                <p>${processedBody}</p>
+                <small>${new Date(post.created_at).toLocaleString()}</small>
+              </div>
+            `;
+          }
         });
 
         container.innerHTML = postsHTML;
+
+        // After inserting HTML, trigger the image adjustment functions
+        // (These are defined below)
+        document.querySelectorAll('.media-grid-item.large img, .media-grid-item.large video').forEach(el => {
+            if (el.complete) {
+                applyFitBasedOnAspectRatio(el);
+            } else {
+                el.addEventListener('load', () => applyFitBasedOnAspectRatio(el));
+            }
+        });
+        document.querySelectorAll('.second-thumbnail img, .second-thumbnail video').forEach(el => {
+            if (el.complete) {
+                applyFitBasedOnAspectRatio(el);
+            } else {
+                el.addEventListener('load', () => applyFitBasedOnAspectRatio(el));
+            }
+        });
 
       } catch (err) {
         console.error('Unexpected error loading posts:', err);
@@ -123,133 +253,232 @@
     document.addEventListener('DOMContentLoaded', () => {
       loadAllPosts();
     });
-  </script>
-</body>
-</html><!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Grief Support Platform - Homepage</title>
-  <!-- Load Supabase JS client -->
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-  <style>
-    body {
-      font-family: Arial, sans-serif;
-      margin: 0;
-      padding: 20px;
-      background-color: #f0f2f5;
-    }
-    .login-section {
-      background-color: white;
-      padding: 20px;
-      border-radius: 8px;
-      box-shadow: 0 1px 3px rgba(0,0,0,0.1);
-      margin-bottom: 20px;
-      max-width: 400px;
-    }
-    .posts-section {
-      margin-top: 20px;
-    }
-    .posts-section h2 {
-      margin-bottom: 15px;
-    }
-    .post-item {
-      background: white;
-      padding: 15px;
-      border-radius: 8px;
-      margin-bottom: 15px;
-      box-shadow: 0 1px 3px rgba(0,0,0,0.1);
-    }
-    .post-item p {
-      margin: 0;
-      line-height: 1.6;
-    }
-    .post-item small {
-      display: block;
-      color: #718096;
-      font-size: 12px;
-      margin-top: 8px;
-    }
-  </style>
-</head>
-<body>
 
-  <!-- Existing Login Section -->
-  <div class="login-section">
-    <h2>Login</h2>
-    <form id="loginForm">
-      <input type="email" id="loginEmail" placeholder="Email" required><br><br>
-      <input type="password" id="loginPassword" placeholder="Password" required><br><br>
-      <button type="submit">Sign In</button>
-    </form>
-    <a href="signup.html">Don't have an account? Sign up</a>
-  </div>
+    // --- Gallery and Image Adjustment Functions (Copied from media.js) ---
+    // These are needed for the gallery and image display logic on the homepage.
+    // They are copied directly from your provided code to ensure compatibility.
 
-  <!-- New Section for All Users' Posts -->
-  <div class="posts-section">
-    <h2>Community Memories</h2>
-    <div id="all-posts-container">
-      <p>Loading community posts...</p>
-    </div>
-  </div>
-
-  <script>
-    // Initialize Supabase client (Replace these with your actual values)
-    const supabaseUrl = 'YOUR_SUPABASE_URL'; // e.g., https://xxxxx.supabase.co
-    const supabaseAnonKey = 'YOUR_SUPABASE_ANON_KEY'; // Get this from your Supabase dashboard
-    const supabase = supabase.createClient(supabaseUrl, supabaseAnonKey);
-
-    // Function to load and display posts from ALL users
-    async function loadAllPosts() {
-      const container = document.getElementById('all-posts-container');
-      container.innerHTML = '<p>Loading posts...</p>'; // Simple loading state
-
-      try {
-        // Fetch posts ordered by creation date (newest first)
-        const { data, error } = await supabase
-          .from('memories') // Use the same table as script.js
-          .select('id, user_id, body, created_at') // Fetch user_id too if needed for display
-          .order('created_at', { ascending: false });
-
-        if (error) {
-          console.error('Error loading all posts:', error);
-          container.innerHTML = '<p>Could not load community posts at this time.</p>';
-          return;
+    // Function to detect image aspect ratio and adjust fit
+    window.adjustImageFit = function(img) {
+      if (img.complete) {
+        applyFitBasedOnAspectRatio(img);
+      } else {
+        img.onload = function() {
+          img.onload = null; // Prevent multiple calls
+          applyFitBasedOnAspectRatio(img);
+        };
+      }
+    };
+    window.adjustThumbnailFit = function(img) {
+      if (img.complete) {
+        applyFitBasedOnAspectRatio(img);
+      } else {
+        img.onload = function() {
+          img.onload = null; // Prevent multiple calls
+          applyFitBasedOnAspectRatio(img);
+        };
+      }
+    };
+    function applyFitBasedOnAspectRatio(img) {
+      if (img.naturalWidth && img.naturalHeight) {
+        const aspectRatio = img.naturalWidth / img.naturalHeight;
+        if (aspectRatio < 1) { // Portrait (height > width)
+          img.style.objectFit = 'contain';
+        } else if (aspectRatio > 1.2) { // Landscape (width > height by more than 20%)
+          img.style.objectFit = 'cover';
+        } else { // Square or nearly square
+          img.style.objectFit = 'contain';
         }
-
-        if (data.length === 0) {
-          container.innerHTML = '<p>The community hasn't shared any memories yet.</p>';
-          return;
-        }
-
-        // Generate simple HTML for each post
-        let postsHTML = '';
-        data.forEach(post => {
-          // For now, just show the raw body text and timestamp.
-          // This avoids complex media handling for simplicity.
-          let processedBody = post.body.replace(/\n/g, '<br>'); // Convert newlines to <br>
-
-          postsHTML += `
-            <div class="post-item">
-              <p>${processedBody}</p>
-              <small>${new Date(post.created_at).toLocaleString()}</small>
-            </div>
-          `;
-        });
-
-        container.innerHTML = postsHTML;
-
-      } catch (err) {
-        console.error('Unexpected error loading posts:', err);
-        container.innerHTML = '<p>An unexpected error occurred while loading posts.</p>';
+      } else {
+        // Default to contain for images that can't determine aspect ratio
+        img.style.objectFit = 'contain';
       }
     }
 
-    // Call the function to load posts when the page loads
-    document.addEventListener('DOMContentLoaded', () => {
-      loadAllPosts();
-    });
+    // Gallery State
+    let currentGalleryState = null;
+
+    // Gallery Open Function (copied from media.js)
+    window.openGallery = function(postId, encodedMediaUrlsJson, startIndex = 0) {
+      const mediaUrls = JSON.parse(decodeURIComponent(encodedMediaUrlsJson));
+      currentGalleryState = {
+        mediaUrls: mediaUrls,
+        currentIndex: startIndex
+      };
+      const galleryHtml = `
+        <div id="gallery-overlay" style="position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.9); z-index: 9999; display: flex; align-items: center; justify-content: center; padding: 20px; flex-direction: column;">
+          <div class="gallery-container" style="position: relative; max-width: 90vw; max-height: 85vh; width: 100%; display: flex; flex-direction: column; align-items: center; justify-content: center; flex: 1;">
+            <button id="gallery-close" onclick="closeGallery()" style="position: absolute; top: 20px; right: 20px; background: #e53e3e; border: none; border-radius: 50%; width: 40px; height: 40px; font-size: 20px; cursor: pointer; color: white; z-index: 10001; box-shadow: 0 2px 4px rgba(0,0,0,0.3);">✕</button>
+            <div id="gallery-swiper" style="width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; flex: 1;">
+              ${currentGalleryState.mediaUrls.map((url, index) => {
+                const isVideo = url.includes('.mp4') || url.includes('.webm') || url.includes('.mov');
+                return `
+                  <div class="gallery-slide" style="position: absolute; width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; opacity: 0; transition: opacity 0.3s ease;" data-index="${index}">
+                    ${isVideo ?
+                      `<video controls style="max-width: 90vw; max-height: 80vh; width: auto; height: auto;">
+                         <source src="${url}" type="video/mp4">
+                       </video>` :
+                      `<img src="${url}" alt="Gallery item" style="max-width: 90vw; max-height: 80vh; object-fit: contain; object-position: center; display: block; background: white;" onload="adjustGalleryImageFit(this)">
+                     `
+                    }
+                  </div>
+                `;
+              }).join('')}
+            </div>
+            <button id="gallery-prev" onclick="galleryPrev()" style="position: absolute; left: 20px; background: rgba(255,255,255,0.2); border: none; border-radius: 50%; width: 50px; height: 50px; font-size: 24px; cursor: pointer; color: white; z-index: 10000;">‹</button>
+            <button id="gallery-next" onclick="galleryNext()" style="position: absolute; right: 20px; background: rgba(255,255,255,0.2); border: none; border-radius: 50%; width: 50px; height: 50px; font-size: 24px; cursor: pointer; color: white; z-index: 10000;">›</button>
+            <div id="gallery-counter" style="position: absolute; bottom: 60px; left: 50%; transform: translateX(-50%); color: white; font-size: 16px; z-index: 10000;">
+              <span id="current-index">${currentGalleryState.currentIndex + 1}</span> / ${currentGalleryState.mediaUrls.length}
+            </div>
+          </div>
+          <div id="thumbnail-strip" style="display: flex; gap: 10px; padding: 15px 0; max-width: 90vw; overflow-x: auto; justify-content: center; align-items: center;">
+            ${currentGalleryState.mediaUrls.map((url, index) => {
+              const isVideo = url.includes('.mp4') || url.includes('.webm') || url.includes('.mov');
+              return `
+                <div
+                  class="thumbnail-item"
+                  style="width: 60px; height: 60px; border-radius: 8px; overflow: hidden; cursor: pointer; border: ${index === currentGalleryState.currentIndex ? '3px solid white' : '3px solid transparent'}; transition: border 0.3s; background: white;"
+                  onclick="galleryGoToIndex(${index})"
+                >
+                  ${isVideo ?
+                    `<video muted playsinline style="width: 100%; height: 100%; object-fit: cover;">
+                       <source src="${url}" type="video/mp4">
+                     </video>` :
+                    `<img src="${url}" alt="Thumbnail ${index + 1}" style="width: 100%; height: 100%; object-fit: contain; object-position: center; display: block;" onload="adjustThumbnailFit(this)">
+                   `
+                  }
+                </div>
+              `;
+            }).join('')}
+          </div>
+        </div>
+      `;
+      document.body.insertAdjacentHTML('beforeend', galleryHtml);
+      showGallerySlide(currentGalleryState.currentIndex);
+
+      const swiper = document.getElementById('gallery-swiper');
+      let startX = 0;
+      let startY = 0;
+      let endX = 0;
+      let endY = 0;
+      const handleTouchStart = (e) => {
+        startX = e.touches[0].clientX;
+        startY = e.touches[0].clientY;
+      };
+      const handleTouchEnd = (e) => {
+        endX = e.changedTouches[0].clientX;
+        endY = e.changedTouches[0].clientY;
+        handleSwipe(startX, startY, endX, endY);
+      };
+      const handleMouseDown = (e) => {
+        startX = e.clientX;
+        startY = e.clientY;
+      };
+      const handleMouseUp = (e) => {
+        endX = e.clientX;
+        endY = e.clientY;
+        handleSwipe(startX, startY, endX, endY);
+      };
+      swiper.addEventListener('touchstart', handleTouchStart);
+      swiper.addEventListener('touchend', handleTouchEnd);
+      swiper.addEventListener('mousedown', handleMouseDown);
+      window.addEventListener('mouseup', handleMouseUp);
+
+      const overlay = document.getElementById('gallery-overlay');
+      overlay.addEventListener('click', (e) => {
+        if (e.target === overlay) {
+          closeGallery();
+        }
+      });
+
+      const handleKeyDown = (e) => {
+        if (e.key === 'Escape') {
+          closeGallery();
+        }
+      };
+      document.addEventListener('keydown', handleKeyDown);
+
+      window.closeGallery = function(event) {
+        if (event) {
+          event.stopPropagation();
+        }
+        const overlay = document.getElementById('gallery-overlay');
+        if (overlay) {
+          swiper.removeEventListener('touchstart', handleTouchStart);
+          swiper.removeEventListener('touchend', handleTouchEnd);
+          swiper.removeEventListener('mousedown', handleMouseDown);
+          window.removeEventListener('mouseup', handleMouseUp);
+          document.removeEventListener('keydown', handleKeyDown);
+          overlay.remove();
+        }
+        currentGalleryState = null;
+      };
+    };
+
+    // Gallery Helper Functions (copied from media.js)
+    window.adjustGalleryImageFit = function(img) {
+      if (img.complete) {
+        applyFitBasedOnAspectRatio(img);
+      } else {
+        img.onload = function() {
+          img.onload = null;
+          applyFitBasedOnAspectRatio(img);
+        };
+      }
+    };
+
+    function handleSwipe(startX, startY, endX, endY) {
+      const threshold = 50;
+      const verticalThreshold = 30;
+      const diffX = startX - endX;
+      const diffY = startY - endY;
+      if (Math.abs(diffX) > threshold && Math.abs(diffY) < verticalThreshold) {
+        if (diffX > 0) {
+          galleryNext();
+        } else {
+          galleryPrev();
+        }
+      }
+    }
+
+    function showGallerySlide(index) {
+      if (!currentGalleryState || index < 0 || index >= currentGalleryState.mediaUrls.length) return;
+      const slides = document.querySelectorAll('.gallery-slide');
+      slides.forEach((slide, i) => {
+        slide.style.opacity = i === index ? '1' : '0';
+      });
+      const counterElement = document.getElementById('current-index');
+      if (counterElement) {
+        counterElement.textContent = index + 1;
+      }
+      currentGalleryState.currentIndex = index;
+      updateThumbnailBorders();
+    }
+
+    function updateThumbnailBorders() {
+      const thumbnailItems = document.querySelectorAll('.thumbnail-item');
+      thumbnailItems.forEach((item, index) => {
+        item.style.border = index === currentGalleryState.currentIndex ? '3px solid white' : '3px solid transparent';
+      });
+    }
+
+    window.galleryGoToIndex = function(index) {
+      if (!currentGalleryState || index < 0 || index >= currentGalleryState.mediaUrls.length) return;
+      showGallerySlide(index);
+    };
+
+    window.galleryNext = function() {
+      if (!currentGalleryState) return;
+      const newIndex = (currentGalleryState.currentIndex + 1) % currentGalleryState.mediaUrls.length;
+      showGallerySlide(newIndex);
+    };
+
+    window.galleryPrev = function() {
+      if (!currentGalleryState) return;
+      const newIndex = (currentGalleryState.currentIndex - 1 + currentGalleryState.mediaUrls.length) % currentGalleryState.mediaUrls.length;
+      showGallerySlide(newIndex);
+    };
+    // --- End Gallery Functions ---
   </script>
 </body>
 </html>
