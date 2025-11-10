@@ -151,6 +151,8 @@ function showMediaPreview(url, filename, fileType) {
     border-radius: 8px;
     overflow: hidden;
     box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    background: white; /* Add white background for transparent images */
+    padding: 5px; /* Add padding to prevent cropping */
   `;
 
   let previewElement;
@@ -159,19 +161,25 @@ function showMediaPreview(url, filename, fileType) {
     previewElement.src = url;
     previewElement.alt = filename;
     previewElement.style.cssText = `
-      max-width: 100px;
-      height: 100px;
-      object-fit: cover;
-      border-radius: 8px;
+      max-width: 90px; /* Slightly smaller to accommodate padding */
+      max-height: 90px; /* Slightly smaller to accommodate padding */
+      width: auto;
+      height: auto;
+      object-fit: contain; /* Always contain for previews */
+      object-position: center; /* Center the image */
+      border-radius: 4px;
     `;
   } else if (fileType.startsWith('video')) {
     previewElement = document.createElement('video');
     previewElement.controls = false;
     previewElement.style.cssText = `
-      max-width: 100px;
-      height: 100px;
-      object-fit: cover;
-      border-radius: 8px;
+      max-width: 90px;
+      max-height: 90px;
+      width: auto;
+      height: auto;
+      object-fit: contain;
+      object-position: center;
+      border-radius: 4px;
     `;
     const source = document.createElement('source');
     source.src = url;
@@ -194,6 +202,7 @@ function showMediaPreview(url, filename, fileType) {
     height: 20px;
     cursor: pointer;
     font-weight: bold;
+    z-index: 10;
   `;
   removeBtn.onclick = (e) => {
     e.stopPropagation();
@@ -251,7 +260,7 @@ window.openGallery = function(postId, encodedMediaUrlsJson, startIndex = 0) {
                   `<video controls style="max-width: 90vw; max-height: 80vh; width: auto; height: auto;">
                      <source src="${url}" type="video/mp4">
                    </video>` :
-                  `<img src="${url}" alt="Gallery item" style="max-width: 90vw; max-height: 80vh; object-fit: contain; object-position: center; display: block;" onload="adjustGalleryImageFit(this)">
+                  `<img src="${url}" alt="Gallery item" style="max-width: 90vw; max-height: 80vh; object-fit: contain; object-position: center; display: block; background: white;" onload="adjustGalleryImageFit(this)">
                  `
                 }
               </div>
@@ -274,7 +283,7 @@ window.openGallery = function(postId, encodedMediaUrlsJson, startIndex = 0) {
           return `
             <div 
               class="thumbnail-item" 
-              style="width: 60px; height: 60px; border-radius: 8px; overflow: hidden; cursor: pointer; border: ${index === currentGalleryState.currentIndex ? '3px solid white' : '3px solid transparent'}; transition: border 0.3s;"
+              style="width: 60px; height: 60px; border-radius: 8px; overflow: hidden; cursor: pointer; border: ${index === currentGalleryState.currentIndex ? '3px solid white' : '3px solid transparent'}; transition: border 0.3s; background: white;"
               onclick="galleryGoToIndex(${index})"
             >
               ${isVideo ? 
@@ -384,12 +393,16 @@ window.adjustGalleryImageFit = function(img) {
 function applyFitBasedOnAspectRatio(img) {
   if (img.naturalWidth && img.naturalHeight) {
     const aspectRatio = img.naturalWidth / img.naturalHeight;
-    // Use 'contain' for square and portrait images (aspectRatio <= 1)
-    if (aspectRatio <= 1) {
+    if (aspectRatio < 1) { // Portrait (height > width)
       img.style.objectFit = 'contain';
-    } else { // Landscape images (aspectRatio > 1)
+    } else if (aspectRatio > 1.2) { // Landscape (width > height by more than 20%)
       img.style.objectFit = 'cover';
+    } else { // Square or nearly square
+      img.style.objectFit = 'contain';
     }
+  } else {
+    // Default to contain for images that can't determine aspect ratio
+    img.style.objectFit = 'contain';
   }
 }
 
