@@ -72,7 +72,7 @@ export function initializeMediaHandlers(supabase) {
 
       if (uploadError) {
         console.error('Upload error:', uploadError);
-        alert('Upload failed: ' + uploadError.message); // Fixed typo: removed '+' before uploadError.message
+        alert('Upload failed: + uploadError.message');
         if (uploadProgress) {
           uploadProgress.style.display = 'none';
         }
@@ -161,8 +161,8 @@ function showMediaPreview(url, filename, fileType) {
     previewElement.src = url;
     previewElement.alt = filename;
     previewElement.style.cssText = `
-      max-width: 120px; /* Increased from 90px */
-      max-height: 120px; /* Increased from 90px */
+      max-width: 90px; /* Slightly smaller to accommodate padding */
+      max-height: 90px; /* Slightly smaller to accommodate padding */
       width: auto;
       height: auto;
       object-fit: contain; /* Always contain for previews */
@@ -173,8 +173,8 @@ function showMediaPreview(url, filename, fileType) {
     previewElement = document.createElement('video');
     previewElement.controls = false;
     previewElement.style.cssText = `
-      max-width: 120px;
-      max-height: 120px;
+      max-width: 90px;
+      max-height: 90px;
       width: auto;
       height: auto;
       object-fit: contain;
@@ -247,7 +247,7 @@ window.openGallery = function(postId, encodedMediaUrlsJson, startIndex = 0) {
 
   const galleryHtml = `
     <div id="gallery-overlay" style="position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.9); z-index: 9999; display: flex; align-items: center; justify-content: center; padding: 20px; flex-direction: column;">
-      <div class="gallery-container" style="position: relative; max-width: 95vw; max-height: 95vh; width: 100%; display: flex; flex-direction: column; align-items: center; justify-content: center; flex: 1;">
+      <div class="gallery-container" style="position: relative; max-width: 90vw; max-height: 85vh; width: 100%; display: flex; flex-direction: column; align-items: center; justify-content: center; flex: 1;">
         <!-- Red Close Button Added Here -->
         <button id="gallery-close" onclick="closeGallery()" style="position: absolute; top: 20px; right: 20px; background: #e53e3e; border: none; border-radius: 50%; width: 40px; height: 40px; font-size: 20px; cursor: pointer; color: white; z-index: 10001; box-shadow: 0 2px 4px rgba(0,0,0,0.3);">✕</button>
         
@@ -257,10 +257,10 @@ window.openGallery = function(postId, encodedMediaUrlsJson, startIndex = 0) {
             return `
               <div class="gallery-slide" style="position: absolute; width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; opacity: 0; transition: opacity 0.3s ease;" data-index="${index}">
                 ${isVideo ? 
-                  `<video controls style="max-width: 95vw; max-height: 90vh; width: auto; height: auto;">
+                  `<video controls style="max-width: 90vw; max-height: 80vh; width: auto; height: auto;">
                      <source src="${url}" type="video/mp4">
                    </video>` :
-                  `<img src="${url}" alt="Gallery item" style="max-width: 95vw; max-height: 90vh; object-fit: contain; object-position: center; display: block; background: white;" onload="adjustGalleryImageFit(this)">
+                  `<img src="${url}" alt="Gallery item" style="max-width: 90vw; max-height: 80vh; object-fit: contain; object-position: center; display: block; background: white;" onload="adjustGalleryImageFit(this)">
                  `
                 }
               </div>
@@ -277,13 +277,13 @@ window.openGallery = function(postId, encodedMediaUrlsJson, startIndex = 0) {
       </div>
 
       <!-- Thumbnail Strip -->
-      <div id="thumbnail-strip" style="display: flex; gap: 10px; padding: 15px 0; max-width: 95vw; overflow-x: auto; justify-content: center; align-items: center;">
+      <div id="thumbnail-strip" style="display: flex; gap: 10px; padding: 15px 0; max-width: 90vw; overflow-x: auto; justify-content: center; align-items: center;">
         ${currentGalleryState.mediaUrls.map((url, index) => {
           const isVideo = url.includes('.mp4') || url.includes('.webm') || url.includes('.mov');
           return `
             <div 
               class="thumbnail-item" 
-              style="width: 80px; height: 80px; border-radius: 8px; overflow: hidden; cursor: pointer; border: ${index === currentGalleryState.currentIndex ? '3px solid white' : '3px solid transparent'}; transition: border 0.3s; background: white;"
+              style="width: 60px; height: 60px; border-radius: 8px; overflow: hidden; cursor: pointer; border: ${index === currentGalleryState.currentIndex ? '3px solid white' : '3px solid transparent'}; transition: border 0.3s; background: white;"
               onclick="galleryGoToIndex(${index})"
             >
               ${isVideo ? 
@@ -477,4 +477,4 @@ async function checkAuth() {
 document.addEventListener('DOMContentLoaded', async () => {
   // Initialize media handlers using the global client
   initializeMediaHandlers(window.supabaseClient);
-});
+}); 
