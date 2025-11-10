@@ -509,7 +509,7 @@ function adjustThumbnailFit(img) {
 
 // Auth helper (moved here to avoid duplication)
 async function checkAuth() {
-  const { data: { user } } = await window.supabaseClient.auth.getUser(); // ✅ CORRECTED
+  const {  { user } } = await window.supabaseClient.auth.getUser(); // ✅ CORRECTED
   if (!user) {
     window.location.href = 'signin.html';
     return null;
@@ -519,30 +519,6 @@ async function checkAuth() {
 
 // Export aspect ratio functions for use in other modules
 export function adjustImageFit(img) {
-  // Clear the event listener to prevent multiple calls
-  img.onload = null;
-  img.onloadedmetadata = null;
-
-  let width, height;
-  if (img.tagName === 'IMG') {
-    width = img.naturalWidth;
-    height = img.naturalHeight;
-  } else if (img.tagName === 'VIDEO') {
-    width = img.videoWidth;
-    height = img.videoHeight;
-  }
-
-  if (width && height) {
-    const aspectRatio = width / height;
-    if (aspectRatio < 1) { // Portrait (height > width)
-      img.style.objectFit = 'contain';
-    } else { // Landscape or square
-      img.style.objectFit = 'cover';
-    }
-  }
-}
-
-export function adjustThumbnailFit(img) {
   // Clear the event listener to prevent multiple calls
   img.onload = null;
   img.onloadedmetadata = null;
