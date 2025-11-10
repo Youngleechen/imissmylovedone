@@ -49,9 +49,9 @@
 
   <input type="file" id="mediaInput" accept="image/*,video/*" style="display:none;" multiple />
 
-  <!-- Load main logic first -->
-  <script type="module" src="script.js"></script>
-  <!-- Then load media handling (depends on global supabaseClient) -->
+  <!-- Load media handling first as a module to ensure global functions are available -->
   <script type="module" src="media.js"></script>
+  <!-- Then load main logic -->
+  <script type="module" src="script.js"></script>
 </body>
 </html>
