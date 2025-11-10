@@ -29,8 +29,7 @@ document.addEventListener('DOMContentLoaded', async () => {
       .select(`
         id, 
         body, 
-        created_at,
-        users(email)
+        created_at
       `)
       .order('created_at', { ascending: false });
 
@@ -83,7 +82,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                   `<video muted playsinline style="width: 100%; height: 100%; object-fit: cover;">
                      <source src="${secondUrl}" type="video/mp4">
                    </video>` :
-                  `<img src="${secondUrl}" alt="Additional media" style="width: 100%; height: 100%; object-fit: contain; object-position: center; display: block;" onload="adjustImageFit(this)">
+                  `<img src="${secondUrl}" alt="Additional media" style="width: 100%; height: 100%; object-fit: contain; object-position: center; display: block;" onload="adjustThumbnailFit(this)">
                  `
                 }
               </div>
@@ -102,9 +101,6 @@ document.addEventListener('DOMContentLoaded', async () => {
         
         return `
           <div class="post-item" style="background: white; padding: 15px; border-radius: 8px; margin-bottom: 15px; box-shadow: 0 1px 3px rgba(0,0,0,0.1);">
-            <div style="font-weight: bold; color: #2d3748; margin-bottom: 8px; font-size: 14px;">
-              By: ${post.users?.email || 'Unknown User'}
-            </div>
             <p style="margin: 0; line-height: 1.6;">${textOnlyBody}</p>
             ${mediaGridHtml}
             <small style="display: block; color: #718096; font-size: 12px; margin-top: 8px;">
@@ -117,9 +113,6 @@ document.addEventListener('DOMContentLoaded', async () => {
         let processedBody = post.body.replace(/\n/g, '<br>');
         return `
           <div class="post-item" style="background: white; padding: 15px; border-radius: 8px; margin-bottom: 15px; box-shadow: 0 1px 3px rgba(0,0,0,0.1);">
-            <div style="font-weight: bold; color: #2d3748; margin-bottom: 8px; font-size: 14px;">
-              By: ${post.users?.email || 'Unknown User'}
-            </div>
             <p style="margin: 0; line-height: 1.6;">${processedBody}</p>
             <small style="display: block; color: #718096; font-size: 12px; margin-top: 8px;">
               ${new Date(post.created_at).toLocaleString()}
@@ -132,6 +125,19 @@ document.addEventListener('DOMContentLoaded', async () => {
 
   // Function to detect image aspect ratio and adjust fit
   window.adjustImageFit = function(img) {
+    img.onload = null; // Prevent multiple calls
+    if (img.naturalWidth && img.naturalHeight) {
+      const aspectRatio = img.naturalWidth / img.naturalHeight;
+      if (aspectRatio < 1) { // Portrait (height > width)
+        img.style.objectFit = 'contain';
+      } else { // Landscape or square
+        img.style.objectFit = 'cover';
+      }
+    }
+  };
+
+  // Function to detect aspect ratio for thumbnail images
+  window.adjustThumbnailFit = function(img) {
     img.onload = null; // Prevent multiple calls
     if (img.naturalWidth && img.naturalHeight) {
       const aspectRatio = img.naturalWidth / img.naturalHeight;
@@ -291,19 +297,6 @@ document.addEventListener('DOMContentLoaded', async () => {
 
   // Function to detect aspect ratio for gallery images
   window.adjustGalleryImageFit = function(img) {
-    img.onload = null; // Prevent multiple calls
-    if (img.naturalWidth && img.naturalHeight) {
-      const aspectRatio = img.naturalWidth / img.naturalHeight;
-      if (aspectRatio < 1) { // Portrait (height > width)
-        img.style.objectFit = 'contain';
-      } else { // Landscape or square
-        img.style.objectFit = 'cover';
-      }
-    }
-  };
-
-  // Function to detect aspect ratio for thumbnail images
-  window.adjustThumbnailFit = function(img) {
     img.onload = null; // Prevent multiple calls
     if (img.naturalWidth && img.naturalHeight) {
       const aspectRatio = img.naturalWidth / img.naturalHeight;
