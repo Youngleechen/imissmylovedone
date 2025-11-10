@@ -5,7 +5,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   const updatesContainer = document.getElementById('updatesContainer');
 
   async function checkAuth() {
-    const { data: { user } } = await supabase.auth.getUser();
+    const {  { user } } = await supabase.auth.getUser();
     if (!user) {
       window.location.href = '../signin.html'; // Adjust path as needed
       return null;
@@ -20,18 +20,22 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     const { data, error } = await supabase
       .from('development_updates') // ✅ Your table
-      .select('id, body, created_at')
-      .eq('author_id', user.id)   // ✅ Matches your column name
+      .select(`
+        id, 
+        body, 
+        created_at,
+        profiles(username)
+      `)
       .order('created_at', { ascending: false });
 
     if (error) {
       console.error('Load error:', error);
-      updatesContainer.innerHTML = '<p>Could not load your updates.</p>';
+      updatesContainer.innerHTML = '<p>Could not load updates.</p>';
       return;
     }
 
     if (data.length === 0) {
-      updatesContainer.innerHTML = '<p>You haven’t posted any progress updates yet.</p>';
+      updatesContainer.innerHTML = '<p>No progress updates have been posted yet.</p>';
       return;
     }
 
@@ -92,6 +96,9 @@ document.addEventListener('DOMContentLoaded', async () => {
         
         return `
           <div class="post-item" style="background: white; padding: 15px; border-radius: 8px; margin-bottom: 15px; box-shadow: 0 1px 3px rgba(0,0,0,0.1);">
+            <div style="font-weight: bold; color: #2d3748; margin-bottom: 8px; font-size: 14px;">
+              By: ${post.profiles?.username || 'Unknown User'}
+            </div>
             <p style="margin: 0; line-height: 1.6;">${textOnlyBody}</p>
             ${mediaGridHtml}
             <small style="display: block; color: #718096; font-size: 12px; margin-top: 8px;">
@@ -104,6 +111,9 @@ document.addEventListener('DOMContentLoaded', async () => {
         let processedBody = post.body.replace(/\n/g, '<br>');
         return `
           <div class="post-item" style="background: white; padding: 15px; border-radius: 8px; margin-bottom: 15px; box-shadow: 0 1px 3px rgba(0,0,0,0.1);">
+            <div style="font-weight: bold; color: #2d3748; margin-bottom: 8px; font-size: 14px;">
+              By: ${post.profiles?.username || 'Unknown User'}
+            </div>
             <p style="margin: 0; line-height: 1.6;">${processedBody}</p>
             <small style="display: block; color: #718096; font-size: 12px; margin-top: 8px;">
               ${new Date(post.created_at).toLocaleString()}
