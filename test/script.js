@@ -163,18 +163,24 @@ document.addEventListener('DOMContentLoaded', async () => {
       const mediaMatches = [...post.body.matchAll(/!\[([^\]]*)\]\s*\(\s*([^)]+)\s*\)/g)];
       
       if (mediaMatches.length > 0) {
-        let mediaGridHtml = `
-          <div class="media-grid" style="position: relative; width: 100%; margin: 10px 0; background: white; border-radius: 8px; overflow: hidden;">
-            <!-- First Media Item -->
-            <div class="media-grid-item large" style="width: 100%; cursor: pointer;" onclick="openGallery('${post.id}', '${encodeURIComponent(JSON.stringify(mediaMatches.map(m => m[2])))}', 0)">
-              ${mediaMatches[0][2].includes('.mp4') || mediaMatches[0][2].includes('.webm') || mediaMatches[0][2].includes('.mov') ? 
-                `<video muted playsinline style="width: 100%; height: auto; max-height: 500px; object-fit: cover; display: block;">
-                   <source src="${mediaMatches[0][2]}" type="video/mp4">
-                 </video>` :
-                `<img src="${mediaMatches[0][2]}" alt="${mediaMatches[0][1] || 'Media'}" style="width: 100%; height: auto; max-height: 500px; object-fit: contain; object-position: center; display: block; background: white;" onload="adjustImageFit(this)">
-               `
-              }
-            </div>
+        let mediaGridHtml = '<div class="media-grid" style="position: relative; width: 100%; height: 300px; margin: 10px 0; background: white;">';
+        
+        // Show first media item as large
+        const firstMedia = mediaMatches[0];
+        const firstAlt = firstMedia[1] || 'Media';
+        const firstUrl = firstMedia[2].trim();
+        const isFirstVideo = firstUrl.includes('.mp4') || firstUrl.includes('.webm') || firstUrl.includes('.mov');
+        
+        mediaGridHtml += `
+          <div class="media-grid-item large" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; cursor: pointer;" onclick="openGallery('${post.id}', '${encodeURIComponent(JSON.stringify(mediaMatches.map(m => m[2])))}', 0)">
+            ${isFirstVideo ? 
+              `<video muted playsinline style="width: 100%; height: 100%; object-fit: cover;">
+                 <source src="${firstUrl}" type="video/mp4">
+               </video>` :
+              `<img src="${firstUrl}" alt="${firstAlt}" style="width: 100%; height: 100%; object-fit: contain; object-position: center; display: block; background: white;" onload="adjustImageFit(this)">
+             `
+            }
+          </div>
         `;
         
         // If there are more media items, show the +N overlay
