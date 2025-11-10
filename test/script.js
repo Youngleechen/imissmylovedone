@@ -1,5 +1,8 @@
 // script.js - Main application logic
 
+// Import aspect ratio functions from media.js
+import { adjustImageFit, adjustThumbnailFit } from './media.js';
+
 document.addEventListener('DOMContentLoaded', async () => {
   const supabase = window.supabaseClient; // ✅ Use global client
   const memoryBody = document.getElementById('memory-body');
@@ -174,10 +177,10 @@ document.addEventListener('DOMContentLoaded', async () => {
         mediaGridHtml += `
           <div class="media-grid-item large" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; cursor: pointer;" onclick="openGallery('${post.id}', '${encodeURIComponent(JSON.stringify(mediaMatches.map(m => m[2])))}', 0)">
             ${isFirstVideo ? 
-              `<video muted playsinline style="width: 100%; height: 100%; object-fit: cover;">
+              `<video muted playsinline style="width: 100%; height: 100%; object-fit: cover;" onloadedmetadata="adjustImageFit(this)">
                  <source src="${firstUrl}" type="video/mp4">
                </video>` :
-              `<img src="${firstUrl}" alt="${firstAlt}" style="width: 100%; height: 100%; object-fit: cover;">`
+              `<img src="${firstUrl}" alt="${firstAlt}" style="width: 100%; height: 100%; object-fit: cover; display: block;" onload="adjustImageFit(this)">`
             }
           </div>
         `;
@@ -192,10 +195,10 @@ document.addEventListener('DOMContentLoaded', async () => {
             <div class="media-grid-overlay" style="position: absolute; bottom: 10px; right: 10px; width: 80px; height: 80px; cursor: pointer;" onclick="openGallery('${post.id}', '${encodeURIComponent(JSON.stringify(mediaMatches.map(m => m[2])))}', 1)">
               <div class="second-thumbnail" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; border-radius: 8px; overflow: hidden; box-shadow: 0 2px 4px rgba(0,0,0,0.3);">
                 ${isSecondVideo ? 
-                  `<video muted playsinline style="width: 100%; height: 100%; object-fit: cover;">
+                  `<video muted playsinline style="width: 100%; height: 100%; object-fit: cover;" onloadedmetadata="adjustThumbnailFit(this)">
                      <source src="${secondUrl}" type="video/mp4">
                    </video>` :
-                  `<img src="${secondUrl}" alt="Additional media" style="width: 100%; height: 100%; object-fit: cover;">`
+                  `<img src="${secondUrl}" alt="Additional media" style="width: 100%; height: 100%; object-fit: cover; display: block;" onload="adjustThumbnailFit(this)">`
                 }
               </div>
               <div class="more-overlay" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); border-radius: 8px; display: flex; align-items: center; justify-content: center;">
