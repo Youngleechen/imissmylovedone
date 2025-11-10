@@ -161,7 +161,11 @@ document.addEventListener('DOMContentLoaded', async () => {
   let currentGalleryState = null;
 
   window.openGallery = function(postId, encodedMediaUrlsJson, startIndex = 0) {
+    console.log('Opening gallery for post:', postId);
+    console.log('Media URLs JSON:', encodedMediaUrlsJson);
+    
     const mediaUrls = JSON.parse(decodeURIComponent(encodedMediaUrlsJson));
+    console.log('Parsed media URLs:', mediaUrls);
 
     currentGalleryState = {
       mediaUrls: mediaUrls,
@@ -263,6 +267,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     const overlay = document.getElementById('gallery-overlay');
     overlay.addEventListener('click', (e) => {
       if (e.target === overlay) {
+        console.log('Clicked outside gallery - closing');
         closeGallery();
       }
     });
@@ -270,6 +275,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     // Close gallery when pressing ESC
     const handleKeyDown = (e) => {
       if (e.key === 'Escape') {
+        console.log('ESC key pressed - closing gallery');
         closeGallery();
       }
     };
@@ -277,8 +283,10 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     // Unified closeGallery function
     window.closeGallery = function() {
+      console.log('closeGallery function called');
       const overlay = document.getElementById('gallery-overlay');
       if (overlay) {
+        console.log('Found overlay, removing it');
         // Clean up event listeners
         if (swiper) {
           swiper.removeEventListener('touchstart', handleTouchStart);
@@ -290,8 +298,12 @@ document.addEventListener('DOMContentLoaded', async () => {
 
         // Remove the overlay
         overlay.remove();
+        console.log('Overlay removed');
+      } else {
+        console.log('No overlay found to close');
       }
       currentGalleryState = null;
+      console.log('Gallery state cleared');
     };
   };
 
@@ -325,8 +337,12 @@ document.addEventListener('DOMContentLoaded', async () => {
   }
 
   function showGallerySlide(index) {
-    if (!currentGalleryState || index < 0 || index >= currentGalleryState.mediaUrls.length) return;
-
+    if (!currentGalleryState || index < 0 || index >= currentGalleryState.mediaUrls.length) {
+      console.log('Cannot show slide - invalid index or no gallery state');
+      return;
+    }
+    
+    console.log('Showing gallery slide at index:', index);
     const slides = document.querySelectorAll('.gallery-slide');
     slides.forEach((slide, i) => {
       slide.style.opacity = i === index ? '1' : '0';
@@ -349,17 +365,20 @@ document.addEventListener('DOMContentLoaded', async () => {
   }
 
   window.galleryGoToIndex = function(index) {
+    console.log('Going to gallery index:', index);
     if (!currentGalleryState || index < 0 || index >= currentGalleryState.mediaUrls.length) return;
     showGallerySlide(index);
   };
 
   window.galleryNext = function() {
+    console.log('Gallery next clicked');
     if (!currentGalleryState) return;
     const newIndex = (currentGalleryState.currentIndex + 1) % currentGalleryState.mediaUrls.length;
     showGallerySlide(newIndex);
   };
 
   window.galleryPrev = function() {
+    console.log('Gallery previous clicked');
     if (!currentGalleryState) return;
     const newIndex = (currentGalleryState.currentIndex - 1 + currentGalleryState.mediaUrls.length) % currentGalleryState.mediaUrls.length;
     showGallerySlide(newIndex);
