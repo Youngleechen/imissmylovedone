@@ -72,7 +72,7 @@ export function initializeMediaHandlers(supabase) {
 
       if (uploadError) {
         console.error('Upload error:', uploadError);
-        alert('Upload failed: + uploadError.message');
+        alert('Upload failed: ' + uploadError.message);
         if (uploadProgress) {
           uploadProgress.style.display = 'none';
         }
@@ -251,7 +251,7 @@ window.openGallery = function(postId, encodedMediaUrlsJson, startIndex = 0) {
                   `<video controls style="max-width: 90vw; max-height: 80vh; width: auto; height: auto;">
                      <source src="${url}" type="video/mp4">
                    </video>` :
-                  `<img src="${url}" alt="Gallery item" style="max-width: 90vw; max-height: 80vh; object-fit: contain;">
+                  `<img src="${url}" alt="Gallery item" style="max-width: 90vw; max-height: 80vh; object-fit: contain; object-position: center; display: block;" onload="adjustGalleryImageFit(this)">
                  `
                 }
               </div>
@@ -259,8 +259,8 @@ window.openGallery = function(postId, encodedMediaUrlsJson, startIndex = 0) {
           }).join('')}
         </div>
 
-        <button id="gallery-prev" onclick="galleryPrev()" style="position: absolute; left: 20px; background: rgba(255,255,255,0.2); border: none; border-radius: 50%; width: 50px; height: 50px; font-size: 24px; cursor: pointer; color: white; z-index: 10000;">‹</button>
-        <button id="gallery-next" onclick="galleryNext()" style="position: absolute; right: 20px; background: rgba(255,255,255,0.2); border: none; border-radius: 50%; width: 50px; height: 50px; font-size: 24px; cursor: pointer; color: white; z-index: 10000;">›</button>
+        <button id="gallery-prev" onclick="galleryNext()" style="position: absolute; left: 20px; background: rgba(255,255,255,0.2); border: none; border-radius: 50%; width: 50px; height: 50px; font-size: 24px; cursor: pointer; color: white; z-index: 10000;">‹</button>
+        <button id="gallery-next" onclick="galleryPrev()" style="position: absolute; right: 20px; background: rgba(255,255,255,0.2); border: none; border-radius: 50%; width: 50px; height: 50px; font-size: 24px; cursor: pointer; color: white; z-index: 10000;">›</button>
 
         <div id="gallery-counter" style="position: absolute; bottom: 60px; left: 50%; transform: translateX(-50%); color: white; font-size: 16px; z-index: 10000;">
           <span id="current-index">${currentGalleryState.currentIndex + 1}</span> / ${currentGalleryState.mediaUrls.length}
@@ -281,7 +281,7 @@ window.openGallery = function(postId, encodedMediaUrlsJson, startIndex = 0) {
                 `<video muted playsinline style="width: 100%; height: 100%; object-fit: cover;">
                    <source src="${url}" type="video/mp4">
                  </video>` :
-                `<img src="${url}" alt="Thumbnail ${index + 1}" style="width: 100%; height: 100%; object-fit: cover;">
+                `<img src="${url}" alt="Thumbnail ${index + 1}" style="width: 100%; height: 100%; object-fit: contain; object-position: center; display: block;" onload="adjustThumbnailFit(this)">
                `
               }
             </div>
@@ -365,6 +365,32 @@ window.openGallery = function(postId, encodedMediaUrlsJson, startIndex = 0) {
     }
     currentGalleryState = null;
   };
+};
+
+// Function to detect aspect ratio for gallery images
+window.adjustGalleryImageFit = function(img) {
+  img.onload = null; // Prevent multiple calls
+  if (img.naturalWidth && img.naturalHeight) {
+    const aspectRatio = img.naturalWidth / img.naturalHeight;
+    if (aspectRatio < 1) { // Portrait (height > width)
+      img.style.objectFit = 'contain';
+    } else { // Landscape or square
+      img.style.objectFit = 'cover';
+    }
+  }
+};
+
+// Function to detect aspect ratio for thumbnail images
+window.adjustThumbnailFit = function(img) {
+  img.onload = null; // Prevent multiple calls
+  if (img.naturalWidth && img.naturalHeight) {
+    const aspectRatio = img.naturalWidth / img.naturalHeight;
+    if (aspectRatio < 1) { // Portrait (height > width)
+      img.style.objectFit = 'contain';
+    } else { // Landscape or square
+      img.style.objectFit = 'cover';
+    }
+  }
 };
 
 function handleSwipe(startX, startY, endX, endY) {
