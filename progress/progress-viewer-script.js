@@ -26,12 +26,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     const { data, error } = await supabase
       .from('development_updates') // ✅ Your table
-      .select(`
-        id, 
-        body, 
-        created_at,
-        users(email)
-      `)
+      .select('id, body, created_at')
       .order('created_at', { ascending: false });
 
     if (error) {
@@ -50,7 +45,7 @@ document.addEventListener('DOMContentLoaded', async () => {
       const mediaMatches = [...post.body.matchAll(/!\[([^\]]*)\]\s*\(\s*([^)]+)\s*\)/g)];
       
       if (mediaMatches.length > 0) {
-        let mediaGridHtml = '<div class="media-grid" style="position: relative; width: 100%; height: 300px; margin: 10px 0;">';
+        let mediaGridHtml = '<div class="media-grid" style="position: relative; width: 100%; max-height: 400px; margin: 10px 0; overflow: hidden; background: #f8f8f8; border-radius: 8px;">';
         
         // Show first media item as large
         const firstMedia = mediaMatches[0];
@@ -64,8 +59,13 @@ document.addEventListener('DOMContentLoaded', async () => {
               `<video muted playsinline style="width: 100%; height: 100%; object-fit: cover;">
                  <source src="${firstUrl}" type="video/mp4">
                </video>` :
-              `<img src="${firstUrl}" alt="${firstAlt}" style="width: 100%; height: 100%; object-fit: cover;">
-             `
+              `<img 
+                 src="${firstUrl}" 
+                 alt="${firstAlt}" 
+                 style="width: 100%; max-height: 400px; object-fit: contain; object-position: center;"
+                 onload="this.style.opacity = 1"
+                 onerror="this.style.opacity = 0.5; this.style.background = '#f0f0f0'"
+               >`
             }
           </div>
         `;
@@ -83,8 +83,13 @@ document.addEventListener('DOMContentLoaded', async () => {
                   `<video muted playsinline style="width: 100%; height: 100%; object-fit: cover;">
                      <source src="${secondUrl}" type="video/mp4">
                    </video>` :
-                  `<img src="${secondUrl}" alt="Additional media" style="width: 100%; height: 100%; object-fit: cover;">
-                 `
+                  `<img 
+                     src="${secondUrl}" 
+                     alt="Additional media" 
+                     style="width: 100%; height: 100%; object-fit: contain; object-position: center;"
+                     onload="this.style.opacity = 1"
+                     onerror="this.style.opacity = 0.5; this.style.background = '#f0f0f0'"
+                   >`
                 }
               </div>
               <div class="more-overlay" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); border-radius: 8px; display: flex; align-items: center; justify-content: center;">
@@ -102,9 +107,6 @@ document.addEventListener('DOMContentLoaded', async () => {
         
         return `
           <div class="post-item" style="background: white; padding: 15px; border-radius: 8px; margin-bottom: 15px; box-shadow: 0 1px 3px rgba(0,0,0,0.1);">
-            <div style="font-weight: bold; color: #2d3748; margin-bottom: 8px; font-size: 14px;">
-              By: ${post.users?.email || 'Unknown User'}
-            </div>
             <p style="margin: 0; line-height: 1.6;">${textOnlyBody}</p>
             ${mediaGridHtml}
             <small style="display: block; color: #718096; font-size: 12px; margin-top: 8px;">
@@ -117,9 +119,6 @@ document.addEventListener('DOMContentLoaded', async () => {
         let processedBody = post.body.replace(/\n/g, '<br>');
         return `
           <div class="post-item" style="background: white; padding: 15px; border-radius: 8px; margin-bottom: 15px; box-shadow: 0 1px 3px rgba(0,0,0,0.1);">
-            <div style="font-weight: bold; color: #2d3748; margin-bottom: 8px; font-size: 14px;">
-              By: ${post.users?.email || 'Unknown User'}
-            </div>
             <p style="margin: 0; line-height: 1.6;">${processedBody}</p>
             <small style="display: block; color: #718096; font-size: 12px; margin-top: 8px;">
               ${new Date(post.created_at).toLocaleString()}
@@ -160,11 +159,16 @@ document.addEventListener('DOMContentLoaded', async () => {
               return `
                 <div class="gallery-slide" style="position: absolute; width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; opacity: 0; transition: opacity 0.3s ease;" data-index="${index}">
                   ${isVideo ? 
-                    `<video controls style="max-width: 90vw; max-height: 80vh; width: auto; height: auto;">
+                    `<video controls style="max-width: 90vw; max-height: 80vh; width: auto; height: auto; object-fit: contain;">
                        <source src="${url}" type="video/mp4">
                      </video>` :
-                    `<img src="${url}" alt="Gallery item" style="max-width: 90vw; max-height: 80vh; object-fit: contain;">
-                   `
+                    `<img 
+                       src="${url}" 
+                       alt="Gallery item" 
+                       style="max-width: 90vw; max-height: 80vh; object-fit: contain; object-position: center;"
+                       onload="this.style.opacity = 1"
+                       onerror="this.style.opacity = 0.5; this.style.background = '#f0f0f0'"
+                     >`
                   }
                 </div>
               `;
@@ -193,8 +197,13 @@ document.addEventListener('DOMContentLoaded', async () => {
                   `<video muted playsinline style="width: 100%; height: 100%; object-fit: cover;">
                      <source src="${url}" type="video/mp4">
                    </video>` :
-                  `<img src="${url}" alt="Thumbnail ${index + 1}" style="width: 100%; height: 100%; object-fit: cover;">
-                 `
+                  `<img 
+                     src="${url}" 
+                     alt="Thumbnail ${index + 1}" 
+                     style="width: 100%; height: 100%; object-fit: contain; object-position: center;"
+                     onload="this.style.opacity = 1"
+                     onerror="this.style.opacity = 0.5; this.style.background = '#f0f0f0'"
+                   >`
                 }
               </div>
             `;
