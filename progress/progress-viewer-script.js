@@ -275,7 +275,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     };
     document.addEventListener('keydown', handleKeyDown);
 
-    // Simple & robust close function
+    // Unified closeGallery function
     window.closeGallery = function() {
       const overlay = document.getElementById('gallery-overlay');
       if (overlay) {
@@ -363,11 +363,5 @@ document.addEventListener('DOMContentLoaded', async () => {
     if (!currentGalleryState) return;
     const newIndex = (currentGalleryState.currentIndex - 1 + currentGalleryState.mediaUrls.length) % currentGalleryState.mediaUrls.length;
     showGallerySlide(newIndex);
-  };
-
-  window.closeGallery = function() {
-    const overlay = document.getElementById('gallery-overlay');
-    if (overlay) overlay.remove();
-    currentGalleryState = null;
   };
 });
