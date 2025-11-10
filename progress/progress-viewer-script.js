@@ -30,7 +30,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         id, 
         body, 
         created_at,
-        profiles(username)
+        users(username)
       `)
       .order('created_at', { ascending: false });
 
@@ -103,7 +103,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         return `
           <div class="post-item" style="background: white; padding: 15px; border-radius: 8px; margin-bottom: 15px; box-shadow: 0 1px 3px rgba(0,0,0,0.1);">
             <div style="font-weight: bold; color: #2d3748; margin-bottom: 8px; font-size: 14px;">
-              By: ${post.profiles?.username || 'Unknown User'}
+              By: ${post.users?.username || 'Unknown User'}
             </div>
             <p style="margin: 0; line-height: 1.6;">${textOnlyBody}</p>
             ${mediaGridHtml}
@@ -118,7 +118,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         return `
           <div class="post-item" style="background: white; padding: 15px; border-radius: 8px; margin-bottom: 15px; box-shadow: 0 1px 3px rgba(0,0,0,0.1);">
             <div style="font-weight: bold; color: #2d3748; margin-bottom: 8px; font-size: 14px;">
-              By: ${post.profiles?.username || 'Unknown User'}
+              By: ${post.users?.username || 'Unknown User'}
             </div>
             <p style="margin: 0; line-height: 1.6;">${processedBody}</p>
             <small style="display: block; color: #718096; font-size: 12px; margin-top: 8px;">
