@@ -6,7 +6,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
   async function checkAuth() {
     try {
-      const {  { user } } = await supabase.auth.getUser();
+      const { data: { user } } = await supabase.auth.getUser(); // ✅ Fixed syntax
       if (!user) {
         window.location.href = '../signin.html'; // Adjust path as needed
         return null;
