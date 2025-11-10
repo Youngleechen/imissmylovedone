@@ -175,8 +175,9 @@ document.addEventListener('DOMContentLoaded', async () => {
     const galleryHtml = `
       <div id="gallery-overlay" style="position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.9); z-index: 9999; display: flex; align-items: center; justify-content: center; padding: 20px; flex-direction: column;">
         <div class="gallery-container" style="position: relative; max-width: 90vw; max-height: 85vh; width: 100%; display: flex; flex-direction: column; align-items: center; justify-content: center; flex: 1;">
-          <button onclick="window.closeGallery && window.closeGallery()" style="position: absolute; top: 20px; right: 20px; background: rgba(255,255,255,0.8); border: none; border-radius: 50%; width: 40px; height: 40px; font-size: 24px; cursor: pointer; color: #333; z-index: 10000; box-shadow: 0 2px 4px rgba(0,0,0,0.2); display: flex; align-items: center; justify-content: center; transition: background 0.2s ease;" onmouseover="this.style.background='rgba(255,255,255,1)';" onmouseout="this.style.background='rgba(255,255,255,0.8)';">×</button>
-
+          <!-- Red Close Button Added Here -->
+          <button id="gallery-close" onclick="closeGallery()" style="position: absolute; top: 20px; right: 20px; background: #e53e3e; border: none; border-radius: 50%; width: 40px; height: 40px; font-size: 20px; cursor: pointer; color: white; z-index: 10001; box-shadow: 0 2px 4px rgba(0,0,0,0.3);">✕</button>
+          
           <div id="gallery-swiper" style="width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; flex: 1;">
             ${currentGalleryState.mediaUrls.map((url, index) => {
               const isVideo = url.includes('.mp4') || url.includes('.webm') || url.includes('.mov');
@@ -272,15 +273,6 @@ document.addEventListener('DOMContentLoaded', async () => {
       }
     });
 
-    // Close gallery when pressing ESC
-    const handleKeyDown = (e) => {
-      if (e.key === 'Escape') {
-        console.log('ESC key pressed - closing gallery');
-        window.closeGallery && window.closeGallery();
-      }
-    };
-    document.addEventListener('keydown', handleKeyDown);
-
     // Define closeGallery as a global function
     window.closeGallery = function() {
       console.log('✅ closeGallery function called');
@@ -294,7 +286,6 @@ document.addEventListener('DOMContentLoaded', async () => {
           swiper.removeEventListener('mousedown', handleMouseDown);
         }
         window.removeEventListener('mouseup', handleMouseUp);
-        document.removeEventListener('keydown', handleKeyDown);
 
         // Remove the overlay
         overlay.remove();
