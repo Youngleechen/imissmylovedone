@@ -509,7 +509,7 @@ function adjustThumbnailFit(img) {
 
 // Auth helper (moved here to avoid duplication)
 async function checkAuth() {
-  const {  { user } } = await window.supabaseClient.auth.getUser(); // ✅ CORRECTED
+  const { data: { user } } = await window.supabaseClient.auth.getUser(); // ✅ CORRECTED
   if (!user) {
     window.location.href = 'signin.html';
     return null;
