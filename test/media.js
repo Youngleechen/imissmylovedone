@@ -72,7 +72,7 @@ export function initializeMediaHandlers(supabase) {
 
       if (uploadError) {
         console.error('Upload error:', uploadError);
-        alert('Upload failed: ' + uploadError.message); // Fixed: Added 'uploadError.message'
+        alert('Upload failed: ' + uploadError.message); // Fixed typo: removed '+' before uploadError.message
         if (uploadProgress) {
           uploadProgress.style.display = 'none';
         }
@@ -112,7 +112,7 @@ function getCurrentBucketName() {
   }
 
   const currentPath = window.location.pathname;
-
+  
   // Map page paths to bucket names
   const bucketMap = {
     '/test/index.html': 'memories',
@@ -161,8 +161,8 @@ function showMediaPreview(url, filename, fileType) {
     previewElement.src = url;
     previewElement.alt = filename;
     previewElement.style.cssText = `
-      max-width: 90px; /* Slightly smaller to accommodate padding */
-      max-height: 90px; /* Slightly smaller to accommodate padding */
+      max-width: 120px; /* Increased from 90px */
+      max-height: 120px; /* Increased from 90px */
       width: auto;
       height: auto;
       object-fit: contain; /* Always contain for previews */
@@ -173,8 +173,8 @@ function showMediaPreview(url, filename, fileType) {
     previewElement = document.createElement('video');
     previewElement.controls = false;
     previewElement.style.cssText = `
-      max-width: 90px;
-      max-height: 90px;
+      max-width: 120px;
+      max-height: 120px;
       width: auto;
       height: auto;
       object-fit: contain;
@@ -247,20 +247,20 @@ window.openGallery = function(postId, encodedMediaUrlsJson, startIndex = 0) {
 
   const galleryHtml = `
     <div id="gallery-overlay" style="position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.9); z-index: 9999; display: flex; align-items: center; justify-content: center; padding: 20px; flex-direction: column;">
-      <div class="gallery-container" style="position: relative; max-width: 90vw; max-height: 85vh; width: 100%; display: flex; flex-direction: column; align-items: center; justify-content: center; flex: 1;">
+      <div class="gallery-container" style="position: relative; max-width: 95vw; max-height: 95vh; width: 100%; display: flex; flex-direction: column; align-items: center; justify-content: center; flex: 1;">
         <!-- Red Close Button Added Here -->
         <button id="gallery-close" onclick="closeGallery()" style="position: absolute; top: 20px; right: 20px; background: #e53e3e; border: none; border-radius: 50%; width: 40px; height: 40px; font-size: 20px; cursor: pointer; color: white; z-index: 10001; box-shadow: 0 2px 4px rgba(0,0,0,0.3);">✕</button>
-
+        
         <div id="gallery-swiper" style="width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; flex: 1;">
           ${currentGalleryState.mediaUrls.map((url, index) => {
             const isVideo = url.includes('.mp4') || url.includes('.webm') || url.includes('.mov');
             return `
               <div class="gallery-slide" style="position: absolute; width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; opacity: 0; transition: opacity 0.3s ease;" data-index="${index}">
-                ${isVideo ?
-                  `<video controls style="max-width: 90vw; max-height: 80vh; width: auto; height: auto;">
+                ${isVideo ? 
+                  `<video controls style="max-width: 95vw; max-height: 90vh; width: auto; height: auto;">
                      <source src="${url}" type="video/mp4">
                    </video>` :
-                  `<img src="${url}" alt="Gallery item" style="max-width: 90vw; max-height: 80vh; object-fit: contain; object-position: center; display: block; background: white;" onload="adjustGalleryImageFit(this)">
+                  `<img src="${url}" alt="Gallery item" style="max-width: 95vw; max-height: 90vh; object-fit: contain; object-position: center; display: block; background: white;" onload="adjustGalleryImageFit(this)">
                  `
                 }
               </div>
@@ -277,16 +277,16 @@ window.openGallery = function(postId, encodedMediaUrlsJson, startIndex = 0) {
       </div>
 
       <!-- Thumbnail Strip -->
-      <div id="thumbnail-strip" style="display: flex; gap: 10px; padding: 15px 0; max-width: 90vw; overflow-x: auto; justify-content: center; align-items: center;">
+      <div id="thumbnail-strip" style="display: flex; gap: 10px; padding: 15px 0; max-width: 95vw; overflow-x: auto; justify-content: center; align-items: center;">
         ${currentGalleryState.mediaUrls.map((url, index) => {
           const isVideo = url.includes('.mp4') || url.includes('.webm') || url.includes('.mov');
           return `
-            <div
-              class="thumbnail-item"
-              style="width: 60px; height: 60px; border-radius: 8px; overflow: hidden; cursor: pointer; border: ${index === currentGalleryState.currentIndex ? '3px solid white' : '3px solid transparent'}; transition: border 0.3s; background: white;"
+            <div 
+              class="thumbnail-item" 
+              style="width: 80px; height: 80px; border-radius: 8px; overflow: hidden; cursor: pointer; border: ${index === currentGalleryState.currentIndex ? '3px solid white' : '3px solid transparent'}; transition: border 0.3s; background: white;"
               onclick="galleryGoToIndex(${index})"
             >
-              ${isVideo ?
+              ${isVideo ? 
                 `<video muted playsinline style="width: 100%; height: 100%; object-fit: cover;">
                    <source src="${url}" type="video/mp4">
                  </video>` :
@@ -299,9 +299,9 @@ window.openGallery = function(postId, encodedMediaUrlsJson, startIndex = 0) {
       </div>
     </div>
   `;
-
+  
   document.body.insertAdjacentHTML('beforeend', galleryHtml);
-
+  
   showGallerySlide(currentGalleryState.currentIndex);
 
   const swiper = document.getElementById('gallery-swiper');
@@ -393,16 +393,16 @@ window.adjustGalleryImageFit = function(img) {
 function applyFitBasedOnAspectRatio(img) {
   if (img.naturalWidth && img.naturalHeight) {
     const aspectRatio = img.naturalWidth / img.naturalHeight;
-
-    // For gallery, always use 'contain' to show the full image without cropping
-    if (aspectRatio >= 1) { // Landscape or Square
-      img.style.objectFit = 'contain'; // Show full image, letterbox top/bottom if needed.
-    } else { // Portrait
-      img.style.objectFit = 'contain'; // Show full image, letterbox sides if needed.
+    if (aspectRatio < 1) { // Portrait (height > width)
+      img.style.objectFit = 'contain';
+    } else if (aspectRatio > 1.2) { // Landscape (width > height by more than 20%)
+      img.style.objectFit = 'cover';
+    } else { // Square or nearly square
+      img.style.objectFit = 'contain';
     }
   } else {
-    // Default fallback
-    img.style.objectFit = 'contain'; // Always show the full image in gallery.
+    // Default to contain for images that can't determine aspect ratio
+    img.style.objectFit = 'contain';
   }
 }
 
@@ -429,7 +429,7 @@ function showGallerySlide(index) {
   slides.forEach((slide, i) => {
     slide.style.opacity = i === index ? '1' : '0';
   });
-
+  
   const counterElement = document.getElementById('current-index');
   if (counterElement) {
     counterElement.textContent = index + 1;
