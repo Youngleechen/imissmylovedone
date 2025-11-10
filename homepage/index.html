@@ -10,7 +10,7 @@
   <!-- Supabase Client (loaded first) -->
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
-  <!-- Emoji Picker (module) - Loaded for potential future use if needed by copied functions -->
+  <!-- Emoji Picker (module) -->
   <script type="module" src="https://cdn.jsdelivr.net/npm/emoji-picker-element@^1/index.js"></script>
 
   <!-- Styles for the posts section (if not in your style.css) -->
@@ -127,26 +127,26 @@
   <!-- ✅ Load your existing script.js (handles login and potentially other page logic) -->
   <script src="/homepage/script.js"></script>
 
-  <!-- Initialize Supabase client globally using the same credentials from your index.html -->
+  <!-- ✅ Initialize Supabase client globally using the same credentials from your index.html -->
+  <!-- This is the crucial fix for the "Cannot access 'supabase' before initialization" error -->
   <script>
     // Initialize Supabase client (using credentials from your index.html)
-    // Note: The global client `window.supabaseClient` is already defined in your index.html's script tags.
-    // However, if it's not guaranteed to be available on the homepage, we can initialize it here again.
-    // It's generally better practice to have one client instance, but for this specific page,
-    // re-initializing it is safe if needed.
-    const supabaseUrl = 'https://ccetnqdqfrsitooestbh.supabase.co';
-    const supabaseAnonKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImNjZXRucWRxZnJzaXRvb2VzdGJoIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjIzMTE4MjksImV4cCI6MjA3Nzg4NzgyOX0.1NjRZZrgsPOg-2z_r2kRELWn9IVXNEQNpSxK6CktJRY';
-    const supabase = supabase.createClient(supabaseUrl, supabaseAnonKey);
+    window.supabaseClient = window.supabase.createClient(
+      'https://ccetnqdqfrsitooestbh.supabase.co',
+      'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImNjZXRucWRxZnJzaXRvb2VzdGJoIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjIzMTE4MjksImV4cCI6MjA3Nzg4NzgyOX0.1NjRZZrgsPOg-2z_r2kRELWn9IVXNEQNpSxK6CktJRY'
+    );
+  </script>
 
+  <!-- Script to load and display all posts -->
+  <script>
     // Function to load and display posts from ALL users
-    // This mirrors the logic from your script.js's loadUserPosts function, but fetches for all users
     async function loadAllPosts() {
       const container = document.getElementById('all-posts-container');
       container.innerHTML = '<p>Loading posts...</p>'; // Simple loading state
 
       try {
         // Fetch posts ordered by creation date (newest first) for ALL users
-        const { data, error } = await supabase
+        const { data, error } = await window.supabaseClient // Use the global client
           .from('memories') // Use the same table as script.js
           .select('id, body, created_at') // Do not filter by user_id
           .order('created_at', { ascending: false });
