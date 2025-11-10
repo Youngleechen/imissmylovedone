@@ -161,44 +161,28 @@ document.addEventListener('DOMContentLoaded', async () => {
     postsContainer.innerHTML = data.map(post => {
       // Extract media URLs from post body
       const mediaMatches = [...post.body.matchAll(/!\[([^\]]*)\]\s*\(\s*([^)]+)\s*\)/g)];
-
+      
       if (mediaMatches.length > 0) {
-        // Extract the first media item
-        const firstMedia = mediaMatches[0];
-        const firstAlt = firstMedia[1] || 'Media';
-        const firstUrl = firstMedia[2].trim();
-        const isFirstVideo = firstUrl.includes('.mp4') || firstUrl.includes('.webm') || firstUrl.includes('.mov');
-
-        // Create the main image container (no fixed height)
-        let mediaGridHtml = `<div class="media-grid" style="position: relative; width: 100%; margin: 10px 0; background: white; overflow: hidden;">`;
-
-        // Generate the large image/video element
-        let imageOrVideoElement;
-        if (isFirstVideo) {
-          imageOrVideoElement = `
-            <video muted playsinline controls style="width: 100%; height: auto; max-height: 60vh; object-fit: cover; cursor: pointer;" onclick="openGallery('${post.id}', '${encodeURIComponent(JSON.stringify(mediaMatches.map(m => m[2])))}', 0)">
-              <source src="${firstUrl}" type="video/mp4">
-            </video>
-          `;
-        } else {
-          // For images, we'll determine the fit based on aspect ratio
-          imageOrVideoElement = `
-            <img src="${firstUrl}" alt="${firstAlt}" 
-                 style="width: 100%; height: auto; max-height: 60vh; cursor: pointer; display: block; background: white;"
-                 onload="adjustImageFit(this)"
-                 onclick="openGallery('${post.id}', '${encodeURIComponent(JSON.stringify(mediaMatches.map(m => m[2])))}', 0)">
-          `;
-        }
-
-        mediaGridHtml += imageOrVideoElement;
-
+        let mediaGridHtml = `
+          <div class="media-grid" style="position: relative; width: 100%; margin: 10px 0; background: white; border-radius: 8px; overflow: hidden;">
+            <!-- First Media Item -->
+            <div class="media-grid-item large" style="width: 100%; cursor: pointer;" onclick="openGallery('${post.id}', '${encodeURIComponent(JSON.stringify(mediaMatches.map(m => m[2])))}', 0)">
+              ${mediaMatches[0][2].includes('.mp4') || mediaMatches[0][2].includes('.webm') || mediaMatches[0][2].includes('.mov') ? 
+                `<video muted playsinline style="width: 100%; height: auto; max-height: 500px; object-fit: cover; display: block;">
+                   <source src="${mediaMatches[0][2]}" type="video/mp4">
+                 </video>` :
+                `<img src="${mediaMatches[0][2]}" alt="${mediaMatches[0][1] || 'Media'}" style="width: 100%; height: auto; max-height: 500px; object-fit: contain; object-position: center; display: block; background: white;" onload="adjustImageFit(this)">
+               `
+              }
+            </div>
+        `;
+        
         // If there are more media items, show the +N overlay
         if (mediaMatches.length > 1) {
           const secondMedia = mediaMatches[1];
           const secondUrl = secondMedia[2].trim();
           const isSecondVideo = secondUrl.includes('.mp4') || secondUrl.includes('.webm') || secondUrl.includes('.mov');
-
-          // Position the overlay at the bottom-right corner of the *actual image/video*
+          
           mediaGridHtml += `
             <div class="media-grid-overlay" style="position: absolute; bottom: 10px; right: 10px; width: 80px; height: 80px; cursor: pointer;" onclick="openGallery('${post.id}', '${encodeURIComponent(JSON.stringify(mediaMatches.map(m => m[2])))}', 1)">
               <div class="second-thumbnail" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; border-radius: 8px; overflow: hidden; box-shadow: 0 2px 4px rgba(0,0,0,0.3); background: white;">
@@ -216,13 +200,13 @@ document.addEventListener('DOMContentLoaded', async () => {
             </div>
           `;
         }
-
+        
         mediaGridHtml += '</div>';
 
         // Remove media markdown from text body
         let textOnlyBody = post.body.replace(/!\[([^\]]*)\]\s*\(\s*([^)]+)\s*\)/g, '');
         textOnlyBody = textOnlyBody.replace(/\n/g, '<br>');
-
+        
         return `
           <div class="post-item" style="background: white; padding: 15px; border-radius: 8px; margin-bottom: 15px; box-shadow: 0 1px 3px rgba(0,0,0,0.1);">
             <p style="margin: 0; line-height: 1.6;">${textOnlyBody}</p>
@@ -277,18 +261,16 @@ document.addEventListener('DOMContentLoaded', async () => {
   function applyFitBasedOnAspectRatio(img) {
     if (img.naturalWidth && img.naturalHeight) {
       const aspectRatio = img.naturalWidth / img.naturalHeight;
-
-      // Facebook-style: prioritize filling the width.
-      // Use 'cover' for anything wider than 1:1 (landscape), even slightly.
-      // Use 'contain' for square or portrait.
-      if (aspectRatio >= 1) { // Landscape or Square
-        img.style.objectFit = 'cover'; // Fill the space, crop top/bottom if needed.
-      } else { // Portrait
-        img.style.objectFit = 'contain'; // Show full image, letterbox sides if needed.
+      if (aspectRatio < 1) { // Portrait (height > width)
+        img.style.objectFit = 'contain';
+      } else if (aspectRatio > 1.2) { // Landscape (width > height by more than 20%)
+        img.style.objectFit = 'cover';
+      } else { // Square or nearly square
+        img.style.objectFit = 'contain';
       }
     } else {
-      // Default fallback
-      img.style.objectFit = 'cover'; // Assume landscape for unknown aspect ratios.
+      // Default to contain for images that can't determine aspect ratio
+      img.style.objectFit = 'contain';
     }
   }
 
