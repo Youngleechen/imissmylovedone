@@ -384,9 +384,10 @@ window.adjustGalleryImageFit = function(img) {
 function applyFitBasedOnAspectRatio(img) {
   if (img.naturalWidth && img.naturalHeight) {
     const aspectRatio = img.naturalWidth / img.naturalHeight;
-    if (aspectRatio < 1) { // Portrait (height > width)
+    // Use 'contain' for square and portrait images (aspectRatio <= 1)
+    if (aspectRatio <= 1) {
       img.style.objectFit = 'contain';
-    } else { // Landscape or square
+    } else { // Landscape images (aspectRatio > 1)
       img.style.objectFit = 'cover';
     }
   }
