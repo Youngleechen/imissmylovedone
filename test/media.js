@@ -151,8 +151,6 @@ function showMediaPreview(url, filename, fileType) {
     border-radius: 8px;
     overflow: hidden;
     box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-    background: white; /* Add white background for transparent images */
-    padding: 5px; /* Add padding to prevent cropping */
   `;
 
   let previewElement;
@@ -161,23 +159,19 @@ function showMediaPreview(url, filename, fileType) {
     previewElement.src = url;
     previewElement.alt = filename;
     previewElement.style.cssText = `
-      max-width: 90px; /* Slightly smaller to accommodate padding */
-      max-height: 90px; /* Slightly smaller to accommodate padding */
-      width: auto;
-      height: auto;
-      object-fit: contain; /* Always contain for previews */
-      object-position: center; /* Center the image */
+      width: 100px;
+      height: 100px;
+      object-fit: cover;
+      object-position: center;
       border-radius: 4px;
     `;
   } else if (fileType.startsWith('video')) {
     previewElement = document.createElement('video');
     previewElement.controls = false;
     previewElement.style.cssText = `
-      max-width: 90px;
-      max-height: 90px;
-      width: auto;
-      height: auto;
-      object-fit: contain;
+      width: 100px;
+      height: 100px;
+      object-fit: cover;
       object-position: center;
       border-radius: 4px;
     `;
@@ -260,7 +254,7 @@ window.openGallery = function(postId, encodedMediaUrlsJson, startIndex = 0) {
                   `<video controls style="max-width: 90vw; max-height: 80vh; width: auto; height: auto;">
                      <source src="${url}" type="video/mp4">
                    </video>` :
-                  `<img src="${url}" alt="Gallery item" style="max-width: 90vw; max-height: 80vh; object-fit: contain; object-position: center; display: block; background: white;" onload="adjustGalleryImageFit(this)">
+                  `<img src="${url}" alt="Gallery item" style="max-width: 90vw; max-height: 80vh; object-fit: cover; object-position: center; display: block;" onload="adjustGalleryImageFit(this)">
                  `
                 }
               </div>
@@ -283,14 +277,14 @@ window.openGallery = function(postId, encodedMediaUrlsJson, startIndex = 0) {
           return `
             <div 
               class="thumbnail-item" 
-              style="width: 60px; height: 60px; border-radius: 8px; overflow: hidden; cursor: pointer; border: ${index === currentGalleryState.currentIndex ? '3px solid white' : '3px solid transparent'}; transition: border 0.3s; background: white;"
+              style="width: 60px; height: 60px; border-radius: 8px; overflow: hidden; cursor: pointer; border: ${index === currentGalleryState.currentIndex ? '3px solid white' : '3px solid transparent'}; transition: border 0.3s;"
               onclick="galleryGoToIndex(${index})"
             >
               ${isVideo ? 
                 `<video muted playsinline style="width: 100%; height: 100%; object-fit: cover;">
                    <source src="${url}" type="video/mp4">
                  </video>` :
-                `<img src="${url}" alt="Thumbnail ${index + 1}" style="width: 100%; height: 100%; object-fit: contain; object-position: center; display: block;" onload="adjustThumbnailFit(this)">
+                `<img src="${url}" alt="Thumbnail ${index + 1}" style="width: 100%; height: 100%; object-fit: cover; object-position: center; display: block;" onload="adjustThumbnailFit(this)">
                `
               }
             </div>
@@ -394,15 +388,15 @@ function applyFitBasedOnAspectRatio(img) {
   if (img.naturalWidth && img.naturalHeight) {
     const aspectRatio = img.naturalWidth / img.naturalHeight;
     if (aspectRatio < 1) { // Portrait (height > width)
-      img.style.objectFit = 'contain';
+      img.style.objectFit = 'cover';
     } else if (aspectRatio > 1.2) { // Landscape (width > height by more than 20%)
       img.style.objectFit = 'cover';
     } else { // Square or nearly square
-      img.style.objectFit = 'contain';
+      img.style.objectFit = 'cover';
     }
   } else {
-    // Default to contain for images that can't determine aspect ratio
-    img.style.objectFit = 'contain';
+    // Default to cover for images that can't determine aspect ratio
+    img.style.objectFit = 'cover';
   }
 }
 
