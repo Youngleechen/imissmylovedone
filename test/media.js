@@ -72,7 +72,7 @@ export function initializeMediaHandlers(supabase) {
 
       if (uploadError) {
         console.error('Upload error:', uploadError);
-        alert('Upload failed: + uploadError.message');
+        alert('Upload failed: ' + uploadError.message);
         if (uploadProgress) {
           uploadProgress.style.display = 'none';
         }
@@ -232,7 +232,7 @@ export function clearMediaPreviews() {
 }
 
 // Function to detect image/video aspect ratio and adjust fit for preview
-window.adjustPreviewImageFit = function(element) {
+function adjustPreviewImageFit(element) {
   // Clear the event listener to prevent multiple calls
   element.onload = null;
   element.onloadedmetadata = null;
@@ -254,7 +254,7 @@ window.adjustPreviewImageFit = function(element) {
       element.style.objectFit = 'cover';
     }
   }
-};
+}
 
 // --- GALLERY FUNCTIONS ---
 // These are now part of media.js since they manage media display.
@@ -292,8 +292,8 @@ window.openGallery = function(postId, encodedMediaUrlsJson, startIndex = 0) {
           }).join('')}
         </div>
 
-        <button id="gallery-prev" onclick="galleryNext()" style="position: absolute; left: 20px; background: rgba(255,255,255,0.2); border: none; border-radius: 50%; width: 50px; height: 50px; font-size: 24px; cursor: pointer; color: white; z-index: 10000;">‹</button>
-        <button id="gallery-next" onclick="galleryPrev()" style="position: absolute; right: 20px; background: rgba(255,255,255,0.2); border: none; border-radius: 50%; width: 50px; height: 50px; font-size: 24px; cursor: pointer; color: white; z-index: 10000;">›</button>
+        <button id="gallery-prev" onclick="galleryPrev()" style="position: absolute; left: 20px; background: rgba(255,255,255,0.2); border: none; border-radius: 50%; width: 50px; height: 50px; font-size: 24px; cursor: pointer; color: white; z-index: 10000;">‹</button>
+        <button id="gallery-next" onclick="galleryNext()" style="position: absolute; right: 20px; background: rgba(255,255,255,0.2); border: none; border-radius: 50%; width: 50px; height: 50px; font-size: 24px; cursor: pointer; color: white; z-index: 10000;">›</button>
 
         <div id="gallery-counter" style="position: absolute; bottom: 60px; left: 50%; transform: translateX(-50%); color: white; font-size: 16px; z-index: 10000;">
           <span id="current-index">${currentGalleryState.currentIndex + 1}</span> / ${currentGalleryState.mediaUrls.length}
@@ -458,7 +458,7 @@ window.galleryPrev = function() {
 };
 
 // Function to detect image/video aspect ratio and adjust fit for gallery images
-window.adjustGalleryImageFit = function(img) {
+function adjustGalleryImageFit(img) {
   // Clear the event listener to prevent multiple calls
   img.onload = null;
   img.onloadedmetadata = null;
@@ -480,10 +480,10 @@ window.adjustGalleryImageFit = function(img) {
       img.style.objectFit = 'cover';
     }
   }
-};
+}
 
 // Function to detect aspect ratio for thumbnail images
-window.adjustThumbnailFit = function(img) {
+function adjustThumbnailFit(img) {
   // Clear the event listener to prevent multiple calls
   img.onload = null;
   img.onloadedmetadata = null;
@@ -505,11 +505,11 @@ window.adjustThumbnailFit = function(img) {
       img.style.objectFit = 'cover';
     }
   }
-};
+}
 
 // Auth helper (moved here to avoid duplication)
 async function checkAuth() {
-  const { data: { user } } = await window.supabaseClient.auth.getUser(); // ✅ CORRECTED
+  const {  { user } } = await window.supabaseClient.auth.getUser(); // ✅ CORRECTED
   if (!user) {
     window.location.href = 'signin.html';
     return null;
@@ -522,3 +522,52 @@ document.addEventListener('DOMContentLoaded', async () => {
   // Initialize media handlers using the global client
   initializeMediaHandlers(window.supabaseClient);
 });
+
+// Export aspect ratio functions for use in other modules
+export function adjustImageFit(img) {
+  // Clear the event listener to prevent multiple calls
+  img.onload = null;
+  img.onloadedmetadata = null;
+
+  let width, height;
+  if (img.tagName === 'IMG') {
+    width = img.naturalWidth;
+    height = img.naturalHeight;
+  } else if (img.tagName === 'VIDEO') {
+    width = img.videoWidth;
+    height = img.videoHeight;
+  }
+
+  if (width && height) {
+    const aspectRatio = width / height;
+    if (aspectRatio < 1) { // Portrait (height > width)
+      img.style.objectFit = 'contain';
+    } else { // Landscape or square
+      img.style.objectFit = 'cover';
+    }
+  }
+}
+
+export function adjustThumbnailFit(img) {
+  // Clear the event listener to prevent multiple calls
+  img.onload = null;
+  img.onloadedmetadata = null;
+
+  let width, height;
+  if (img.tagName === 'IMG') {
+    width = img.naturalWidth;
+    height = img.naturalHeight;
+  } else if (img.tagName === 'VIDEO') {
+    width = img.videoWidth;
+    height = img.videoHeight;
+  }
+
+  if (width && height) {
+    const aspectRatio = width / height;
+    if (aspectRatio < 1) { // Portrait (height > width)
+      img.style.objectFit = 'contain';
+    } else { // Landscape or square
+      img.style.objectFit = 'cover';
+    }
+  }
+}
