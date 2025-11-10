@@ -239,30 +239,6 @@ window.openGallery = function(postId, encodedMediaUrlsJson, startIndex = 0) {
   const galleryHtml = `
     <div id="gallery-overlay" style="position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.9); z-index: 9999; display: flex; align-items: center; justify-content: center; padding: 20px; flex-direction: column;">
       <div class="gallery-container" style="position: relative; max-width: 90vw; max-height: 85vh; width: 100%; display: flex; flex-direction: column; align-items: center; justify-content: center; flex: 1;">
-        <button 
-          onclick="closeGallery(event)" 
-          style="
-            position: absolute;
-            top: 20px;
-            right: 20px;
-            background: rgba(255,255,255,0.8);
-            border: none;
-            border-radius: 50%;
-            width: 40px;
-            height: 40px;
-            font-size: 24px;
-            cursor: pointer;
-            color: #333;
-            z-index: 10000;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.2);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            transition: background 0.2s ease;
-          "
-          onmouseover="this.style.background='rgba(255,255,255,1)';"
-          onmouseout="this.style.background='rgba(255,255,255,0.8)';"
-        >×</button>
 
         <div id="gallery-swiper" style="width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; flex: 1;">
           ${currentGalleryState.mediaUrls.map((url, index) => {
