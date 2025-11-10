@@ -72,7 +72,7 @@ export function initializeMediaHandlers(supabase) {
 
       if (uploadError) {
         console.error('Upload error:', uploadError);
-        alert('Upload failed: ' + uploadError.message);
+        alert('Upload failed: + uploadError.message');
         if (uploadProgress) {
           uploadProgress.style.display = 'none';
         }
@@ -239,7 +239,9 @@ window.openGallery = function(postId, encodedMediaUrlsJson, startIndex = 0) {
   const galleryHtml = `
     <div id="gallery-overlay" style="position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.9); z-index: 9999; display: flex; align-items: center; justify-content: center; padding: 20px; flex-direction: column;">
       <div class="gallery-container" style="position: relative; max-width: 90vw; max-height: 85vh; width: 100%; display: flex; flex-direction: column; align-items: center; justify-content: center; flex: 1;">
-
+        <!-- Red Close Button Added Here -->
+        <button id="gallery-close" onclick="closeGallery()" style="position: absolute; top: 20px; right: 20px; background: #e53e3e; border: none; border-radius: 50%; width: 40px; height: 40px; font-size: 20px; cursor: pointer; color: white; z-index: 10001; box-shadow: 0 2px 4px rgba(0,0,0,0.3);">✕</button>
+        
         <div id="gallery-swiper" style="width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; flex: 1;">
           ${currentGalleryState.mediaUrls.map((url, index) => {
             const isVideo = url.includes('.mp4') || url.includes('.webm') || url.includes('.mov');
@@ -326,7 +328,7 @@ window.openGallery = function(postId, encodedMediaUrlsJson, startIndex = 0) {
   swiper.addEventListener('mousedown', handleMouseDown);
   window.addEventListener('mouseup', handleMouseUp);
 
-  // ✅ Close gallery when clicking outside
+  // Close gallery when clicking outside
   const overlay = document.getElementById('gallery-overlay');
   overlay.addEventListener('click', (e) => {
     if (e.target === overlay) {
@@ -334,7 +336,7 @@ window.openGallery = function(postId, encodedMediaUrlsJson, startIndex = 0) {
     }
   });
 
-  // ✅ Close gallery when pressing ESC
+  // Close gallery when pressing ESC
   const handleKeyDown = (e) => {
     if (e.key === 'Escape') {
       closeGallery();
@@ -342,7 +344,7 @@ window.openGallery = function(postId, encodedMediaUrlsJson, startIndex = 0) {
   };
   document.addEventListener('keydown', handleKeyDown);
 
-  // ✅ SIMPLE & ROBUST CLOSE FUNCTION
+  // SIMPLE & ROBUST CLOSE FUNCTION
   window.closeGallery = function(event) {
     if (event) {
       event.stopPropagation();
