@@ -146,7 +146,7 @@
             
             showMessage('Welcome! Redirecting to your space...', false);
             setTimeout(() => {
-              window.location.href = '/test/'; // ✅ CORRECTED: Absolute path
+              window.location.href = window.location.origin + '/test/';
             }, 1500);
           }, 1000);
           return;
