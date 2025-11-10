@@ -6,7 +6,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
   async function checkAuth() {
     try {
-      const { data: { user } } = await supabase.auth.getUser();
+      const {  { user } } = await supabase.auth.getUser();
       if (!user) {
         window.location.href = '../signin.html'; // Adjust path as needed
         return null;
@@ -30,7 +30,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         id, 
         body, 
         created_at,
-        users(username)
+        users(email)
       `)
       .order('created_at', { ascending: false });
 
@@ -103,7 +103,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         return `
           <div class="post-item" style="background: white; padding: 15px; border-radius: 8px; margin-bottom: 15px; box-shadow: 0 1px 3px rgba(0,0,0,0.1);">
             <div style="font-weight: bold; color: #2d3748; margin-bottom: 8px; font-size: 14px;">
-              By: ${post.users?.username || 'Unknown User'}
+              By: ${post.users?.email || 'Unknown User'}
             </div>
             <p style="margin: 0; line-height: 1.6;">${textOnlyBody}</p>
             ${mediaGridHtml}
@@ -118,7 +118,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         return `
           <div class="post-item" style="background: white; padding: 15px; border-radius: 8px; margin-bottom: 15px; box-shadow: 0 1px 3px rgba(0,0,0,0.1);">
             <div style="font-weight: bold; color: #2d3748; margin-bottom: 8px; font-size: 14px;">
-              By: ${post.users?.username || 'Unknown User'}
+              By: ${post.users?.email || 'Unknown User'}
             </div>
             <p style="margin: 0; line-height: 1.6;">${processedBody}</p>
             <small style="display: block; color: #718096; font-size: 12px; margin-top: 8px;">
@@ -171,8 +171,8 @@ document.addEventListener('DOMContentLoaded', async () => {
             }).join('')}
           </div>
 
-          <button id="gallery-prev" onclick="galleryPrev()" style="position: absolute; left: 20px; background: rgba(255,255,255,0.2); border: none; border-radius: 50%; width: 50px; height: 50px; font-size: 24px; cursor: pointer; color: white; z-index: 10000;">‹</button>
-          <button id="gallery-next" onclick="galleryNext()" style="position: absolute; right: 20px; background: rgba(255,255,255,0.2); border: none; border-radius: 50%; width: 50px; height: 50px; font-size: 24px; cursor: pointer; color: white; z-index: 10000;">›</button>
+          <button id="gallery-prev" onclick="galleryNext()" style="position: absolute; left: 20px; background: rgba(255,255,255,0.2); border: none; border-radius: 50%; width: 50px; height: 50px; font-size: 24px; cursor: pointer; color: white; z-index: 10000;">‹</button>
+          <button id="gallery-next" onclick="galleryPrev()" style="position: absolute; right: 20px; background: rgba(255,255,255,0.2); border: none; border-radius: 50%; width: 50px; height: 50px; font-size: 24px; cursor: pointer; color: white; z-index: 10000;">›</button>
 
           <div id="gallery-counter" style="position: absolute; bottom: 60px; left: 50%; transform: translateX(-50%); color: white; font-size: 16px; z-index: 10000;">
             <span id="current-index">${currentGalleryState.currentIndex + 1}</span> / ${currentGalleryState.mediaUrls.length}
