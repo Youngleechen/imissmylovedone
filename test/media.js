@@ -509,19 +509,13 @@ function adjustThumbnailFit(img) {
 
 // Auth helper (moved here to avoid duplication)
 async function checkAuth() {
-  const {  { user } } = await window.supabaseClient.auth.getUser(); // ✅ CORRECTED
+  const { data: { user } } = await window.supabaseClient.auth.getUser(); // ✅ CORRECTED
   if (!user) {
     window.location.href = 'signin.html';
     return null;
   }
   return user;
 }
-
-// Initialize when this module loads
-document.addEventListener('DOMContentLoaded', async () => {
-  // Initialize media handlers using the global client
-  initializeMediaHandlers(window.supabaseClient);
-});
 
 // Export aspect ratio functions for use in other modules
 export function adjustImageFit(img) {
@@ -571,3 +565,9 @@ export function adjustThumbnailFit(img) {
     }
   }
 }
+
+// Initialize when this module loads
+document.addEventListener('DOMContentLoaded', async () => {
+  // Initialize media handlers using the global client
+  initializeMediaHandlers(window.supabaseClient);
+});
