@@ -163,7 +163,7 @@ document.addEventListener('DOMContentLoaded', async () => {
       const mediaMatches = [...post.body.matchAll(/!\[([^\]]*)\]\s*\(\s*([^)]+)\s*\)/g)];
       
       if (mediaMatches.length > 0) {
-        let mediaGridHtml = '<div class="media-grid" style="position: relative; width: 100%; height: 300px; margin: 10px 0; background: white;">';
+        let mediaGridHtml = '<div class="media-grid" style="position: relative; width: 100%; min-height: 300px; margin: 10px 0; overflow: hidden; border-radius: 8px;">';
         
         // Show first media item as large
         const firstMedia = mediaMatches[0];
@@ -177,7 +177,7 @@ document.addEventListener('DOMContentLoaded', async () => {
               `<video muted playsinline style="width: 100%; height: 100%; object-fit: cover;">
                  <source src="${firstUrl}" type="video/mp4">
                </video>` :
-              `<img src="${firstUrl}" alt="${firstAlt}" style="width: 100%; height: 100%; object-fit: contain; object-position: center; display: block; background: white;" onload="adjustImageFit(this)">
+              `<img src="${firstUrl}" alt="${firstAlt}" style="width: 100%; height: 100%; object-fit: cover; object-position: center; display: block;" onload="adjustImageFit(this)">
              `
             }
           </div>
@@ -191,12 +191,12 @@ document.addEventListener('DOMContentLoaded', async () => {
           
           mediaGridHtml += `
             <div class="media-grid-overlay" style="position: absolute; bottom: 10px; right: 10px; width: 80px; height: 80px; cursor: pointer;" onclick="openGallery('${post.id}', '${encodeURIComponent(JSON.stringify(mediaMatches.map(m => m[2])))}', 1)">
-              <div class="second-thumbnail" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; border-radius: 8px; overflow: hidden; box-shadow: 0 2px 4px rgba(0,0,0,0.3); background: white;">
+              <div class="second-thumbnail" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; border-radius: 8px; overflow: hidden; box-shadow: 0 2px 4px rgba(0,0,0,0.3);">
                 ${isSecondVideo ? 
                   `<video muted playsinline style="width: 100%; height: 100%; object-fit: cover;">
                      <source src="${secondUrl}" type="video/mp4">
                    </video>` :
-                  `<img src="${secondUrl}" alt="Additional media" style="width: 100%; height: 100%; object-fit: contain; object-position: center; display: block; background: white;" onload="adjustThumbnailFit(this)">
+                  `<img src="${secondUrl}" alt="Additional media" style="width: 100%; height: 100%; object-fit: cover; object-position: center; display: block;" onload="adjustThumbnailFit(this)">
                  `
                 }
               </div>
@@ -268,15 +268,15 @@ document.addEventListener('DOMContentLoaded', async () => {
     if (img.naturalWidth && img.naturalHeight) {
       const aspectRatio = img.naturalWidth / img.naturalHeight;
       if (aspectRatio < 1) { // Portrait (height > width)
-        img.style.objectFit = 'contain';
+        img.style.objectFit = 'cover';
       } else if (aspectRatio > 1.2) { // Landscape (width > height by more than 20%)
         img.style.objectFit = 'cover';
       } else { // Square or nearly square
-        img.style.objectFit = 'contain';
+        img.style.objectFit = 'cover';
       }
     } else {
-      // Default to contain for images that can't determine aspect ratio
-      img.style.objectFit = 'contain';
+      // Default to cover for images that can't determine aspect ratio
+      img.style.objectFit = 'cover';
     }
   }
 
