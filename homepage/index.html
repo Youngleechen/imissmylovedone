@@ -7,12 +7,51 @@
   <link rel="stylesheet" href="/homepage/style.css" />
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <style>
-    .posts-section { margin-top: 20px; padding: 20px; background-color: white; border-radius: 8px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
-    .posts-section h2 { margin-bottom: 15px; }
-    .post-item { background: white; padding: 15px; border-radius: 8px; margin-bottom: 15px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
-    .post-item p { margin: 0; line-height: 1.6; }
-    .post-item small { display: block; color: #718096; font-size: 12px; margin-top: 8px; }
-    .media-item { max-width: 100%; height: auto; margin: 10px 0; border-radius: 8px; object-fit: contain; }
+    .posts-section { 
+      margin-top: 20px; 
+      padding: 20px; 
+      background-color: white; 
+      border-radius: 8px; 
+      box-shadow: 0 1px 3px rgba(0,0,0,0.1); 
+    }
+    .posts-section h2 { 
+      margin-bottom: 15px; 
+    }
+    .post-item { 
+      background: white; 
+      padding: 15px; 
+      border-radius: 8px; 
+      margin-bottom: 15px; 
+      box-shadow: 0 1px 3px rgba(0,0,0,0.1); 
+    }
+    .post-item p { 
+      margin: 0; 
+      line-height: 1.6; 
+    }
+    .post-item small { 
+      display: block; 
+      color: #718096; 
+      font-size: 12px; 
+      margin-top: 8px; 
+    }
+    .media-container {
+      margin: 10px 0;
+      overflow: hidden;
+      border-radius: 8px;
+      position: relative;
+    }
+    .media-item {
+      width: 100%;
+      display: block;
+      max-height: 500px;
+      object-fit: cover;
+      object-position: center;
+    }
+    .media-item-video {
+      width: 100%;
+      display: block;
+      max-height: 500px;
+    }
   </style>
 </head>
 <body>
@@ -59,7 +98,12 @@
             const alt = match[1] || 'Media';
             const url = match[2].trim();
             const isVideo = url.includes('.mp4') || url.includes('.webm') || url.includes('.mov');
-            mediaHtml += isVideo ? `<video controls class="media-item"><source src="${url}" type="video/mp4"></video>` : `<img src="${url}" alt="${alt}" class="media-item">`;
+            
+            if (isVideo) {
+              mediaHtml += `<div class="media-container"><video controls class="media-item-video"><source src="${url}" type="video/mp4"></video></div>`;
+            } else {
+              mediaHtml += `<div class="media-container"><img src="${url}" alt="${alt}" class="media-item"></div>`;
+            }
           });
 
           return `<div class="post-item"><p>${contentHtml}</p>${mediaHtml}<small>${new Date(post.created_at).toLocaleString()}</small></div>`;
