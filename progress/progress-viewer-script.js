@@ -6,7 +6,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
   async function checkAuth() {
     try {
-      const { data: { user } } = await supabase.auth.getUser();
+      const {  { user } } = await supabase.auth.getUser();
       if (!user) {
         window.location.href = '../signin.html'; // Adjust path as needed
         return null;
@@ -175,7 +175,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     const galleryHtml = `
       <div id="gallery-overlay" style="position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.9); z-index: 9999; display: flex; align-items: center; justify-content: center; padding: 20px; flex-direction: column;">
         <div class="gallery-container" style="position: relative; max-width: 90vw; max-height: 85vh; width: 100%; display: flex; flex-direction: column; align-items: center; justify-content: center; flex: 1;">
-          <button onclick="closeGallery()" style="position: absolute; top: 20px; right: 20px; background: rgba(255,255,255,0.8); border: none; border-radius: 50%; width: 40px; height: 40px; font-size: 24px; cursor: pointer; color: #333; z-index: 10000; box-shadow: 0 2px 4px rgba(0,0,0,0.2); display: flex; align-items: center; justify-content: center; transition: background 0.2s ease;" onmouseover="this.style.background='rgba(255,255,255,1)';" onmouseout="this.style.background='rgba(255,255,255,0.8)';">×</button>
+          <button onclick="window.closeGallery && window.closeGallery()" style="position: absolute; top: 20px; right: 20px; background: rgba(255,255,255,0.8); border: none; border-radius: 50%; width: 40px; height: 40px; font-size: 24px; cursor: pointer; color: #333; z-index: 10000; box-shadow: 0 2px 4px rgba(0,0,0,0.2); display: flex; align-items: center; justify-content: center; transition: background 0.2s ease;" onmouseover="this.style.background='rgba(255,255,255,1)';" onmouseout="this.style.background='rgba(255,255,255,0.8)';">×</button>
 
           <div id="gallery-swiper" style="width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; flex: 1;">
             ${currentGalleryState.mediaUrls.map((url, index) => {
@@ -268,7 +268,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     overlay.addEventListener('click', (e) => {
       if (e.target === overlay) {
         console.log('Clicked outside gallery - closing');
-        closeGallery();
+        window.closeGallery && window.closeGallery();
       }
     });
 
@@ -276,17 +276,17 @@ document.addEventListener('DOMContentLoaded', async () => {
     const handleKeyDown = (e) => {
       if (e.key === 'Escape') {
         console.log('ESC key pressed - closing gallery');
-        closeGallery();
+        window.closeGallery && window.closeGallery();
       }
     };
     document.addEventListener('keydown', handleKeyDown);
 
-    // Unified closeGallery function
+    // Define closeGallery as a global function
     window.closeGallery = function() {
-      console.log('closeGallery function called');
+      console.log('✅ closeGallery function called');
       const overlay = document.getElementById('gallery-overlay');
       if (overlay) {
-        console.log('Found overlay, removing it');
+        console.log('✅ Found overlay, removing it');
         // Clean up event listeners
         if (swiper) {
           swiper.removeEventListener('touchstart', handleTouchStart);
@@ -298,12 +298,12 @@ document.addEventListener('DOMContentLoaded', async () => {
 
         // Remove the overlay
         overlay.remove();
-        console.log('Overlay removed');
+        console.log('✅ Overlay removed');
       } else {
-        console.log('No overlay found to close');
+        console.log('❌ No overlay found to close');
       }
       currentGalleryState = null;
-      console.log('Gallery state cleared');
+      console.log('✅ Gallery state cleared');
     };
   };
 
