@@ -5,12 +5,18 @@ document.addEventListener('DOMContentLoaded', async () => {
   const updatesContainer = document.getElementById('updatesContainer');
 
   async function checkAuth() {
-    const {  { user } } = await supabase.auth.getUser();
-    if (!user) {
-      window.location.href = '../signin.html'; // Adjust path as needed
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) {
+        window.location.href = '../signin.html'; // Adjust path as needed
+        return null;
+      }
+      return user;
+    } catch (error) {
+      console.error('Auth check failed:', error);
+      window.location.href = '../signin.html';
       return null;
     }
-    return user;
   }
 
   // Load updates
