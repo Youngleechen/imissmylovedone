@@ -72,7 +72,7 @@ export function initializeMediaHandlers(supabase) {
 
       if (uploadError) {
         console.error('Upload error:', uploadError);
-        alert('Upload failed: ' + uploadError.message);
+        alert('Upload failed: + uploadError.message');
         if (uploadProgress) {
           uploadProgress.style.display = 'none';
         }
@@ -161,18 +161,26 @@ function showMediaPreview(url, filename, fileType) {
     previewElement.style.cssText = `
       max-width: 100px;
       height: 100px;
-      object-fit: cover;
+      object-fit: cover; /* Will be adjusted by adjustPreviewImageFit */
       border-radius: 8px;
     `;
+    // Apply aspect ratio adjustment
+    previewElement.onload = function() {
+      adjustPreviewImageFit(previewElement);
+    };
   } else if (fileType.startsWith('video')) {
     previewElement = document.createElement('video');
     previewElement.controls = false;
     previewElement.style.cssText = `
       max-width: 100px;
       height: 100px;
-      object-fit: cover;
+      object-fit: cover; /* Will be adjusted by adjustPreviewImageFit */
       border-radius: 8px;
     `;
+    // Apply aspect ratio adjustment when metadata is loaded
+    previewElement.onloadedmetadata = function() {
+      adjustPreviewImageFit(previewElement);
+    };
     const source = document.createElement('source');
     source.src = url;
     source.type = fileType;
@@ -223,6 +231,31 @@ export function clearMediaPreviews() {
   window.currentMediaFiles = [];
 }
 
+// Function to detect image/video aspect ratio and adjust fit for preview
+window.adjustPreviewImageFit = function(element) {
+  // Clear the event listener to prevent multiple calls
+  element.onload = null;
+  element.onloadedmetadata = null;
+
+  let width, height;
+  if (element.tagName === 'IMG') {
+    width = element.naturalWidth;
+    height = element.naturalHeight;
+  } else if (element.tagName === 'VIDEO') {
+    width = element.videoWidth;
+    height = element.videoHeight;
+  }
+
+  if (width && height) {
+    const aspectRatio = width / height;
+    if (aspectRatio < 1) { // Portrait (height > width)
+      element.style.objectFit = 'contain';
+    } else { // Landscape or square
+      element.style.objectFit = 'cover';
+    }
+  }
+};
+
 // --- GALLERY FUNCTIONS ---
 // These are now part of media.js since they manage media display.
 
@@ -248,10 +281,10 @@ window.openGallery = function(postId, encodedMediaUrlsJson, startIndex = 0) {
             return `
               <div class="gallery-slide" style="position: absolute; width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; opacity: 0; transition: opacity 0.3s ease;" data-index="${index}">
                 ${isVideo ? 
-                  `<video controls style="max-width: 90vw; max-height: 80vh; width: auto; height: auto;">
+                  `<video controls style="max-width: 90vw; max-height: 80vh; width: auto; height: auto; object-fit: contain;" onload="adjustGalleryImageFit(this)">
                      <source src="${url}" type="video/mp4">
                    </video>` :
-                  `<img src="${url}" alt="Gallery item" style="max-width: 90vw; max-height: 80vh; object-fit: contain; object-position: center; display: block;" onload="adjustGalleryImageFit(this)">
+                  `<img src="${url}" alt="Gallery item" style="max-width: 90vw; max-height: 80vh; object-fit: contain;" onload="adjustGalleryImageFit(this)">
                  `
                 }
               </div>
@@ -278,10 +311,10 @@ window.openGallery = function(postId, encodedMediaUrlsJson, startIndex = 0) {
               onclick="galleryGoToIndex(${index})"
             >
               ${isVideo ? 
-                `<video muted playsinline style="width: 100%; height: 100%; object-fit: cover;">
+                `<video muted playsinline style="width: 100%; height: 100%; object-fit: cover;" onload="adjustThumbnailFit(this)">
                    <source src="${url}" type="video/mp4">
                  </video>` :
-                `<img src="${url}" alt="Thumbnail ${index + 1}" style="width: 100%; height: 100%; object-fit: contain; object-position: center; display: block;" onload="adjustThumbnailFit(this)">
+                `<img src="${url}" alt="Thumbnail ${index + 1}" style="width: 100%; height: 100%; object-fit: cover;" onload="adjustThumbnailFit(this)">
                `
               }
             </div>
@@ -367,32 +400,6 @@ window.openGallery = function(postId, encodedMediaUrlsJson, startIndex = 0) {
   };
 };
 
-// Function to detect aspect ratio for gallery images
-window.adjustGalleryImageFit = function(img) {
-  img.onload = null; // Prevent multiple calls
-  if (img.naturalWidth && img.naturalHeight) {
-    const aspectRatio = img.naturalWidth / img.naturalHeight;
-    if (aspectRatio < 1) { // Portrait (height > width)
-      img.style.objectFit = 'contain';
-    } else { // Landscape or square
-      img.style.objectFit = 'cover';
-    }
-  }
-};
-
-// Function to detect aspect ratio for thumbnail images
-window.adjustThumbnailFit = function(img) {
-  img.onload = null; // Prevent multiple calls
-  if (img.naturalWidth && img.naturalHeight) {
-    const aspectRatio = img.naturalWidth / img.naturalHeight;
-    if (aspectRatio < 1) { // Portrait (height > width)
-      img.style.objectFit = 'contain';
-    } else { // Landscape or square
-      img.style.objectFit = 'cover';
-    }
-  }
-};
-
 function handleSwipe(startX, startY, endX, endY) {
   const threshold = 50;
   const verticalThreshold = 30;
@@ -448,6 +455,56 @@ window.galleryPrev = function() {
   if (!currentGalleryState) return;
   const newIndex = (currentGalleryState.currentIndex - 1 + currentGalleryState.mediaUrls.length) % currentGalleryState.mediaUrls.length;
   showGallerySlide(newIndex);
+};
+
+// Function to detect image/video aspect ratio and adjust fit for gallery images
+window.adjustGalleryImageFit = function(img) {
+  // Clear the event listener to prevent multiple calls
+  img.onload = null;
+  img.onloadedmetadata = null;
+
+  let width, height;
+  if (img.tagName === 'IMG') {
+    width = img.naturalWidth;
+    height = img.naturalHeight;
+  } else if (img.tagName === 'VIDEO') {
+    width = img.videoWidth;
+    height = img.videoHeight;
+  }
+
+  if (width && height) {
+    const aspectRatio = width / height;
+    if (aspectRatio < 1) { // Portrait (height > width)
+      img.style.objectFit = 'contain';
+    } else { // Landscape or square
+      img.style.objectFit = 'cover';
+    }
+  }
+};
+
+// Function to detect aspect ratio for thumbnail images
+window.adjustThumbnailFit = function(img) {
+  // Clear the event listener to prevent multiple calls
+  img.onload = null;
+  img.onloadedmetadata = null;
+
+  let width, height;
+  if (img.tagName === 'IMG') {
+    width = img.naturalWidth;
+    height = img.naturalHeight;
+  } else if (img.tagName === 'VIDEO') {
+    width = img.videoWidth;
+    height = img.videoHeight;
+  }
+
+  if (width && height) {
+    const aspectRatio = width / height;
+    if (aspectRatio < 1) { // Portrait (height > width)
+      img.style.objectFit = 'contain';
+    } else { // Landscape or square
+      img.style.objectFit = 'cover';
+    }
+  }
 };
 
 // Auth helper (moved here to avoid duplication)
