@@ -69,11 +69,11 @@
 
   <script type="module">
     // 🔑 === PASTE YOUR KEYS HERE (ONLY PLACE YOU NEED TO) ===
-    const SUPABASE_URL = 'https://ccetnqdqfrsitooestbh.supabase.co  ';
+    const SUPABASE_URL = 'https://ccetnqdqfrsitooestbh.supabase.co    ';
     const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImNjZXRucWRxZnJzaXRvb2VzdGJoIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjIzMTE4MjksImV4cCI6MjA3Nzg4NzgyOX0.1NjRZZrgsPOg-2z_r2kRELWn9IVXNEQNpSxK6CktJRY';
     // 🔑 =====================================================
 
-    import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.39.7/+esm  ';
+    import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.39.7/+esm    ';
     const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
     const msg = document.getElementById('message');
@@ -154,7 +154,7 @@
 
         showMessage('Welcome! Redirecting to your space...', false);
         setTimeout(() => {
-          window.location.href = '/test/'; // ✅ CORRECTED: Absolute path
+          window.location.href = window.location.origin + '/test/';
         }, 1500);
         
       } catch (err) {
@@ -184,7 +184,7 @@
 
         showMessage('Welcome back! Redirecting...', false);
         setTimeout(() => {
-          window.location.href = '/test/'; // ✅ CORRECTED: Absolute path
+          window.location.href = window.location.origin + '/test/';
         }, 1500);
         
       } catch (err) {
