@@ -70,7 +70,6 @@
       -webkit-box-orient: vertical;
       overflow: hidden;
       margin-bottom: 8px;
-      line-height: 1.6;
     }
 
     .text-container.expanded {
@@ -108,11 +107,6 @@
       margin-top: 4px;
       text-decoration: underline;
       font-weight: 600;
-      display: none; /* Hidden by default */
-    }
-
-    .show-more-btn.visible {
-      display: inline-block; /* Shown when needed */
     }
 
     .media-container {
@@ -219,37 +213,13 @@
 
         container.innerHTML = postsHTML;
 
-        // Process each post after rendering
-        document.querySelectorAll('.post-item').forEach(postItem => {
-          const textContainer = postItem.querySelector('.text-container');
-          const showMoreBtn = postItem.querySelector('.show-more-btn');
-          
-          // Temporarily remove clamping to measure full height
-          textContainer.style.display = 'block';
-          textContainer.style.webkitLineClamp = 'unset';
-          textContainer.style.webkitBoxOrient = 'unset';
-          
-          const lineHeight = parseFloat(getComputedStyle(textContainer.querySelector('p')).lineHeight);
-          const fullHeight = textContainer.scrollHeight;
-          const threeLineHeight = lineHeight * 3;
-          
-          // Reapply clamping
-          textContainer.style.display = '-webkit-box';
-          textContainer.style.webkitLineClamp = '3';
-          textContainer.style.webkitBoxOrient = 'vertical';
-          
-          // Show button only if content exceeds 3 lines
-          if (fullHeight > threeLineHeight) {
-            showMoreBtn.classList.add('visible');
-          }
-          
-          // Attach event listener to visible buttons
-          if (showMoreBtn.classList.contains('visible')) {
-            showMoreBtn.addEventListener('click', () => {
-              textContainer.classList.toggle('expanded');
-              showMoreBtn.textContent = textContainer.classList.contains('expanded') ? 'Show less' : 'Show more';
-            });
-          }
+        // Attach event listeners to all "Show more" buttons
+        document.querySelectorAll('.show-more-btn').forEach(button => {
+          const textContainer = button.previousElementSibling;
+          button.addEventListener('click', () => {
+            textContainer.classList.toggle('expanded');
+            button.textContent = textContainer.classList.contains('expanded') ? 'Show less' : 'Show more';
+          });
         });
 
       } catch (err) {
