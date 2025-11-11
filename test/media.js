@@ -238,7 +238,6 @@ export function clearMediaPreviews() {
 }
 
 // --- GALLERY FUNCTIONS ---
-// These are now part of media.js since they manage media display.
 
 let currentGalleryState = null;
 
@@ -253,7 +252,7 @@ window.openGallery = function(postId, encodedMediaUrlsJson, startIndex = 0) {
   const galleryHtml = `
     <div id="gallery-overlay" style="position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.9); z-index: 9999; display: flex; align-items: center; justify-content: center; padding: 20px; flex-direction: column;">
       <div class="gallery-container" style="position: relative; max-width: 90vw; max-height: 85vh; width: 100%; display: flex; flex-direction: column; align-items: center; justify-content: center; flex: 1;">
-        <!-- Red Close Button Added Here -->
+        <!-- Close Button -->
         <button id="gallery-close" onclick="closeGallery()" style="position: absolute; top: 20px; right: 20px; background: #e53e3e; border: none; border-radius: 50%; width: 40px; height: 40px; font-size: 20px; cursor: pointer; color: white; z-index: 10001; box-shadow: 0 2px 4px rgba(0,0,0,0.3);">✕</button>
         
         <div id="gallery-swiper" style="width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; flex: 1;">
@@ -467,12 +466,18 @@ window.galleryPrev = function() {
 
 // Auth helper
 async function checkAuth() {
-  const {  { user } } = await window.supabaseClient.auth.getUser();
-  if (!user) {
+  try {
+    const { data: { user } } = await window.supabaseClient.auth.getUser();
+    if (!user) {
+      window.location.href = 'signin.html';
+      return null;
+    }
+    return user;
+  } catch (err) {
+    console.error('Auth check failed:', err);
     window.location.href = 'signin.html';
     return null;
   }
-  return user;
 }
 
 // Initialize when this module loads — but only once
