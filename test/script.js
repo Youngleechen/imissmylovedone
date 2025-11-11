@@ -195,7 +195,7 @@ document.addEventListener('DOMContentLoaded', async () => {
       }
 
       const { error: uploadError } = await supabase.storage
-        .from('memories-media') // Use your actual bucket name
+        .from('memories') // Use your actual bucket name
         .upload(fileName, file, {
           upsert: false,
           onUploadProgress: (progressEvent) => {
@@ -579,3 +579,4 @@ document.addEventListener('DOMContentLoaded', async () => {
     }
   });
 });
+
