@@ -46,27 +46,62 @@
     .post-item {
       background: white;
       border-radius: 8px;
-      margin-bottom: 40px; /* Increased space between posts */
+      margin-bottom: 40px;
       box-shadow: 0 1px 3px rgba(0,0,0,0.1);
       width: 100%;
-      max-width: 602px;
+      max-width: 600px;
       margin-left: auto;
       margin-right: auto;
-      padding: 1px;
+      padding: 15px;
       display: flex;
+      flex-direction: column;
+    }
+
+    .post-header {
+      display: flex;
+      align-items: center;
+      margin-bottom: 12px;
+      gap: 12px;
+    }
+
+    .profile-image {
+      width: 48px;
+      height: 48px;
+      border-radius: 50%;
+      object-fit: cover;
+      background-color: #e5e7eb;
+      display: flex;
+      align-items: center;
       justify-content: center;
+      font-weight: bold;
+      color: #6b7280;
+    }
+
+    .profile-info {
+      display: flex;
+      flex-direction: column;
+    }
+
+    .username {
+      font-weight: 600;
+      color: #1f2937;
+      margin-bottom: 2px;
+    }
+
+    .post-date {
+      font-size: 0.85rem;
+      color: #718096;
     }
 
     .post-content {
       width: 100%;
-      max-width: 600px;
       text-align: left;
     }
 
     .text-container {
       position: relative;
       display: -webkit-box;
-      -webkit-line-clamp: 2; /* Changed from 3 to 2 lines */
+      -webkit-line-clamp: 2;
       -webkit-box-orient: vertical;
       overflow: hidden;
       margin-bottom: 8px;
@@ -107,11 +142,11 @@
       margin-top: 4px;
       text-decoration: underline;
       font-weight: 600;
-      display: none; /* Hidden by default */
+      display: none;
     }
 
     .show-more-btn.visible {
-      display: inline; /* Visible when needed */
+      display: inline;
     }
 
     .media-container {
@@ -119,9 +154,6 @@
       border-radius: 8px;
       position: relative;
       width: 100%;
-      max-width: 600px;
-      margin-left: auto;
-      margin-right: auto;
       overflow: hidden;
     }
 
@@ -132,14 +164,6 @@
       object-fit: contain;
       object-position: center;
       background-color: #f3f4f6;
-    }
-
-    .post-content small {
-      display: block;
-      color: #718096;
-      font-size: 12px;
-      margin-top: 8px;
-      text-align: center;
     }
 
     .aspect-square { aspect-ratio: 1/1; }
@@ -165,10 +189,6 @@
       'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImNjZXRucWRxZnJzaXRvb2VzdGJoIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjIzMTE4MjksImV4cCI6MjA3Nzg4NzgyOX0.1NjRZZrgsPOg-2z_r2kRELWn9IVXNEQNpSxK6CktJRY'
     );
 
-    function getAspectRatioClassFast(imageUrl) {
-      return '';
-    }
-
     async function loadAllPosts() {
       const container = document.getElementById('all-posts-container');
       container.innerHTML = 'Loading...';
@@ -176,7 +196,7 @@
       try {
         const { data, error } = await window.supabaseClient
           .from('memories')
-          .select('id, body, created_at')
+          .select('id, body, created_at, user_id')
           .order('created_at', { ascending: false });
 
         if (error) throw error;
@@ -187,9 +207,16 @@
         }
 
         const postsHTML = data.map(post => {
+          // Extract media
           const mediaMatches = [...post.body.matchAll(/!\[([^\]]*)\]\s*\(\s*([^)]+)\s*\)/g)];
           let contentHtml = post.body.replace(/!\[([^\]]*)\]\s*\(\s*([^)]+)\s*\)/g, '');
           contentHtml = contentHtml.replace(/\n/g, '<br>');
+
+          // Generate user initials for profile placeholder
+          const initials = post.user_id ? post.user_id.charAt(0).toUpperCase() : 'U';
+          
+          // Format date
+          const postDate = new Date(post.created_at).toLocaleString();
 
           let mediaHtml = '';
           for (const match of mediaMatches) {
@@ -205,13 +232,19 @@
           }
 
           return `<div class="post-item">
+                    <div class="post-header">
+                      <div class="profile-image">${initials}</div>
+                      <div class="profile-info">
+                        <div class="username">${post.user_id || 'Anonymous'}</div>
+                        <div class="post-date">${postDate}</div>
+                      </div>
+                    </div>
                     <div class="post-content">
                       <div class="text-container">
                         <p>${contentHtml}</p>
                       </div>
                       <button class="show-more-btn">Show more</button>
                       ${mediaHtml}
-                      <small>${new Date(post.created_at).toLocaleString()}</small>
                     </div>
                   </div>`;
         }).join('');
