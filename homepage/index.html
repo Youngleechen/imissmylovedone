@@ -13,153 +13,111 @@
     }
 
     body {
-      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-      background: linear-gradient(135deg, #f5f7fa 0%, #e4edf5 100%);
-      color: #333;
-      line-height: 1.6;
-      padding: 15px;
+      font-family: Arial, sans-serif;
+      background-color: #f8f9fa;
+      padding: 2px;
       max-width: 800px;
       margin: 0 auto;
     }
 
-    header {
-      text-align: center;
-      margin: 20px 0;
-      padding: 15px;
-      background: rgba(79, 70, 229, 0.08);
-      border-radius: 12px;
-      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
-    }
-
-    h1 {
-      color: #2d3748;
-      font-size: 1.8rem;
-      margin-bottom: 8px;
-    }
-
-    .subtitle {
-      color: #4a5568;
-      font-size: 1.1rem;
-      max-width: 600px;
-      margin: 0 auto;
-    }
-
     .login-btn {
-      background: linear-gradient(to right, #4f46e5, #7c3aed);
+      background-color: #4f46e5;
       color: white;
       border: none;
-      padding: 12px 24px;
-      border-radius: 8px;
+      padding: 10px 20px;
+      border-radius: 6px;
       cursor: pointer;
-      font-weight: 600;
-      font-size: 1rem;
-      margin: 15px auto;
-      display: block;
-      transition: all 0.3s ease;
-      box-shadow: 0 4px 6px rgba(79, 70, 229, 0.3);
-    }
-
-    .login-btn:hover {
-      transform: translateY(-2px);
-      box-shadow: 0 6px 8px rgba(79, 70, 229, 0.4);
+      margin-bottom: 20px;
     }
 
     .posts-section { 
       margin-top: 20px; 
       padding: 20px; 
-      background: rgba(255, 255, 255, 0.85);
-      backdrop-filter: blur(10px);
-      border-radius: 16px; 
-      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+      background-color: white; 
+      border-radius: 8px; 
+      box-shadow: 0 1px 3px rgba(0,0,0,0.1); 
     }
 
     .posts-section h2 { 
-      margin-bottom: 20px; 
-      color: #2d3748;
-      font-size: 1.6rem;
-      text-align: center;
-      position: relative;
-      padding-bottom: 10px;
-    }
-
-    .posts-section h2:after {
-      content: '';
-      position: absolute;
-      bottom: 0;
-      left: 50%;
-      transform: translateX(-50%);
-      width: 80px;
-      height: 3px;
-      background: linear-gradient(to right, #4f46e5, #7c3aed);
-      border-radius: 3px;
+      margin-bottom: 15px; 
+      color: #1f2937;
     }
 
     .post-item {
       background: white;
-      border-radius: 14px;
-      margin-bottom: 15px; /* Added space between posts */
-      box-shadow: 0 3px 10px rgba(0, 0, 0, 0.07);
+      border-radius: 8px;
+      margin-bottom: 10px; /* ✅ Added 10px spacing between posts */
+      box-shadow: 0 1px 3px rgba(0,0,0,0.1);
       width: 100%;
-      overflow: hidden;
-      transition: transform 0.3s ease, box-shadow 0.3s ease;
-    }
-
-    .post-item:hover {
-      transform: translateY(-2px);
-      box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+      max-width: 602px;
+      margin-left: auto;
+      margin-right: auto;
+      padding: 1px;
+      display: flex;
+      justify-content: center;
     }
 
     .post-content {
       width: 100%;
       max-width: 600px;
-      margin: 0 auto;
-      padding: 20px;
       text-align: left;
-      position: relative;
     }
 
     .text-container {
       position: relative;
-      overflow: hidden;
-      margin-bottom: 12px;
-    }
-
-    .text-container.collapsed {
       display: -webkit-box;
       -webkit-line-clamp: 3;
       -webkit-box-orient: vertical;
       overflow: hidden;
+      margin-bottom: 8px;
+    }
+
+    .text-container.expanded {
+      -webkit-line-clamp: unset;
+      -webkit-box-orient: unset;
+      display: block;
     }
 
     .text-container::after {
-      content: '';
+      content: '...';
       position: absolute;
       bottom: 0;
-      left: 0;
       right: 0;
-      height: 40px;
-      background: linear-gradient(to top, rgba(255,255,255,0.9), transparent);
+      background: white;
+      padding-left: 5px;
     }
 
-    .text-container:not(.collapsed)::after {
-      display: none;
+    .text-container.expanded::after {
+      content: '';
     }
 
     .post-content p {
       margin: 0;
-      line-height: 1.7;
-      color: #2d3748;
-      font-size: 1.05rem;
-      word-wrap: break-word;
+      line-height: 1.6;
+      color: #374151;
+    }
+
+    .show-more-btn {
+      background: none;
+      border: none;
+      color: #4f46e5;
+      cursor: pointer;
+      font-size: 0.9em;
+      padding: 0;
+      margin-top: 4px;
+      text-decoration: underline;
+      font-weight: 600;
     }
 
     .media-container {
-      margin: 15px 0;
-      border-radius: 10px;
+      margin: 10px 0;
+      border-radius: 8px;
       position: relative;
       width: 100%;
+      max-width: 600px;
+      margin-left: auto;
+      margin-right: auto;
       overflow: hidden;
-      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
     }
 
     .media-item,
@@ -167,216 +125,110 @@
       width: 100%;
       display: block;
       object-fit: contain;
-      max-height: 400px;
-      background-color: #f8fafc;
+      object-position: center;
+      background-color: #f3f4f6;
     }
 
     .post-content small {
       display: block;
       color: #718096;
-      font-size: 0.85rem;
-      margin-top: 12px;
-      text-align: right;
-      font-style: italic;
-    }
-
-    .show-more-btn {
-      background: none;
-      border: none;
-      color: #4f46e5;
-      font-weight: 600;
-      cursor: pointer;
+      font-size: 12px;
       margin-top: 8px;
-      padding: 5px 0;
-      display: none;
-      font-size: 0.95rem;
-      transition: color 0.2s;
-    }
-
-    .show-more-btn:hover {
-      color: #7c3aed;
-      text-decoration: underline;
-    }
-
-    .show-more-btn.showing {
-      display: block;
-    }
-
-    .heart-icon {
-      color: #e53e3e;
-      margin-right: 4px;
-      font-size: 1.1em;
-    }
-
-    footer {
       text-align: center;
-      margin-top: 30px;
-      padding: 20px;
-      color: #4a5568;
-      font-size: 0.9rem;
     }
 
-    @media (max-width: 600px) {
-      .post-content {
-        padding: 15px;
-      }
-      
-      body {
-        padding: 10px;
-      }
-    }
+    .aspect-square { aspect-ratio: 1/1; }
+    .aspect-video { aspect-ratio: 16/9; }
+    .aspect-4-3 { aspect-ratio: 4/3; }
+    .aspect-2-1 { aspect-ratio: 2/1; }
+    .aspect-2-3 { aspect-ratio: 2/3; }
+    .aspect-16-6 { aspect-ratio: 16/6; }
   </style>
 </head>
 <body>
-  <header>
-    <h1>🕯️ Shared Memories</h1>
-    <p class="subtitle">A safe space to honor loved ones and share your journey through grief</p>
-  </header>
-
-  <button id="loginButton" class="login-btn">Sign In to Share</button>
+  <button id="loginButton" class="login-btn">Login</button>
 
   <div class="posts-section">
     <h2>Community Memories</h2>
-    <div id="all-posts-container">Loading memories...</div>
+    <div id="all-posts-container">Loading...</div>
   </div>
 
-  <footer>
-    <p>You are not alone. This community holds space for your grief and healing.</p>
-    <p>© 2025 Grief Support Platform • A compassionate space for healing</p>
-  </footer>
-
   <script>
-    // Mock data for demonstration since Supabase connection has issues
-    const mockPosts = [
-      {
-        id: 1,
-        body: "Today marks one year since we lost Mom. I still reach for the phone to call her when something good happens. Her garden is blooming beautifully this spring - especially the roses she loved so much. I like to think she's tending an even more magnificent garden somewhere. 💐",
-        created_at: "2025-11-10T14:30:00Z"
-      },
-      {
-        id: 2,
-        body: "I finally went through Dad's old toolbox today. Found a note tucked inside his favorite hammer: 'For my son, who taught me more about patience than I ever taught him.' I broke down right there in the garage. Miss you every day, Dad. Here's a photo of us fishing at Lake Serene in 2018.",
-        created_at: "2025-11-09T09:15:00Z"
-      },
-      {
-        id: 3,
-        body: "Three years without my best friend Sarah. We met in kindergarten when she shared her crayons with me after mine broke. Last week, my daughter brought home a drawing and said, 'I shared my blue crayon with Emma today!' I smiled through tears. Some legacies live on in the smallest gestures. I found this photo while cleaning out old boxes - our graduation day, 2010.",
-        created_at: "2025-11-08T18:45:00Z"
-      },
-      {
-        id: 4,
-        body: "Today would have been my husband's 50th birthday. Instead of cake, I planted the apple tree sapling we bought together last spring. The garden center owner helped me pick the perfect spot where he can watch the sunset. Our dog Max sits under it every evening like he knows. Some absences carve deeper spaces in our hearts. But love remains, transformed.",
-        created_at: "2025-11-07T11:20:00Z"
-      },
-      {
-        id: 5,
-        body: "I still set a place for Grandma at Sunday dinner. The kids know it's 'Nana's spot' and sometimes tell her about their week. Last night, my six-year-old whispered, 'Do you think Nana can smell the roast chicken from heaven?' I held him close and said, 'I think she's smiling down at us right now.' Grief isn't something you get over; it's something you learn to carry with love.",
-        created_at: "2025-11-06T20:10:00Z"
-      }
-    ];
+    // Initialize Supabase client globally
+    window.supabaseClient = window.supabase.createClient(
+      'https://ccetnqdqfrsitooestbh.supabase.co',
+      'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImNjZXRucWRxZnJzaXRvb2VzdGJoIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjIzMTE4MjksImV4cCI6MjA3Nzg4NzgyOX0.1NjRZZrgsPOg-2z_r2kRELWn9IVXNEQNpSxK6CktJRY'
+    );
 
-    // Function to get aspect ratio class — now always returns empty string
     function getAspectRatioClassFast(imageUrl) {
-      return ''; // Never apply aspect ratio classes
+      return '';
     }
 
-    function setupExpandButtons() {
-      const textContainers = document.querySelectorAll('.text-container');
-      textContainers.forEach(container => {
-        const button = container.nextElementSibling;
-        if (!button || !button.classList.contains('show-more-btn')) return;
-        
-        // Check if text is truncated
-        if (container.scrollHeight > container.clientHeight + 20) {
-          button.style.display = 'block';
-          
-          button.addEventListener('click', () => {
-            container.classList.toggle('collapsed');
-            button.textContent = container.classList.contains('collapsed') ? 'Show more' : 'Show less';
-          });
-        }
-      });
-    }
-
-    function loadAllPosts() {
+    async function loadAllPosts() {
       const container = document.getElementById('all-posts-container');
-      
+      container.innerHTML = 'Loading...';
+
       try {
-        // Using mock data since Supabase connection has formatting issues
-        const data = mockPosts;
+        const { data, error } = await window.supabaseClient
+          .from('memories')
+          .select('id, body, created_at')
+          .order('created_at', { ascending: false });
+
+        if (error) throw error;
 
         if (data.length === 0) {
-          container.innerHTML = '<p class="no-posts">No memories shared yet. Be the first to share.</p>';
+          container.innerHTML = 'No memories yet.';
           return;
         }
 
         const postsHTML = data.map(post => {
-          // Simulate media extraction
-          let contentHtml = post.body;
-          let mediaHtml = '';
-          
-          // Add mock media for demonstration
-          if (post.id === 2) {
-            mediaHtml = `<div class="media-container">
-                          <img src="https://images.unsplash.com/photo-1506157786151-b8491531f063?ixlib=rb-4.0.3&auto=format&fit=crop&w=600&q=80" 
-                               alt="Father and son fishing" 
-                               class="media-item">
-                         </div>`;
-          } else if (post.id === 3) {
-            mediaHtml = `<div class="media-container">
-                          <img src="https://images.unsplash.com/photo-1529333165291-5569e98b8d57?ixlib=rb-4.0.3&auto=format&fit=crop&w=600&q=80" 
-                               alt="Two friends at graduation" 
-                               class="media-item">
-                         </div>`;
-          } else if (post.id === 4) {
-            mediaHtml = `<div class="media-container">
-                          <img src="https://images.unsplash.com/photo-1503376780320-1c85d0d68a34?ixlib=rb-4.0.3&auto=format&fit=crop&w=600&q=80" 
-                               alt="Apple tree in garden" 
-                               class="media-item">
-                         </div>`;
-          }
-          
-          // Convert newlines to paragraphs
+          const mediaMatches = [...post.body.matchAll(/!\[([^\]]*)\]\s*\(\s*([^)]+)\s*\)/g)];
+          let contentHtml = post.body.replace(/!\[([^\]]*)\]\s*\(\s*([^)]+)\s*\)/g, '');
           contentHtml = contentHtml.replace(/\n/g, '<br>');
+
+          let mediaHtml = '';
+          for (const match of mediaMatches) {
+            const alt = match[1] || 'Media';
+            const url = match[2].trim();
+            const isVideo = url.includes('.mp4') || url.includes('.webm') || url.includes('.mov');
+            
+            if (isVideo) {
+              mediaHtml += `<div class="media-container"><video controls class="media-item-video"><source src="${url}" type="video/mp4"></video></div>`;
+            } else {
+              mediaHtml += `<div class="media-container"><img src="${url}" alt="${alt}" class="media-item"></div>`;
+            }
+          }
 
           return `<div class="post-item">
                     <div class="post-content">
-                      <div class="text-container collapsed">
+                      <div class="text-container">
                         <p>${contentHtml}</p>
                       </div>
                       <button class="show-more-btn">Show more</button>
                       ${mediaHtml}
-                      <small>Shared on ${new Date(post.created_at).toLocaleDateString('en-US', { 
-                        year: 'numeric', 
-                        month: 'long', 
-                        day: 'numeric',
-                        hour: '2-digit',
-                        minute: '2-digit'
-                      })}</small>
+                      <small>${new Date(post.created_at).toLocaleString()}</small>
                     </div>
                   </div>`;
         }).join('');
 
         container.innerHTML = postsHTML;
-        
-        // Setup expand buttons after content is loaded
-        setTimeout(setupExpandButtons, 100);
+
+        // Attach event listeners to all "Show more" buttons
+        document.querySelectorAll('.show-more-btn').forEach(button => {
+          const textContainer = button.previousElementSibling;
+          button.addEventListener('click', () => {
+            textContainer.classList.toggle('expanded');
+            button.textContent = textContainer.classList.contains('expanded') ? 'Show less' : 'Show more';
+          });
+        });
+
       } catch (err) {
         console.error('Error loading posts:', err);
-        container.innerHTML = '<p class="error">Failed to load memories. Please try again later.</p>';
+        container.innerHTML = 'Failed to load memories.';
       }
     }
 
-    document.addEventListener('DOMContentLoaded', () => {
-      document.getElementById('loginButton').addEventListener('click', () => {
-        alert('Login functionality would be implemented with Supabase authentication');
-      });
-      
-      loadAllPosts();
-      
-      // Simulate periodic refresh
-      setInterval(loadAllPosts, 60000);
-    });
+    document.addEventListener('DOMContentLoaded', loadAllPosts);
   </script>
 </body>
 </html>
