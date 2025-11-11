@@ -15,7 +15,7 @@
     body {
       font-family: Arial, sans-serif;
       background-color: #f8f9fa;
-      padding: 20px;
+      padding: 2px;
       max-width: 800px;
       margin: 0 auto;
     }
@@ -46,13 +46,13 @@
     .post-item {
       background: white;
       border-radius: 8px;
-      margin-bottom: 24px;
+      margin-bottom: 25px; /* Increased space between posts */
       box-shadow: 0 1px 3px rgba(0,0,0,0.1);
       width: 100%;
       max-width: 602px;
       margin-left: auto;
       margin-right: auto;
-      padding: 16px;
+      padding: 1px;
       display: flex;
       justify-content: center;
     }
@@ -67,36 +67,30 @@
       margin: 0;
       line-height: 1.6;
       color: #374151;
-      overflow: hidden;
-      position: relative;
     }
 
-    .post-content .text-clamped {
+    /* Truncated text styling */
+    .truncated {
       display: -webkit-box;
       -webkit-line-clamp: 3;
       -webkit-box-orient: vertical;
       overflow: hidden;
+      position: relative;
     }
 
-    .show-more-btn {
+    .read-more-btn {
       background: none;
       border: none;
       color: #4f46e5;
       cursor: pointer;
-      font-size: 14px;
+      font-size: 0.9em;
+      margin-left: 4px;
       padding: 0;
       text-decoration: underline;
-      display: none;
-      margin-left: 4px;
-      vertical-align: bottom;
-    }
-
-    .show-more-btn.show {
-      display: inline-block;
     }
 
     .media-container {
-      margin: 16px 0;
+      margin: 10px 0;
       border-radius: 8px;
       position: relative;
       width: 100%;
@@ -119,7 +113,7 @@
       display: block;
       color: #718096;
       font-size: 12px;
-      margin-top: 12px;
+      margin-top: 8px;
       text-align: center;
     }
 
@@ -150,46 +144,77 @@
       return '';
     }
 
+    // Function to truncate text at 3 lines and add "Show More"
+    function createTruncatedText(text, postId) {
+      const div = document.createElement('div');
+      div.innerHTML = text;
+      div.style.lineHeight = '1.6';
+      div.style.position = 'absolute';
+      div.style.visibility = 'hidden';
+      div.style.width = '600px'; // Match max-width of post-content
+      div.style.overflow = 'hidden';
+      document.body.appendChild(div);
+
+      const lineHeight = parseFloat(window.getComputedStyle(div).lineHeight);
+      const maxHeight = lineHeight * 3;
+      
+      if (div.offsetHeight > maxHeight) {
+        // Text is longer than 3 lines
+        const words = text.split(' ');
+        let truncated = '';
+        let fullText = text;
+        
+        // Try to find the point where it exceeds 3 lines
+        for (let i = 0; i < words.length; i++) {
+          const testText = words.slice(0, i + 1).join(' ');
+          div.innerHTML = testText + '... <button class="read-more-btn" data-post-id="' + postId + '">Show More</button>';
+          
+          if (div.offsetHeight > maxHeight) {
+            truncated = words.slice(0, i).join(' ') + '...';
+            break;
+          }
+        }
+        
+        if (!truncated) {
+          // If we didn't find a truncation point, just use the full text
+          document.body.removeChild(div);
+          return fullText;
+        }
+        
+        document.body.removeChild(div);
+        return truncated + ' <button class="read-more-btn" data-post-id="' + postId + '">Show More</button>';
+      } else {
+        // Text fits in 3 lines or less
+        document.body.removeChild(div);
+        return text;
+      }
+    }
+
     async function loadAllPosts() {
       const container = document.getElementById('all-posts-container');
       container.innerHTML = 'Loading...';
 
       try {
-        // Simulate loading with mock data for demo
-        const mockData = [
-          {
-            id: 1,
-            body: "Today marks one year since I lost my beloved dog Max. He was more than a pet—he was my best friend and constant companion through the hardest times in my life. I still find myself looking for him when I come home, expecting to see his wagging tail and hear his excited barks. The house feels so empty without him, but I'm grateful for the 12 wonderful years we had together.",
-            created_at: "2025-11-10T14:30:00Z"
-          },
-          {
-            id: 2,
-            body: "I visited the beach where my grandmother and I used to collect seashells every summer. The waves sound the same, the sand feels the same, but everything feels different without her laughter echoing beside me. She taught me to find beauty in small things, and I carry that lesson with me every day.",
-            created_at: "2025-11-09T10:15:00Z"
-          },
-          {
-            id: 3,
-            body: "Short memory",
-            created_at: "2025-11-08T08:45:00Z"
-          },
-          {
-            id: 4,
-            body: "![](https://placehold.co/600x400/4f46e5/white?text=Memorial+Photo)\n\nThis was taken at Sarah's memorial service last month. The community came together in such a beautiful way to honor her life and legacy. She touched so many lives with her kindness and generosity. I miss her every single day, but seeing how many people she impacted gives me some comfort. Her smile could light up any room, and I'll never forget the way she made everyone feel seen and valued. The world is dimmer without her, but her light continues to shine through all of us who knew and loved her.",
-            created_at: "2025-11-07T16:20:00Z"
-          }
-        ];
+        const { data, error } = await window.supabaseClient
+          .from('memories')
+          .select('id, body, created_at')
+          .order('created_at', { ascending: false });
 
-        if (mockData.length === 0) {
+        if (error) throw error;
+
+        if (data.length === 0) {
           container.innerHTML = 'No memories yet.';
           return;
         }
 
-        let postsHTML = '';
-        for (const post of mockData) {
+        const postsHTML = data.map(post => {
           const mediaMatches = [...post.body.matchAll(/!\[([^\]]*)\]\s*\(\s*([^)]+)\s*\)/g)];
           let contentHtml = post.body.replace(/!\[([^\]]*)\]\s*\(\s*([^)]+)\s*\)/g, '');
           contentHtml = contentHtml.replace(/\n/g, '<br>');
 
+          // Apply truncation to text content only
+          const truncatedContent = createTruncatedText(contentHtml, post.id);
+          
           let mediaHtml = '';
           for (const match of mediaMatches) {
             const alt = match[1] || 'Media';
@@ -203,59 +228,32 @@
             }
           }
 
-          postsHTML += `<div class="post-item">
-                        <div class="post-content">
-                          <p>${contentHtml}</p>
-                          ${mediaHtml}
-                          <small>${new Date(post.created_at).toLocaleString()}</small>
-                        </div>
-                      </div>`;
-        }
+          return `<div class="post-item">
+                    <div class="post-content">
+                      <p class="truncated" id="post-${post.id}">${truncatedContent}</p>
+                      ${mediaHtml}
+                      <small>${new Date(post.created_at).toLocaleString()}</small>
+                    </div>
+                  </div>`;
+        }).join('');
 
         container.innerHTML = postsHTML;
-
-        // Apply show more functionality after DOM is rendered
-        setTimeout(() => {
-          const postItems = document.querySelectorAll('.post-item');
-          postItems.forEach((postItem, index) => {
-            const textElement = postItem.querySelector('p');
-            if (!textElement) return;
-
-            // Create a temporary div to measure original text height
-            const tempDiv = document.createElement('div');
-            tempDiv.style.position = 'absolute';
-            tempDiv.style.visibility = 'hidden';
-            tempDiv.style.whiteSpace = 'pre-wrap';
-            tempDiv.style.fontSize = window.getComputedStyle(textElement).fontSize;
-            tempDiv.style.lineHeight = window.getComputedStyle(textElement).lineHeight;
-            tempDiv.style.width = textElement.offsetWidth + 'px';
-            tempDiv.textContent = mockData[index].body.replace(/!\[([^\]]*)\]\s*\(\s*([^)]+)\s*\)/g, '').replace(/\n/g, ' ');
-            document.body.appendChild(tempDiv);
-
-            const lineHeight = parseFloat(window.getComputedStyle(textElement).lineHeight);
-            const threeLinesHeight = lineHeight * 3;
-            const actualHeight = tempDiv.offsetHeight;
-
-            document.body.removeChild(tempDiv);
-
-            // If text exceeds 3 lines, clamp and add button
-            if (actualHeight > threeLinesHeight) {
-              textElement.classList.add('text-clamped');
-
-              const showMoreBtn = document.createElement('button');
-              showMoreBtn.className = 'show-more-btn show';
-              showMoreBtn.textContent = 'show more';
-              showMoreBtn.onclick = function() {
-                textElement.classList.remove('text-clamped');
-                showMoreBtn.style.display = 'none';
-              };
-
-              // Insert button right after the text content
-              textElement.parentNode.insertBefore(showMoreBtn, textElement.nextSibling);
-            }
+        
+        // Add event listeners for "Show More" buttons
+        document.querySelectorAll('.read-more-btn').forEach(button => {
+          button.addEventListener('click', function() {
+            const postId = this.getAttribute('data-post-id');
+            const postElement = document.getElementById(`post-${postId}`);
+            
+            // Find the original full text for this post
+            const originalText = data.find(post => post.id == postId).body
+              .replace(/!\[([^\]]*)\]\s*\(\s*([^)]+)\s*\)/g, '')
+              .replace(/\n/g, '<br>');
+            
+            // Replace with full text and add "Show Less" button
+            postElement.innerHTML = originalText + ' <button class="read-more-btn" data-post-id="' + postId + '">Show Less</button>';
           });
-        }, 100);
-
+        });
       } catch (err) {
         console.error('Error loading posts:', err);
         container.innerHTML = 'Failed to load memories.';
@@ -263,6 +261,23 @@
     }
 
     document.addEventListener('DOMContentLoaded', loadAllPosts);
+    
+    // Add event delegation for "Show Less" buttons
+    document.addEventListener('click', function(e) {
+      if (e.target.classList.contains('read-more-btn') && e.target.textContent === 'Show Less') {
+        const postId = e.target.getAttribute('data-post-id');
+        const postElement = document.getElementById(`post-${postId}`);
+        
+        // Find the original truncated text for this post
+        const originalText = data.find(post => post.id == postId).body
+          .replace(/!\[([^\]]*)\]\s*\(\s*([^)]+)\s*\)/g, '')
+          .replace(/\n/g, '<br>');
+        
+        // Create truncated version again
+        const truncatedContent = createTruncatedText(originalText, postId);
+        postElement.innerHTML = truncatedContent;
+      }
+    });
   </script>
 </body>
 </html>
