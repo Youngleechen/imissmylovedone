@@ -4,7 +4,7 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Grief Support Platform - Homepage</title>
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2    "></script>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <style> 
     * {
       margin: 0;
@@ -46,7 +46,7 @@
     .post-item {
       background: white;
       border-radius: 8px;
-      margin-bottom: 10px; /* ✅ Added 10px spacing between posts */
+      margin-bottom: 10px;
       box-shadow: 0 1px 3px rgba(0,0,0,0.1);
       width: 100%;
       max-width: 602px;
@@ -107,6 +107,11 @@
       margin-top: 4px;
       text-decoration: underline;
       font-weight: 600;
+      display: none; /* Hidden by default */
+    }
+
+    .show-more-btn.visible {
+      display: inline; /* Visible when needed */
     }
 
     .media-container {
@@ -156,7 +161,7 @@
   <script>
     // Initialize Supabase client globally
     window.supabaseClient = window.supabase.createClient(
-      'https://ccetnqdqfrsitooestbh.supabase.co    ',
+      'https://ccetnqdqfrsitooestbh.supabase.co',
       'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImNjZXRucWRxZnJzaXRvb2VzdGJoIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjIzMTE4MjksImV4cCI6MjA3Nzg4NzgyOX0.1NjRZZrgsPOg-2z_r2kRELWn9IVXNEQNpSxK6CktJRY'
     );
 
@@ -204,7 +209,7 @@
                       <div class="text-container">
                         <p>${contentHtml}</p>
                       </div>
-                      <button class="show-more-btn" style="display: none;">Show more</button>
+                      <button class="show-more-btn">Show more</button>
                       ${mediaHtml}
                       <small>${new Date(post.created_at).toLocaleString()}</small>
                     </div>
@@ -213,31 +218,36 @@
 
         container.innerHTML = postsHTML;
 
-        // Check text height and show/hide 'Show more' button after rendering
+        // Process each post to determine if "Show more" button is needed
         document.querySelectorAll('.post-item').forEach(postItem => {
           const textContainer = postItem.querySelector('.text-container');
           const showMoreBtn = postItem.querySelector('.show-more-btn');
-          const pElement = textContainer.querySelector('p');
-
-          // Force layout calculation
-          textContainer.style.display = 'block';
-          const lineHeight = parseInt(window.getComputedStyle(pElement).lineHeight);
-          const containerMaxHeight = lineHeight * 3; // 3 lines height
-
-          if (pElement.scrollHeight > containerMaxHeight) {
-            showMoreBtn.style.display = 'block'; // Show button if content is taller than 3 lines
-          } else {
-            textContainer.classList.add('expanded'); // Expand if content fits in 3 lines or less
-            showMoreBtn.style.display = 'none'; // Hide button if not needed
+          
+          // Temporarily expand to measure full height
+          const originalLineClamp = textContainer.style.webkitLineClamp;
+          textContainer.style.webkitLineClamp = 'unset';
+          textContainer.style.webkitBoxOrient = 'unset';
+          textContainer.classList.add('expanded');
+          
+          const expandedHeight = textContainer.scrollHeight;
+          
+          // Reset to original state
+          textContainer.style.webkitLineClamp = originalLineClamp;
+          textContainer.style.webkitBoxOrient = 'vertical';
+          textContainer.classList.remove('expanded');
+          
+          // Calculate height with line clamp applied
+          const clampedHeight = textContainer.scrollHeight;
+          
+          // Show button only if content is truncated
+          if (expandedHeight > clampedHeight) {
+            showMoreBtn.classList.add('visible');
           }
-        });
-
-        // Attach event listeners to visible "Show more" buttons
-        document.querySelectorAll('.show-more-btn').forEach(button => {
-          const textContainer = button.previousElementSibling;
-          button.addEventListener('click', () => {
+          
+          // Add event listener for the button
+          showMoreBtn.addEventListener('click', () => {
             textContainer.classList.toggle('expanded');
-            button.textContent = textContainer.classList.contains('expanded') ? 'Show less' : 'Show more';
+            showMoreBtn.textContent = textContainer.classList.contains('expanded') ? 'Show less' : 'Show more';
           });
         });
 
