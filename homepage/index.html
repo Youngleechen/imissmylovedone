@@ -165,13 +165,6 @@
       object-position: center;
       background-color: #f3f4f6;
     }
-
-    .aspect-square { aspect-ratio: 1/1; }
-    .aspect-video { aspect-ratio: 16/9; }
-    .aspect-4-3 { aspect-ratio: 4/3; }
-    .aspect-2-1 { aspect-ratio: 2/1; }
-    .aspect-2-3 { aspect-ratio: 2/3; }
-    .aspect-16-6 { aspect-ratio: 16/6; }
   </style>
 </head>
 <body>
@@ -206,6 +199,12 @@
           return;
         }
 
+        // Format month and year (e.g., "November 2025")
+        const formatDate = (dateString) => {
+          const date = new Date(dateString);
+          return date.toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
+        };
+
         const postsHTML = data.map(post => {
           // Extract media
           const mediaMatches = [...post.body.matchAll(/!\[([^\]]*)\]\s*\(\s*([^)]+)\s*\)/g)];
@@ -215,8 +214,8 @@
           // Generate user initials for profile placeholder
           const initials = post.user_id ? post.user_id.charAt(0).toUpperCase() : 'U';
           
-          // Format date
-          const postDate = new Date(post.created_at).toLocaleString();
+          // Format date to show only month and year
+          const postDate = formatDate(post.created_at);
 
           let mediaHtml = '';
           for (const match of mediaMatches) {
