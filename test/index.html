@@ -2,132 +2,63 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
   <title>Healing Connections</title>
-  
-  <!-- Include Font Awesome for professional icons -->
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
-  
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-  <script type="module" src="https://cdn.jsdelivr.net/npm/emoji-picker-element@^1/index.js"></script>
-  <link rel="stylesheet" href="style.css" />
-  
-  <script>
-    window.supabaseClient = window.supabase.createClient(
-      'https://ccetnqdqfrsitooestbh.supabase.co',
-      'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImNjZXRucWRxZnJzaXRvb2VzdGJoIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjIzMTE4MjksImV4cCI6MjA3Nzg4NzgyOX0.1NjRZZrgsPOg-2z_r2kRELWn9IVXNEQNpSxK6CktJRY'
-    );
-  </script>
-  
   <style>
-    /* Modern dashboard layout */
+    /* === BASE STYLES (MOBILE-FIRST) === */
     * {
       margin: 0;
       padding: 0;
       box-sizing: border-box;
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
     }
 
     body {
-      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-      background: linear-gradient(135deg, #f5f7fa 0%, #e4e7f1 100%);
-      min-height: 100vh;
+      background: #f8f9fa;
       color: #2d3748;
+      padding: 0;
+      line-height: 1.6;
+      overflow-x: hidden;
     }
 
-    .dashboard-container {
-      display: flex;
-      min-height: 100vh;
+    /* Dark mode support */
+    body.dark {
+      background: #121212;
+      color: #e2e8f0;
     }
 
-    /* Sidebar styling */
-    .sidebar {
-      width: 280px;
-      background: #ffffff;
-      border-right: 1px solid #e2e8f0;
-      padding: 24px 16px;
-      display: flex;
-      flex-direction: column;
-      box-shadow: 2px 0 10px rgba(0,0,0,0.05);
-    }
-
-    .logo {
-      padding: 0 8px 24px;
-      border-bottom: 1px solid #edf2f7;
-      margin-bottom: 24px;
-    }
-
-    .logo h1 {
-      font-size: 1.5rem;
-      font-weight: 700;
-      color: #5a67d8;
-      text-align: center;
-    }
-
-    .nav-items {
-      display: flex;
-      flex-direction: column;
-      gap: 8px;
-    }
-
-    .nav-item {
-      display: flex;
-      align-items: center;
-      padding: 12px 16px;
-      border-radius: 8px;
-      cursor: pointer;
-      transition: all 0.2s;
-      color: #4a5568;
-      font-weight: 500;
-    }
-
-    .nav-item:hover {
-      background: #f7fafc;
-      color: #5a67d8;
-    }
-
-    .nav-item.active {
-      background: #ebf4ff;
-      color: #5a67d8;
-      border-left: 3px solid #5a67d8;
-    }
-
-    .nav-item i {
-      margin-right: 12px;
-      width: 20px;
-      text-align: center;
-    }
-
-    /* Main content area */
-    .main-content {
-      flex: 1;
-      padding: 24px;
-      overflow-y: auto;
-    }
-
+    /* === HEADER === */
     .header {
       display: flex;
       justify-content: space-between;
       align-items: center;
-      margin-bottom: 32px;
-      padding-bottom: 16px;
-      border-bottom: 1px solid #e2e8f0;
+      padding: 16px;
+      background: white;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+      position: sticky;
+      top: 0;
+      z-index: 100;
     }
 
-    .page-title {
-      font-size: 1.75rem;
-      font-weight: 600;
-      color: #2d3748;
+    .logo {
+      font-size: 1.2rem;
+      font-weight: 700;
+      color: #5a67d8;
+      display: flex;
+      align-items: center;
+      gap: 8px;
     }
 
     .user-menu {
       display: flex;
       align-items: center;
-      gap: 17px;
+      gap: 12px;
     }
 
     .user-avatar {
-      width: 40px;
-      height: 40px;
+      width: 44px;
+      height: 44px;
       border-radius: 50%;
       background: linear-gradient(45deg, #5a67d8, #9f7aea);
       display: flex;
@@ -135,47 +66,171 @@
       justify-content: center;
       color: white;
       font-weight: 600;
+      font-size: 1.1rem;
       cursor: pointer;
     }
 
-    .user-name {
-      font-weight: 500;
-      color: #4a5568;
-    }
-
-    /* Profile completion banner */
-    .profile-completion-banner {
-      background: linear-gradient(135deg, #fff3cd, #ffeaa7);
+    /* === PROFILE COMPLETION BANNER === */
+    .profile-banner {
+      background: #fff3cd;
       border: 1px solid #ffeaa7;
       border-radius: 12px;
-      padding: 16px;
-      margin-bottom: 24px;
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-    }
-
-    .completion-text {
-      font-size: 0.9rem;
+      margin: 0 16px 16px;
+      padding: 14px 16px;
+      font-size: 0.95rem;
       color: #856404;
+      text-align: center;
+      display: none;
     }
 
-    .complete-profile-btn {
+    .profile-banner button {
       background: #ffc107;
       color: #856404;
       border: none;
-      padding: 8px 16px;
+      padding: 6px 12px;
       border-radius: 6px;
+      font-size: 0.9rem;
+      margin-top: 8px;
       cursor: pointer;
+      font-weight: 600;
+    }
+
+    /* === MAIN CONTENT === */
+    .main {
+      padding: 16px;
+      padding-bottom: 80px; /* Leave space for bottom nav */
+    }
+
+    /* === THOUGHT BOX === */
+    .thought-box {
+      background: white;
+      border-radius: 16px;
+      padding: 16px;
+      margin-bottom: 20px;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.05);
+    }
+
+    #memory-body {
+      width: 100%;
+      min-height: 120px;
+      border: 1px solid #e2e8f0;
+      border-radius: 12px;
+      padding: 14px;
+      font-size: 1rem;
+      resize: none;
+      margin-bottom: 12px;
+      font-family: inherit;
+    }
+
+    .thought-actions {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .action-btn {
+      background: white;
+      border: 1px solid #e2e8f0;
+      border-radius: 12px;
+      padding: 10px 14px;
+      font-size: 1rem;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 6px;
       font-weight: 500;
-      transition: background 0.2s;
     }
 
-    .complete-profile-btn:hover {
-      background: #e0a800;
+    .action-btn i {
+      font-size: 1.1rem;
     }
 
-    /* Profile modal */
+    #postButton {
+      background: #5a67d8;
+      color: white;
+      border: none;
+      font-weight: 600;
+    }
+
+    /* === POSTS === */
+    .posts-section {
+      margin-bottom: 24px;
+    }
+
+    .posts-section h2 {
+      font-size: 1.3rem;
+      margin-bottom: 16px;
+      color: #2d3748;
+      font-weight: 600;
+    }
+
+    .post {
+      background: white;
+      border-radius: 16px;
+      padding: 16px;
+      margin-bottom: 16px;
+      box-shadow: 0 1px 4px rgba(0,0,0,0.03);
+    }
+
+    .post p {
+      margin-bottom: 12px;
+      font-size: 1rem;
+      line-height: 1.5;
+    }
+
+    .post-media {
+      display: flex;
+      gap: 8px;
+      overflow-x: auto;
+      padding: 8px 0;
+      scrollbar-width: none;
+    }
+
+    .post-media::-webkit-scrollbar {
+      display: none;
+    }
+
+    .post-media img,
+    .post-media video {
+      width: 140px;
+      height: 140px;
+      object-fit: cover;
+      border-radius: 12px;
+      flex-shrink: 0;
+    }
+
+    /* === BOTTOM NAV === */
+    .bottom-nav {
+      position: fixed;
+      bottom: 0;
+      left: 0;
+      width: 100%;
+      background: white;
+      display: flex;
+      justify-content: space-around;
+      padding: 12px 0;
+      box-shadow: 0 -2px 10px rgba(0,0,0,0.05);
+      z-index: 99;
+    }
+
+    .nav-item {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 4px;
+      font-size: 0.8rem;
+      color: #718096;
+    }
+
+    .nav-item.active {
+      color: #5a67d8;
+    }
+
+    .nav-item i {
+      font-size: 1.4rem;
+    }
+
+    /* === MODAL === */
     .modal {
       display: none;
       position: fixed;
@@ -183,82 +238,81 @@
       left: 0;
       width: 100%;
       height: 100%;
-      background: rgba(0,0,0,0.5);
-      z-index: 10000;
-      align-items: center;
+      background: rgba(0,0,0,0.4);
       justify-content: center;
+      align-items: center;
+      padding: 20px;
+      z-index: 1000;
     }
 
     .modal-content {
       background: white;
-      border-radius: 16px;
-      width: 90%;
-      max-width: 500px;
-      max-height: 90vh;
+      border-radius: 18px;
+      width: 100%;
+      max-width: 420px;
+      max-height: 80vh;
       overflow-y: auto;
-      box-shadow: 0 20px 40px rgba(0,0,0,0.15);
+      padding: 20px;
     }
 
     .modal-header {
-      padding: 24px 24px 16px;
-      border-bottom: 1px solid #e2e8f0;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 20px;
     }
 
     .modal-header h2 {
-      font-size: 1.5rem;
+      font-size: 1.3rem;
       font-weight: 600;
-      color: #2d3748;
     }
 
-    .modal-body {
-      padding: 24px;
+    .close-modal {
+      background: none;
+      border: none;
+      font-size: 1.5rem;
+      cursor: pointer;
+      color: #cbd5e0;
     }
 
     .form-group {
-      margin-bottom: 20px;
+      margin-bottom: 18px;
     }
 
     .form-group label {
       display: block;
       margin-bottom: 8px;
       font-weight: 500;
+      font-size: 0.95rem;
       color: #4a5568;
     }
 
     .form-control {
       width: 100%;
-      padding: 12px 16px;
+      padding: 14px;
       border: 1px solid #e2e8f0;
-      border-radius: 8px;
+      border-radius: 12px;
       font-size: 1rem;
-      transition: border 0.2s;
-    }
-
-    .form-control:focus {
-      outline: none;
-      border-color: #5a67d8;
-      box-shadow: 0 0 0 3px rgba(90, 103, 216, 0.1);
     }
 
     .modal-footer {
-      padding: 16px 24px 24px;
-      border-top: 1px solid #e2e8f0;
       display: flex;
-      justify-content: flex-end;
       gap: 12px;
+      margin-top: 24px;
     }
 
     .btn {
-      padding: 10px 20px;
-      border-radius: 8px;
+      flex: 1;
+      padding: 14px;
+      border-radius: 12px;
+      font-size: 1rem;
       font-weight: 500;
-      cursor: pointer;
-      transition: all 0.2s;
       border: none;
+      cursor: pointer;
     }
 
     .btn-secondary {
-      background: #e2e8f0;
+      background: #f7fafc;
       color: #4a5568;
     }
 
@@ -267,300 +321,216 @@
       color: white;
     }
 
-    .btn:hover {
-      opacity: 0.9;
+    /* === DARK MODE === */
+    body.dark .modal-content,
+    body.dark .thought-box,
+    body.dark .post,
+    body.dark .header,
+    body.dark .bottom-nav,
+    body.dark .form-control,
+    body.dark .profile-banner {
+      background: #1a1a1a;
+      color: #e2e8f0;
     }
 
-    /* Thought box styling */
-    .thought-box {
-      background: white;
-      border-radius: 16px;
-      padding: 24px;
-      box-shadow: 0 4px 12px rgba(0,0,0,0.05);
-      margin-bottom: 24px;
+    body.dark .modal-header h2,
+    body.dark .form-group label,
+    body.dark .posts-section h2,
+    body.dark .nav-item,
+    body.dark .profile-banner {
+      color: #e2e8f0;
     }
 
-    #memory-body {
-      width: 100%;
-      min-height: 120px;
-      border: 1px solid #e2e8f0;
-      border-radius: 8px;
-      padding: 16px;
-      font-size: 1rem;
-      resize: vertical;
-      margin-bottom: 16px;
+    body.dark .form-control {
+      border-color: #334155;
     }
 
-    .thought-actions {
-      display: flex;
-      gap: 12px;
-      margin-bottom: 16px;
-    }
-
-    .action-btn {
-      padding: 8px 16px;
-      border: 1px solid #e2e8f0;
-      border-radius: 6px;
-      background: white;
-      cursor: pointer;
-      font-size: 1rem;
-      transition: all 0.2s;
-    }
-
-    .action-btn:hover {
-      background: #f7fafc;
-      border-color: #cbd5e0;
-    }
-
-    #postButton {
-      background: #5a67d8;
-      color: white;
-      border: none;
-      font-weight: 500;
-    }
-
-    #postButton:hover {
-      background: #4c51bf;
-    }
-
-    /* Posts section */
-    .posts-section {
-      background: white;
-      border-radius: 16px;
-      padding: 24px;
-      box-shadow: 0 4px 12px rgba(0,0,0,0.05);
-    }
-
-    .posts-section h2 {
-      font-size: 1.5rem;
-      margin-bottom: 20px;
-      color: #2d3748;
+    body.dark .action-btn,
+    body.dark .post {
+      border-color: #334155;
     }
   </style>
 </head>
 <body>
-  <div class="dashboard-container">
-    <!-- Sidebar Navigation -->
-    <div class="sidebar">
-      <div class="logo">
-        <h1><i class="fas fa-heart-circle"></i> Healing Connections</h1>
+  <!-- Header -->
+  <div class="header">
+    <div class="logo">
+      <i class="fas fa-heart-circle"></i> Healing
+    </div>
+    <div class="user-menu">
+      <div class="user-avatar" id="userAvatar">U</div>
+    </div>
+  </div>
+
+  <!-- Profile Completion Banner -->
+  <div class="profile-banner" id="profileBanner">
+    Your profile helps others understand you. Tap to complete it.
+    <button id="openProfileModal">Complete Profile</button>
+  </div>
+
+  <!-- Main Content -->
+  <div class="main">
+    <!-- Thought Box -->
+    <div class="thought-box">
+      <textarea id="memory-body" placeholder="What’s on your heart today? You’re safe here…"></textarea>
+      <div class="thought-actions">
+        <button class="action-btn" id="mediaButton">
+          <i class="fas fa-camera"></i> Media
+        </button>
+        <button class="action-btn" id="emojiButton">
+          <i class="far fa-smile"></i> Emoji
+        </button>
+        <button class="action-btn" id="postButton">Post</button>
       </div>
-      <div class="nav-items">
-        <div class="nav-item active" data-page="dashboard">
-          <i class="fas fa-home"></i>
-          <span>Dashboard</span>
+      <div id="emojiPicker"></div>
+      <div id="uploadProgress" style="display:none; margin-top: 10px;">
+        <div style="height: 4px; background: #e2e8f0; border-radius: 2px; overflow: hidden;">
+          <div id="progressFill" style="height: 100%; background: #5a67d8; width: 0%; transition: width 0.3s;"></div>
         </div>
-        <div class="nav-item" data-page="community">
-          <i class="fas fa-users"></i>
-          <span>Community</span>
-        </div>
-        <div class="nav-item" data-page="memories">
-          <i class="fas fa-book"></i>
-          <span>Memories</span>
-        </div>
-        <div class="nav-item" data-page="resources">
-          <i class="fas fa-leaf"></i>
-          <span>Resources</span>
-        </div>
-        <div class="nav-item" data-page="support">
-          <i class="fas fa-hands-helping"></i>
-          <span>Support Groups</span>
-        </div>
-        <div class="nav-item" data-page="settings">
-          <i class="fas fa-cog"></i>
-          <span>Settings</span>
-        </div>
+        <span id="progressText" style="display: block; margin-top: 5px; font-size: 14px; color: #4a5568;">Uploading...</span>
       </div>
+      <div id="mediaPreviewContainer" style="margin-top: 12px; padding: 8px; background: #f9f9f9; border-radius: 8px; display: none;"></div>
     </div>
 
-    <!-- Main Content -->
-    <div class="main-content">
-      <div class="header">
-        <h1 class="page-title">Welcome Back</h1>
-        <div class="user-menu">
-          <div class="user-name" id="displayName">User</div>
-          <div class="user-avatar" id="userAvatar" title="Profile Settings">U</div>
-        </div>
-      </div>
-
-      <!-- Profile Completion Banner -->
-      <div class="profile-completion-banner" id="profileCompletionBanner" style="display: none;">
-        <div class="completion-text">
-          Complete your profile to connect with others in the community
-        </div>
-        <button class="complete-profile-btn" id="completeProfileBtn">
-          Complete Profile
-        </button>
-      </div>
-
-      <!-- Thought Box -->
-      <div class="thought-box">
-        <textarea id="memory-body" placeholder="Share your thoughts, memories, or how you're feeling today..."></textarea>
-        <div class="thought-actions">
-          <button class="action-btn" id="mediaButton" title="Add Photo/Video">
-            <i class="fas fa-camera"></i>
-          </button>
-          <button class="action-btn" id="emojiButton" title="Add Emoji">
-            <i class="far fa-smile"></i>
-          </button>
-          <button class="action-btn" id="postButton">Post</button>
-        </div>
-        <div id="emojiPicker"></div>
-        <div id="uploadProgress" style="display:none; margin-top: 10px;">
-          <div class="progress-bar" style="height: 4px; background: #e2e8f0; border-radius: 2px; overflow: hidden;">
-            <div id="progressFill" style="height: 100%; background: #5a67d8; width: 0%; transition: width 0.3s ease;"></div>
-          </div>
-          <span id="progressText" style="display: block; margin-top: 5px; font-size: 14px; color: #4a5568;">Uploading...</span>
-        </div>
-        <div id="mediaPreviewContainer" style="margin-top: 12px; padding: 8px; background: #f9f9f9; border-radius: 8px; display: none;"></div>
-      </div>
-
-      <!-- Posts Section -->
-      <div class="posts-section">
-        <h2>Your Posts</h2>
-        <div id="postsContainer"></div>
+    <!-- Posts -->
+    <div class="posts-section">
+      <h2>Your Posts</h2>
+      <div id="postsContainer">
+        <!-- Posts will load here -->
       </div>
     </div>
   </div>
 
-  <!-- Profile Completion Modal -->
+  <!-- Bottom Navigation -->
+  <div class="bottom-nav">
+    <div class="nav-item active" data-page="home">
+      <i class="fas fa-home"></i>
+      <span>Home</span>
+    </div>
+    <div class="nav-item" data-page="community">
+      <i class="fas fa-users"></i>
+      <span>Community</span>
+    </div>
+    <div class="nav-item" data-page="memories">
+      <i class="fas fa-book"></i>
+      <span>Memories</span>
+    </div>
+    <div class="nav-item" data-page="resources">
+      <i class="fas fa-leaf"></i>
+      <span>Help</span>
+    </div>
+  </div>
+
+  <!-- Profile Modal -->
   <div class="modal" id="profileModal">
     <div class="modal-content">
       <div class="modal-header">
         <h2>Complete Your Profile</h2>
+        <button class="close-modal" id="closeProfileModal">&times;</button>
       </div>
-      <div class="modal-body">
-        <div class="form-group">
-          <label for="firstName">First Name *</label>
-          <input type="text" id="firstName" class="form-control" placeholder="Enter your first name">
-        </div>
-        <div class="form-group">
-          <label for="lastName">Last Name</label>
-          <input type="text" id="lastName" class="form-control" placeholder="Enter your last name">
-        </div>
-        <div class="form-group">
-          <label for="preferredName">Preferred Name</label>
-          <input type="text" id="preferredName" class="form-control" placeholder="How would you like to be addressed?">
-        </div>
-        <div class="form-group">
-          <label for="about">About You</label>
-          <textarea id="about" class="form-control" rows="3" placeholder="Share a bit about yourself..."></textarea>
-        </div>
+      <div class="form-group">
+        <label for="firstName">Your First Name *</label>
+        <input type="text" id="firstName" class="form-control" placeholder="How would you like to be called?" autofocus>
+      </div>
+      <div class="form-group">
+        <label for="preferredName">Preferred Name (optional)</label>
+        <input type="text" id="preferredName" class="form-control" placeholder="e.g., Dave, or just 'D'">
+      </div>
+      <div class="form-group">
+        <label for="about">About You (optional)</label>
+        <textarea id="about" class="form-control" rows="3" placeholder="You don’t have to share anything you’re not ready for…"></textarea>
       </div>
       <div class="modal-footer">
         <button class="btn btn-secondary" id="cancelProfileBtn">Cancel</button>
-        <button class="btn btn-primary" id="saveProfileBtn">Save Profile</button>
+        <button class="btn btn-primary" id="saveProfileBtn">Save & Continue</button>
       </div>
     </div>
   </div>
 
+  <!-- Media Input -->
   <input type="file" id="mediaInput" accept="image/*,video/*" style="display:none;" multiple />
 
-  <!-- Edit Modal -->
-  <div id="editModal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 9999; padding: 20px; overflow-y: auto;">
-    <div style="background: white; padding: 20px; border-radius: 8px; max-width: 600px; margin: 50px auto; box-shadow: 0 4px 12px rgba(0,0,0,0.1);">
-      <h3>Edit Post</h3>
-      <button id="closeEditModal" style="position: absolute; top: 10px; right: 10px; background: #e53e3e; color: white; border: none; padding: 5px 10px; border-radius: 4px; cursor: pointer;">×</button>
-      <textarea id="editBody" style="width: 100%; min-height: 100px; padding: 10px; border: 1px solid #ccc; border-radius: 4px; margin: 10px 0;"></textarea>
-      <div style="margin: 10px 0;">
-        <label>Existing Media:</label>
-        <div id="editMediaContainer" style="display: flex; flex-wrap: wrap; gap: 10px; margin: 10px 0;"></div>
-        <button id="addMoreMediaButton" style="background: #4299e1; color: white; border: none; padding: 5px 10px; border-radius: 4px; cursor: pointer; font-size: 12px;">Add More Media</button>
-        <input type="file" id="addMoreMediaInput" multiple accept="image/*,video/*" style="display: none;" />
-      </div>
-      <div id="editUploadProgress" style="display: none; margin: 10px 0;">
-        <div style="width: 100%; background: #eee; border-radius: 4px; overflow: hidden;">
-          <div id="editProgressFill" style="height: 10px; background: #4299e1; width: 0%; transition: width 0.3s;"></div>
-        </div>
-        <div id="editProgressText" style="margin-top: 5px; font-size: 12px;">Uploading...</div>
-      </div>
-      <div style="display: flex; justify-content: space-between; margin-top: 20px;">
-        <button id="deleteEditButton" style="background: #e53e3e; color: white; border: none; padding: 8px 16px; border-radius: 4px; cursor: pointer; font-size: 14px;">Delete Post</button>
-        <button id="saveEditButton" style="background: #4299e1; color: white; border: none; padding: 8px 16px; border-radius: 4px; cursor: pointer; font-size: 14px;">Save Changes</button>
-      </div>
-    </div>
-  </div>
-
-  <script type="module" src="media.js"></script>
-  <script type="module" src="script.js"></script>
+  <!-- Supabase & Emoji Picker -->
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script type="module" src="https://cdn.jsdelivr.net/npm/emoji-picker-element@^1/index.js"></script>
 
   <script>
-    // Profile management functionality
-    document.addEventListener('DOMContentLoaded', function() {
-      const profileModal = document.getElementById('profileModal');
-      const completeProfileBtn = document.getElementById('completeProfileBtn');
-      const userAvatar = document.getElementById('userAvatar');
-      const profileCompletionBanner = document.getElementById('profileCompletionBanner');
-      const cancelProfileBtn = document.getElementById('cancelProfileBtn');
-      const saveProfileBtn = document.getElementById('saveProfileBtn');
-      const displayName = document.getElementById('displayName');
+    // Initialize Supabase
+    window.supabaseClient = window.supabase.createClient(
+      'https://ccetnqdqfrsitooestbh.supabase.co',
+      'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImNjZXRucWRxZnJzaXRvb2VzdGJoIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjIzMTE4MjksImV4cCI6MjA3Nzg4NzgyOX0.1NjRZZrgsPOg-2z_r2kRELWn9IVXNEQNpSxK6CktJRY'
+    );
 
-      // Check if user has completed profile (mock check - implement with Supabase)
-      function checkProfileCompletion() {
-        // In real implementation, check Supabase user data
-        const hasProfile = localStorage.getItem('profileComplete') === 'true';
-        
-        if (!hasProfile) {
-          profileCompletionBanner.style.display = 'flex';
-        } else {
-          // Get saved name from localStorage
-          const savedName = localStorage.getItem('userFirstName') || 'User';
-          displayName.textContent = savedName;
-          userAvatar.textContent = savedName.charAt(0).toUpperCase();
-        }
+    // DOM Elements
+    const userAvatar = document.getElementById('userAvatar');
+    const profileBanner = document.getElementById('profileBanner');
+    const profileModal = document.getElementById('profileModal');
+    const closeProfileModal = document.getElementById('closeProfileModal');
+    const cancelProfileBtn = document.getElementById('cancelProfileBtn');
+    const saveProfileBtn = document.getElementById('saveProfileBtn');
+    const firstNameInput = document.getElementById('firstName');
+    const preferredNameInput = document.getElementById('preferredName');
+    const aboutInput = document.getElementById('about');
+
+    // Check profile status on load
+    document.addEventListener('DOMContentLoaded', () => {
+      const savedName = localStorage.getItem('userFirstName');
+      const profileComplete = localStorage.getItem('profileComplete') === 'true';
+
+      if (savedName) {
+        userAvatar.textContent = savedName.charAt(0).toUpperCase();
       }
 
-      // Open profile modal
-      completeProfileBtn.addEventListener('click', function() {
-        profileModal.style.display = 'flex';
-      });
+      if (!profileComplete) {
+        profileBanner.style.display = 'block';
+      }
 
-      userAvatar.addEventListener('click', function() {
+      // Open modal on banner click
+      document.getElementById('openProfileModal').addEventListener('click', () => {
         profileModal.style.display = 'flex';
       });
 
       // Close modal
-      cancelProfileBtn.addEventListener('click', function() {
-        profileModal.style.display = 'none';
-      });
+      closeProfileModal.addEventListener('click', () => profileModal.style.display = 'none');
+      cancelProfileBtn.addEventListener('click', () => profileModal.style.display = 'none');
 
       // Save profile
-      saveProfileBtn.addEventListener('click', function() {
-        const firstName = document.getElementById('firstName').value.trim();
-        
-        if (firstName) {
-          // Save to localStorage (implement with Supabase in real version)
-          localStorage.setItem('userFirstName', firstName);
-          localStorage.setItem('profileComplete', 'true');
-          
-          displayName.textContent = firstName;
-          userAvatar.textContent = firstName.charAt(0).toUpperCase();
-          
-          profileModal.style.display = 'none';
-          profileCompletionBanner.style.display = 'none';
-          
-          // Show success message
-          alert('Profile updated successfully!');
-        } else {
-          alert('Please enter at least your first name');
+      saveProfileBtn.addEventListener('click', () => {
+        const name = firstNameInput.value.trim();
+        if (!name) {
+          alert('Please enter your first name to continue.');
+          return;
         }
+
+        localStorage.setItem('userFirstName', name);
+        localStorage.setItem('profileComplete', 'true');
+        userAvatar.textContent = name.charAt(0).toUpperCase();
+        profileBanner.style.display = 'none';
+        profileModal.style.display = 'none';
+        alert('Thank you, Dave. Your profile is ready.');
       });
 
-      // Navigation
+      // Bottom Nav
       document.querySelectorAll('.nav-item').forEach(item => {
-        item.addEventListener('click', function() {
+        item.addEventListener('click', () => {
           document.querySelectorAll('.nav-item').forEach(i => i.classList.remove('active'));
-          this.classList.add('active');
-          
-          // In real implementation, load different content based on selection
-          const page = this.getAttribute('data-page');
-          console.log(`Navigating to ${page}`);
+          item.classList.add('active');
+          const page = item.getAttribute('data-page');
+          console.log(`Navigating to ${page}`); // Replace with actual page load logic
         });
       });
 
-      // Initialize
-      checkProfileCompletion();
+      // Dark mode toggle (optional, for eye sensitivity)
+      document.addEventListener('keydown', (e) => {
+        if (e.ctrlKey && e.key === 'd') {
+          document.body.classList.toggle('dark');
+        }
+      });
     });
   </script>
+
+  <!-- Load your media and script modules -->
+  <script type="module" src="media.js"></script>
+  <script type="module" src="script.js"></script>
 </body>
 </html>
