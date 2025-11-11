@@ -17,33 +17,35 @@
     .posts-section h2 { 
       margin-bottom: 15px; 
     }
-    .post-item { 
-      background: white; 
-      border-radius: 8px; 
-      margin-bottom: 15px; 
-      box-shadow: 0 1px 3px rgba(0,0,0,0.1); 
+    .post-item {
+      background: white;
+      border-radius: 8px;
+      margin-bottom: 15px;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+      padding: 0; /* Remove padding from outer container */
     }
-    .post-content {
-      padding: 15px;
-      max-width: 600px; /* Match image max-width */
-      margin: 0 auto;
+    .post-content-wrapper {
+      max-width: 602px; /* Slightly wider than image to accommodate borders/spacing */
+      margin: 0 auto; /* Center the entire post */
+      padding: 15px; /* Add padding inside the wrapper */
     }
-    .post-content p { 
-      margin: 0; 
-      line-height: 1.6; 
+    .post-content-wrapper p {
+      margin: 0;
+      line-height: 1.6;
     }
-    .post-content small { 
-      display: block; 
-      color: #718096; 
-      font-size: 12px; 
-      margin-top: 8px; 
+    .post-content-wrapper small {
+      display: block;
+      color: #718096;
+      font-size: 12px;
+      margin-top: 8px;
+      text-align: center; /* Center the date under the image */
     }
     .media-container {
-      margin: 10px auto; /* Center the container */
+      margin: 10px auto; /* Center the media container */
       border-radius: 8px;
       position: relative;
       width: 100%;
-      max-width: 600px; /* Same max-width as content */
+      max-width: 600px; /* Image max width */
     }
     .media-item {
       width: 100%;
@@ -123,12 +125,8 @@
             }
           }
 
-          // If there are images, apply the same width constraint to content
-          const hasMedia = mediaMatches.length > 0;
-          const contentClass = hasMedia ? 'post-content' : 'post-content';
-          
           return `<div class="post-item">
-                    <div class="${contentClass}">
+                    <div class="post-content-wrapper">
                       <p>${contentHtml}</p>
                       ${mediaHtml}
                       <small>${new Date(post.created_at).toLocaleString()}</small>
