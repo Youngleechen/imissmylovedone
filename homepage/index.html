@@ -36,22 +36,26 @@
     }
     .media-container {
       margin: 10px 0;
-      overflow: hidden;
       border-radius: 8px;
       position: relative;
+      width: 100%;
     }
     .media-item {
       width: 100%;
       display: block;
-      max-height: 500px;
-      object-fit: cover;
-      object-position: center;
+      object-fit: contain;
     }
     .media-item-video {
       width: 100%;
       display: block;
-      max-height: 500px;
     }
+    /* Specific aspect ratio classes */
+    .aspect-square { aspect-ratio: 1/1; }
+    .aspect-video { aspect-ratio: 16/9; }
+    .aspect-4-3 { aspect-ratio: 4/3; }
+    .aspect-2-1 { aspect-ratio: 2/1; }
+    .aspect-2-3 { aspect-ratio: 2/3; }
+    .aspect-16-6 { aspect-ratio: 16/6; }
   </style>
 </head>
 <body>
@@ -71,6 +75,34 @@
       'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImNjZXRucWRxZnJzaXRvb2VzdGJoIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjIzMTE4MjksImV4cCI6MjA3Nzg4NzgyOX0.1NjRZZrgsPOg-2z_r2kRELWn9IVXNEQNpSxK6CktJRY'
     );
 
+    // Function to determine aspect ratio class based on image dimensions
+    function getAspectRatioClass(imageUrl) {
+      return new Promise((resolve) => {
+        const img = new Image();
+        img.onload = function() {
+          const ratio = this.width / this.height;
+          // Determine the closest aspect ratio
+          if (Math.abs(ratio - 1) < 0.1) resolve('aspect-square'); // 1:1
+          else if (Math.abs(ratio - 4/3) < 0.1) resolve('aspect-4-3'); // 4:3
+          else if (Math.abs(ratio - 16/9) < 0.1) resolve('aspect-video'); // 16:9
+          else if (Math.abs(ratio - 2) < 0.1) resolve('aspect-2-1'); // 2:1
+          else if (Math.abs(ratio - 2/3) < 0.1) resolve('aspect-2-3'); // 2:3
+          else if (Math.abs(ratio - 16/6) < 0.1) resolve('aspect-16-6'); // 16:6
+          else resolve(''); // Default to no specific aspect ratio
+        };
+        img.onerror = () => resolve(''); // Resolve with no class if image fails to load
+        img.src = imageUrl;
+      });
+    }
+
+    // Function to get aspect ratio class without preloading (for faster loading)
+    function getAspectRatioClassFast(imageUrl) {
+      // For common aspect ratios, we can try to determine from common sizes
+      // This is a simplified version that doesn't require image preloading
+      // You could also store aspect ratio info in your database
+      return 'aspect-video'; // Default fallback
+    }
+
     async function loadAllPosts() {
       const container = document.getElementById('all-posts-container');
       container.innerHTML = 'Loading...';
@@ -88,13 +120,13 @@
           return;
         }
 
-        const postsHTML = data.map(post => {
+        const postPromises = data.map(async post => {
           const mediaMatches = [...post.body.matchAll(/!\[([^\]]*)\]\s*\(\s*([^)]+)\s*\)/g)];
           let contentHtml = post.body.replace(/!\[([^\]]*)\]\s*\(\s*([^)]+)\s*\)/g, '');
           contentHtml = contentHtml.replace(/\n/g, '<br>');
 
           let mediaHtml = '';
-          mediaMatches.forEach(match => {
+          for (const match of mediaMatches) {
             const alt = match[1] || 'Media';
             const url = match[2].trim();
             const isVideo = url.includes('.mp4') || url.includes('.webm') || url.includes('.mov');
@@ -102,12 +134,17 @@
             if (isVideo) {
               mediaHtml += `<div class="media-container"><video controls class="media-item-video"><source src="${url}" type="video/mp4"></video></div>`;
             } else {
-              mediaHtml += `<div class="media-container"><img src="${url}" alt="${alt}" class="media-item"></div>`;
+              // For images, we'll use a default aspect ratio class
+              // In a real implementation, you might want to store dimensions in your database
+              const aspectClass = getAspectRatioClassFast(url);
+              mediaHtml += `<div class="media-container ${aspectClass}"><img src="${url}" alt="${alt}" class="media-item"></div>`;
             }
-          });
+          }
 
           return `<div class="post-item"><p>${contentHtml}</p>${mediaHtml}<small>${new Date(post.created_at).toLocaleString()}</small></div>`;
-        }).join('');
+        });
+
+        const postsHTML = (await Promise.all(postPromises)).join('');
 
         container.innerHTML = postsHTML;
       } catch (err) {
