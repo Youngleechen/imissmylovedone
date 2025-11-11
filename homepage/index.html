@@ -18,32 +18,41 @@
       margin-bottom: 15px; 
     }
 
-    /* ✅ CORRECT STRUCTURE: Each post is a centered block, one per line */
+    /* Post item: full width, but content centered */
     .post-item {
       background: white;
       border-radius: 8px;
       margin-bottom: 15px;
       box-shadow: 0 1px 3px rgba(0,0,0,0.1);
-      width: 100%; /* Full width on mobile */
-      max-width: 602px; /* Max width on desktop — this is the key */
-      margin-left: auto; /* Center horizontally */
-      margin-right: auto; /* Center horizontally */
-      padding: 15px; /* Padding inside the post */
-      text-align: center; /* Center text and date */
+      width: 100%;
+      max-width: 602px;
+      margin-left: auto;
+      margin-right: auto;
+      padding: 15px;
+      display: flex;
+      justify-content: center;
     }
 
-    .post-item p {
+    /* Inner container to hold text + image */
+    .post-content {
+      width: 100%;
+      max-width: 600px;
+      text-align: left; /* Text starts at left edge of image */
+    }
+
+    .post-content p {
       margin: 0;
       line-height: 1.6;
-      text-align: left; /* Keep text left-aligned inside the centered container */
     }
 
     .media-container {
-      margin: 10px auto; /* Center the image/video */
+      margin: 10px 0;
       border-radius: 8px;
       position: relative;
       width: 100%;
-      max-width: 600px; /* Image won't exceed this */
+      max-width: 600px;
+      margin-left: auto;
+      margin-right: auto;
     }
 
     .media-item,
@@ -54,11 +63,12 @@
       max-height: 400px;
     }
 
-    .post-item small {
+    .post-content small {
       display: block;
       color: #718096;
       font-size: 12px;
       margin-top: 8px;
+      text-align: center; /* Date centered under image */
     }
 
     /* Aspect ratios */
@@ -128,9 +138,11 @@
           }
 
           return `<div class="post-item">
-                    <p>${contentHtml}</p>
-                    ${mediaHtml}
-                    <small>${new Date(post.created_at).toLocaleString()}</small>
+                    <div class="post-content">
+                      <p>${contentHtml}</p>
+                      ${mediaHtml}
+                      <small>${new Date(post.created_at).toLocaleString()}</small>
+                    </div>
                   </div>`;
         }).join('');
 
