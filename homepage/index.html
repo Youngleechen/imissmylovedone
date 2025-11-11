@@ -205,14 +205,27 @@
           return date.toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
         };
 
-        const postsHTML = data.map(post => {
+        // List of generic names to simulate different users
+        const genericNames = [
+          'Sarah Johnson', 'Michael Chen', 'Emma Rodriguez', 'David Kim',
+          'Lisa Thompson', 'James Wilson', 'Maria Garcia', 'Robert Taylor',
+          'Jennifer Lee', 'William Brown', 'Amanda Davis', 'Christopher Miller',
+          'Michelle Jackson', 'Daniel Smith', 'Ashley White', 'Matthew Anderson',
+          'Stephanie Martinez', 'Joshua Thomas', 'Nicole Hernandez', 'Ryan Moore'
+        ];
+
+        const postsHTML = data.map((post, index) => {
+          // Use a generic name based on the post index
+          const authorName = genericNames[index % genericNames.length];
+          
           // Extract media
           const mediaMatches = [...post.body.matchAll(/!\[([^\]]*)\]\s*\(\s*([^)]+)\s*\)/g)];
           let contentHtml = post.body.replace(/!\[([^\]]*)\]\s*\(\s*([^)]+)\s*\)/g, '');
           contentHtml = contentHtml.replace(/\n/g, '<br>');
 
-          // Generate user initials for profile placeholder
-          const initials = post.user_id ? post.user_id.charAt(0).toUpperCase() : 'U';
+          // Generate user initials from the generic name
+          const nameParts = authorName.split(' ');
+          const initials = nameParts.map(part => part[0]).join('').toUpperCase();
           
           // Format date to show only month and year
           const postDate = formatDate(post.created_at);
@@ -234,7 +247,7 @@
                     <div class="post-header">
                       <div class="profile-image">${initials}</div>
                       <div class="profile-info">
-                        <div class="username">${post.user_id || 'Anonymous'}</div>
+                        <div class="username">${authorName}</div>
                         <div class="post-date">${postDate}</div>
                       </div>
                     </div>
