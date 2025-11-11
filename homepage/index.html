@@ -46,15 +46,13 @@
     .post-item {
       background: white;
       border-radius: 8px;
-      margin-bottom: 20px; /* 💡 Added space between posts */
+      margin-bottom: 24px; /* 👈 more space between posts */
       box-shadow: 0 1px 3px rgba(0,0,0,0.1);
       width: 100%;
       max-width: 602px;
       margin-left: auto;
       margin-right: auto;
-      padding: 12px;
-      display: flex;
-      justify-content: center;
+      padding: 16px;
     }
 
     .post-content {
@@ -63,6 +61,7 @@
       text-align: left;
     }
 
+    /* Truncated text style */
     .post-text {
       line-height: 1.6;
       color: #374151;
@@ -70,7 +69,7 @@
     }
 
     .post-text.collapsed {
-      max-height: 4.8em; /* ~3 lines with line-height 1.6 */
+      max-height: 4.8em; /* 3 lines × 1.6 line-height */
       position: relative;
     }
 
@@ -81,7 +80,7 @@
       left: 0;
       right: 0;
       height: 1.6em;
-      background: linear-gradient(to top, rgba(255,255,255,1) 40%, rgba(255,255,255,0));
+      background: linear-gradient(to top, #ffffff 40%, transparent);
     }
 
     .show-more-btn {
@@ -90,20 +89,17 @@
       color: #4f46e5;
       cursor: pointer;
       font-size: 14px;
-      margin-top: 6px;
-      padding: 0;
-      text-align: left;
+      padding: 4px 0;
+      margin: 4px 0;
+      font-weight: 600;
     }
 
     .media-container {
-      margin: 10px 0;
+      margin: 12px 0;
       border-radius: 8px;
-      position: relative;
+      overflow: hidden;
       width: 100%;
       max-width: 600px;
-      margin-left: auto;
-      margin-right: auto;
-      overflow: hidden;
     }
 
     .media-item,
@@ -111,25 +107,16 @@
       width: 100%;
       display: block;
       object-fit: contain;
-      object-position: center;
       background-color: #f3f4f6;
     }
 
-    .post-content small {
+    .post-timestamp {
       display: block;
       color: #718096;
       font-size: 12px;
-      margin-top: 8px;
+      margin-top: 12px;
       text-align: center;
     }
-
-    /* Aspect ratio classes (not used, but kept for reference) */
-    .aspect-square { aspect-ratio: 1/1; }
-    .aspect-video { aspect-ratio: 16/9; }
-    .aspect-4-3 { aspect-ratio: 4/3; }
-    .aspect-2-1 { aspect-ratio: 2/1; }
-    .aspect-2-3 { aspect-ratio: 2/3; }
-    .aspect-16-6 { aspect-ratio: 16/6; }
   </style>
 </head>
 <body>
@@ -141,25 +128,18 @@
   </div>
 
   <script>
-    // Initialize Supabase client
     const supabase = window.supabase.createClient(
       'https://ccetnqdqfrsitooestbh.supabase.co',
       'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImNjZXRucWRxZnJzaXRvb2VzdGJoIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjIzMTE4MjksImV4cCI6MjA3Nzg4NzgyOX0.1NjRZZrgsPOg-2z_r2kRELWn9IVXNEQNpSxK6CktJRY'
     );
 
-    function getAspectRatioClassFast() {
-      return '';
-    }
-
     function addShowMoreLogic(postElement, textElement) {
-      // Temporarily un-collapsed to measure real height
+      // Temporarily expand to measure
       textElement.classList.remove('collapsed');
-      const fullHeight = textElement.scrollHeight;
+      const isLong = textElement.scrollHeight > 77; // ~4.8em in px
       textElement.classList.add('collapsed');
 
-      if (fullHeight <= 77) { // ~4.8em ≈ 77px at 16px base
-        return; // No need for "Show more"
-      }
+      if (!isLong) return;
 
       const btn = document.createElement('button');
       btn.className = 'show-more-btn';
@@ -174,7 +154,8 @@
         }
       };
 
-      postElement.querySelector('.post-content').appendChild(btn);
+      // Insert button right after .post-text
+      textElement.parentNode.insertBefore(btn, textElement.nextSibling);
     }
 
     async function loadAllPosts() {
@@ -188,46 +169,51 @@
           .order('created_at', { ascending: false });
 
         if (error) throw error;
-
         if (data.length === 0) {
           container.innerHTML = 'No memories yet.';
           return;
         }
 
         const postsHTML = data.map(post => {
+          // Extract all media
           const mediaMatches = [...post.body.matchAll(/!\[([^\]]*)\]\s*\(\s*([^)]+)\s*\)/g)];
-          let contentHtml = post.body.replace(/!\[([^\]]*)\]\s*\(\s*([^)]+)\s*\)/g, '');
-          contentHtml = contentHtml.replace(/\n/g, '<br>');
+          let contentHtml = post.body.replace(/!\[([^\]]*)\]\s*\(\s*([^)]+)\s*\)/g, '').trim();
+          contentHtml = contentHtml.replace(/\n/g, '<br>') || '<br>'; // preserve spacing
 
           let mediaHtml = '';
-          for (const match of mediaMatches) {
-            const alt = match[1] || 'Media';
-            const url = match[2].trim();
-            const isVideo = /\.(mp4|webm|mov)$/i.test(url);
-            if (isVideo) {
-              mediaHtml += `<div class="media-container"><video controls class="media-item-video"><source src="${url}" type="video/mp4">Your browser does not support the video tag.</video></div>`;
+          for (const [_, alt, url] of mediaMatches) {
+            const cleanUrl = url.trim();
+            if (/\.(mp4|webm|mov)$/i.test(cleanUrl)) {
+              mediaHtml += `
+                <div class="media-container">
+                  <video controls class="media-item-video">
+                    <source src="${cleanUrl}" type="video/mp4">
+                    Your browser does not support the video tag.
+                  </video>
+                </div>`;
             } else {
-              mediaHtml += `<div class="media-container"><img src="${url}" alt="${alt}" class="media-item"></div>`;
+              mediaHtml += `
+                <div class="media-container">
+                  <img src="${cleanUrl}" alt="${alt || 'Media'}" class="media-item">
+                </div>`;
             }
           }
 
-          return `<div class="post-item">
-                    <div class="post-content">
-                      <div class="post-text collapsed">${contentHtml}</div>
-                      ${mediaHtml}
-                      <small>${new Date(post.created_at).toLocaleString()}</small>
-                    </div>
-                  </div>`;
+          return `
+            <div class="post-item">
+              <div class="post-content">
+                <div class="post-text collapsed">${contentHtml}</div>
+                ${mediaHtml}
+                <small class="post-timestamp">${new Date(post.created_at).toLocaleString()}</small>
+              </div>
+            </div>`;
         }).join('');
 
         container.innerHTML = postsHTML;
 
-        // Now attach "Show more" logic after DOM is ready
-        document.querySelectorAll('.post-item').forEach((item, index) => {
-          const textEl = item.querySelector('.post-text');
-          if (textEl) {
-            addShowMoreLogic(item, textEl);
-          }
+        // Apply "Show more" logic
+        document.querySelectorAll('.post-text').forEach(textEl => {
+          addShowMoreLogic(textEl.closest('.post-item'), textEl);
         });
 
       } catch (err) {
