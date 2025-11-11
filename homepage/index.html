@@ -19,40 +19,42 @@
     }
     .post-item { 
       background: white; 
-      padding: 15px; 
       border-radius: 8px; 
       margin-bottom: 15px; 
       box-shadow: 0 1px 3px rgba(0,0,0,0.1); 
     }
-    .post-item p { 
+    .post-content {
+      padding: 15px;
+      max-width: 600px; /* Match image max-width */
+      margin: 0 auto;
+    }
+    .post-content p { 
       margin: 0; 
       line-height: 1.6; 
     }
-    .post-item small { 
+    .post-content small { 
       display: block; 
       color: #718096; 
       font-size: 12px; 
       margin-top: 8px; 
     }
     .media-container {
-      margin: 10px 0;
+      margin: 10px auto; /* Center the container */
       border-radius: 8px;
       position: relative;
       width: 100%;
-      max-width: 600px; /* Limit the width to prevent full page coverage */
-      margin-left: auto;
-      margin-right: auto;
+      max-width: 600px; /* Same max-width as content */
     }
     .media-item {
       width: 100%;
       display: block;
       object-fit: contain;
-      max-height: 400px; /* Limit the height */
+      max-height: 400px;
     }
     .media-item-video {
       width: 100%;
       display: block;
-      max-height: 400px; /* Limit the height */
+      max-height: 400px;
     }
     /* Specific aspect ratio classes */
     .aspect-square { aspect-ratio: 1/1; }
@@ -116,13 +118,22 @@
             if (isVideo) {
               mediaHtml += `<div class="media-container"><video controls class="media-item-video"><source src="${url}" type="video/mp4"></video></div>`;
             } else {
-              // For images, we'll use a default aspect ratio class
               const aspectClass = getAspectRatioClassFast(url);
               mediaHtml += `<div class="media-container ${aspectClass}"><img src="${url}" alt="${alt}" class="media-item"></div>`;
             }
           }
 
-          return `<div class="post-item"><p>${contentHtml}</p>${mediaHtml}<small>${new Date(post.created_at).toLocaleString()}</small></div>`;
+          // If there are images, apply the same width constraint to content
+          const hasMedia = mediaMatches.length > 0;
+          const contentClass = hasMedia ? 'post-content' : 'post-content';
+          
+          return `<div class="post-item">
+                    <div class="${contentClass}">
+                      <p>${contentHtml}</p>
+                      ${mediaHtml}
+                      <small>${new Date(post.created_at).toLocaleString()}</small>
+                    </div>
+                  </div>`;
         });
 
         const postsHTML = (await Promise.all(postPromises)).join('');
