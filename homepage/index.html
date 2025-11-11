@@ -162,7 +162,6 @@
         // Text is longer than 3 lines
         const words = text.split(' ');
         let truncated = '';
-        let fullText = text;
         
         // Try to find the point where it exceeds 3 lines
         for (let i = 0; i < words.length; i++) {
@@ -178,11 +177,11 @@
         if (!truncated) {
           // If we didn't find a truncation point, just use the full text
           document.body.removeChild(div);
-          return fullText;
+          return text;
         }
         
         document.body.removeChild(div);
-        return truncated + ' <button class="read-more-btn" data-post-id="' + postId + '">Show More</button>';
+        return truncated + ' <button class="read-more-btn" data-post-id="' + postId + '" data-full-text="' + encodeURIComponent(text) + '">Show More</button>';
       } else {
         // Text fits in 3 lines or less
         document.body.removeChild(div);
@@ -212,8 +211,11 @@
           let contentHtml = post.body.replace(/!\[([^\]]*)\]\s*\(\s*([^)]+)\s*\)/g, '');
           contentHtml = contentHtml.replace(/\n/g, '<br>');
 
+          // Store the original full text for later use
+          const originalText = contentHtml;
+          
           // Apply truncation to text content only
-          const truncatedContent = createTruncatedText(contentHtml, post.id);
+          const truncatedContent = createTruncatedText(originalText, post.id);
           
           let mediaHtml = '';
           for (const match of mediaMatches) {
@@ -238,22 +240,6 @@
         }).join('');
 
         container.innerHTML = postsHTML;
-        
-        // Add event listeners for "Show More" buttons
-        document.querySelectorAll('.read-more-btn').forEach(button => {
-          button.addEventListener('click', function() {
-            const postId = this.getAttribute('data-post-id');
-            const postElement = document.getElementById(`post-${postId}`);
-            
-            // Find the original full text for this post
-            const originalText = data.find(post => post.id == postId).body
-              .replace(/!\[([^\]]*)\]\s*\(\s*([^)]+)\s*\)/g, '')
-              .replace(/\n/g, '<br>');
-            
-            // Replace with full text and add "Show Less" button
-            postElement.innerHTML = originalText + ' <button class="read-more-btn" data-post-id="' + postId + '">Show Less</button>';
-          });
-        });
       } catch (err) {
         console.error('Error loading posts:', err);
         container.innerHTML = 'Failed to load memories.';
@@ -262,20 +248,22 @@
 
     document.addEventListener('DOMContentLoaded', loadAllPosts);
     
-    // Add event delegation for "Show Less" buttons
+    // Add event delegation for "Show More" and "Show Less" buttons
     document.addEventListener('click', function(e) {
-      if (e.target.classList.contains('read-more-btn') && e.target.textContent === 'Show Less') {
+      if (e.target.classList.contains('read-more-btn')) {
         const postId = e.target.getAttribute('data-post-id');
         const postElement = document.getElementById(`post-${postId}`);
+        const fullText = e.target.getAttribute('data-full-text');
         
-        // Find the original truncated text for this post
-        const originalText = data.find(post => post.id == postId).body
-          .replace(/!\[([^\]]*)\]\s*\(\s*([^)]+)\s*\)/g, '')
-          .replace(/\n/g, '<br>');
-        
-        // Create truncated version again
-        const truncatedContent = createTruncatedText(originalText, postId);
-        postElement.innerHTML = truncatedContent;
+        if (e.target.textContent === 'Show More') {
+          // Show full text with "Show Less" button
+          postElement.innerHTML = decodeURIComponent(fullText) + ' <button class="read-more-btn" data-post-id="' + postId + '">Show Less</button>';
+        } else if (e.target.textContent === 'Show Less') {
+          // Restore truncated text with "Show More" button
+          const originalText = decodeURIComponent(fullText);
+          const truncatedContent = createTruncatedText(originalText, postId);
+          postElement.innerHTML = truncatedContent;
+        }
       }
     });
   </script>
