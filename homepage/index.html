@@ -182,6 +182,11 @@
       'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImNjZXRucWRxZnJzaXRvb2VzdGJoIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjIzMTE4MjksImV4cCI6MjA3Nzg4NzgyOX0.1NjRZZrgsPOg-2z_r2kRELWn9IVXNEQNpSxK6CktJRY'
     );
 
+    // Add event listener for login button
+    document.getElementById('loginButton').addEventListener('click', function () {
+      window.location.href = '/login/';
+    });
+
     async function loadAllPosts() {
       const container = document.getElementById('all-posts-container');
       container.innerHTML = 'Loading...';
