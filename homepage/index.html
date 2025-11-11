@@ -4,9 +4,32 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Grief Support Platform - Homepage</title>
-  <link rel="stylesheet" href="/homepage/style.css" />
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: Arial, sans-serif;
+      background-color: #f8f9fa;
+      padding: 20px;
+      max-width: 800px;
+      margin: 0 auto;
+    }
+
+    .login-btn {
+      background-color: #4f46e5;
+      color: white;
+      border: none;
+      padding: 10px 20px;
+      border-radius: 6px;
+      cursor: pointer;
+      margin-bottom: 20px;
+    }
+
     .posts-section { 
       margin-top: 20px; 
       padding: 20px; 
@@ -14,11 +37,12 @@
       border-radius: 8px; 
       box-shadow: 0 1px 3px rgba(0,0,0,0.1); 
     }
+
     .posts-section h2 { 
       margin-bottom: 15px; 
+      color: #1f2937;
     }
 
-    /* Post item: full width, but content centered */
     .post-item {
       background: white;
       border-radius: 8px;
@@ -33,16 +57,16 @@
       justify-content: center;
     }
 
-    /* Inner container to hold text + image */
     .post-content {
       width: 100%;
       max-width: 600px;
-      text-align: left; /* Text starts at left edge of image */
+      text-align: left;
     }
 
     .post-content p {
       margin: 0;
       line-height: 1.6;
+      color: #374151;
     }
 
     .media-container {
@@ -53,13 +77,14 @@
       max-width: 600px;
       margin-left: auto;
       margin-right: auto;
+      overflow: hidden;
     }
 
     .media-item,
     .media-item-video {
       width: 100%;
       display: block;
-      object-fit: contain;
+      object-fit: cover;
       max-height: 400px;
     }
 
@@ -68,10 +93,9 @@
       color: #718096;
       font-size: 12px;
       margin-top: 8px;
-      text-align: center; /* Date centered under image */
+      text-align: center;
     }
 
-    /* Aspect ratios */
     .aspect-square { aspect-ratio: 1/1; }
     .aspect-video { aspect-ratio: 16/9; }
     .aspect-4-3 { aspect-ratio: 4/3; }
@@ -88,15 +112,14 @@
     <div id="all-posts-container">Loading...</div>
   </div>
 
-  <script src="/homepage/script.js"></script>
-
   <script>
-    // Initialize Supabase client globally (as in your index.html)
+    // Initialize Supabase client globally
     window.supabaseClient = window.supabase.createClient(
       'https://ccetnqdqfrsitooestbh.supabase.co',
       'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImNjZXRucWRxZnJzaXRvb2VzdGJoIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjIzMTE4MjksImV4cCI6MjA3Nzg4NzgyOX0.1NjRZZrgsPOg-2z_r2kRELWn9IVXNEQNpSxK6CktJRY'
     );
 
+    // Function to get aspect ratio class without preloading
     function getAspectRatioClassFast(imageUrl) {
       return 'aspect-video'; // Default fallback
     }
