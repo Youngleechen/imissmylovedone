@@ -72,7 +72,7 @@ export function initializeMediaHandlers(supabase) {
 
       if (uploadError) {
         console.error('Upload error:', uploadError);
-        alert('Upload failed: + uploadError.message');
+        alert('Upload failed: ' + uploadError.message);
         if (uploadProgress) {
           uploadProgress.style.display = 'none';
         }
@@ -117,7 +117,7 @@ function getCurrentBucketName() {
   const bucketMap = {
     '/test/index.html': 'memories',
     '/test/': 'memories', // default for test folder
-    '/progress-updater/': 'progress-updates',
+    '/progress-updater/': 'dev-updates-media',
     '/development-updater/': 'dev-updates-media',
     '/admin/': 'admin-media',
     // Add more as needed
@@ -477,4 +477,4 @@ async function checkAuth() {
 document.addEventListener('DOMContentLoaded', async () => {
   // Initialize media handlers using the global client
   initializeMediaHandlers(window.supabaseClient);
-}); 
+});
