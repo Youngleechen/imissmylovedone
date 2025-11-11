@@ -1,271 +1,273 @@
 <!DOCTYPE html>
 <html>
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Grief Support Platform - Homepage</title>
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-  <style> 
-    * {
-      margin: 0;
-      padding: 0;
-      box-sizing: border-box;
-    }
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Grief Support Platform - Homepage</title>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<style>
+* {
+margin: 0;
+padding: 0;
+box-sizing: border-box;
+}
 
-    body {
-      font-family: Arial, sans-serif;
-      background-color: #f8f9fa;
-      padding: 2px;
-      max-width: 800px;
-      margin: 0 auto;
-    }
+body {
+font-family: Arial, sans-serif;
+background-color: #f8f9fa;
+padding: 2px;
+max-width: 800px;
+margin: 0 auto;
+}
 
-    .login-btn {
-      background-color: #4f46e5;
-      color: white;
-      border: none;
-      padding: 10px 20px;
-      border-radius: 6px;
-      cursor: pointer;
-      margin-bottom: 20px;
-    }
+.login-btn {
+background-color: #4f46e5;
+color: white;
+border: none;
+padding: 10px 20px;
+border-radius: 6px;
+cursor: pointer;
+margin-bottom: 20px;
+}
 
-    .posts-section { 
-      margin-top: 20px; 
-      padding: 20px; 
-      background-color: white; 
-      border-radius: 8px; 
-      box-shadow: 0 1px 3px rgba(0,0,0,0.1); 
-    }
+.posts-section {
+margin-top: 20px;
+padding: 20px;
+background-color: white;
+border-radius: 8px;
+box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+}
 
-    .posts-section h2 { 
-      margin-bottom: 15px; 
-      color: #1f2937;
-    }
+.posts-section h2 {
+margin-bottom: 15px;
+color: #1f2937;
+}
 
-    .post-item {
-      background: white;
-      border-radius: 8px;
-      margin-bottom: 25px; /* Increased space between posts */
-      box-shadow: 0 1px 3px rgba(0,0,0,0.1);
-      width: 100%;
-      max-width: 602px;
-      margin-left: auto;
-      margin-right: auto;
-      padding: 1px;
-      display: flex;
-      justify-content: center;
-    }
+.post-item {
+background: white;
+border-radius: 8px;
+margin-bottom: 25px; /* Increased space between posts */
+box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+width: 100%;
+max-width: 602px;
+margin-left: auto;
+margin-right: auto;
+padding: 1px;
+display: flex;
+justify-content: center;
+}
 
-    .post-content {
-      width: 100%;
-      max-width: 600px;
-      text-align: left;
-    }
+.post-content {
+width: 100%;
+max-width: 600px;
+text-align: left;
+}
 
-    .post-content p {
-      margin: 0;
-      line-height: 1.6;
-      color: #374151;
-    }
+.post-content p {
+margin: 0;
+line-height: 1.6;
+color: #374151;
+}
 
-    /* Truncated text styling */
-    .truncated {
-      display: -webkit-box;
-      -webkit-line-clamp: 3;
-      -webkit-box-orient: vertical;
-      overflow: hidden;
-      position: relative;
-    }
+/* Truncated text styling */
+.truncated {
+display: -webkit-box;
+-webkit-line-clamp: 3;
+-webkit-box-orient: vertical;
+overflow: hidden;
+position: relative;
+}
 
-    .read-more-btn {
-      background: none;
-      border: none;
-      color: #4f46e5;
-      cursor: pointer;
-      font-size: 0.9em;
-      margin-left: 4px;
-      padding: 0;
-      text-decoration: underline;
-    }
+.read-more-btn {
+background: none;
+border: none;
+color: #4f46e5;
+cursor: pointer;
+font-size: 0.9em;
+margin-left: 4px;
+padding: 0;
+text-decoration: underline;
+}
 
-    .media-container {
-      margin: 10px 0;
-      border-radius: 8px;
-      position: relative;
-      width: 100%;
-      max-width: 600px;
-      margin-left: auto;
-      margin-right: auto;
-      overflow: hidden;
-    }
+.media-container {
+margin: 10px 0;
+border-radius: 8px;
+position: relative;
+width: 100%;
+max-width: 600px;
+margin-left: auto;
+margin-right: auto;
+overflow: hidden;
+}
 
-    .media-item,
-    .media-item-video {
-      width: 100%;
-      display: block;
-      object-fit: contain;
-      object-position: center;
-      background-color: #f3f4f6;
-    }
+.media-item,
+.media-item-video {
+width: 100%;
+display: block;
+object-fit: contain;
+object-position: center;
+background-color: #f3f4f6;
+}
 
-    .post-content small {
-      display: block;
-      color: #718096;
-      font-size: 12px;
-      margin-top: 8px;
-      text-align: center;
-    }
+.post-content small {
+display: block;
+color: #718096;
+font-size: 12px;
+margin-top: 8px;
+text-align: center;
+}
 
-    .aspect-square { aspect-ratio: 1/1; }
-    .aspect-video { aspect-ratio: 16/9; }
-    .aspect-4-3 { aspect-ratio: 4/3; }
-    .aspect-2-1 { aspect-ratio: 2/1; }
-    .aspect-2-3 { aspect-ratio: 2/3; }
-    .aspect-16-6 { aspect-ratio: 16/6; }
-  </style>
+.aspect-square { aspect-ratio: 1/1; }
+.aspect-video { aspect-ratio: 16/9; }
+.aspect-4-3 { aspect-ratio: 4/3; }
+.aspect-2-1 { aspect-ratio: 2/1; }
+.aspect-2-3 { aspect-ratio: 2/3; }
+.aspect-16-6 { aspect-ratio: 16/6; }
+</style>
+
 </head>
 <body>
-  <button id="loginButton" class="login-btn">Login</button>
+<button id="loginButton" class="login-btn">Login</button>
 
-  <div class="posts-section">
-    <h2>Community Memories</h2>
-    <div id="all-posts-container">Loading...</div>
-  </div>
+<div class="posts-section">
+<h2>Community Memories</h2>
+<div id="all-posts-container">Loading...</div>
+</div>
 
-  <script>
-    // Initialize Supabase client globally
-    window.supabaseClient = window.supabase.createClient(
-      'https://ccetnqdqfrsitooestbh.supabase.co',
-      'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImNjZXRucWRxZnJzaXRvb2VzdGJoIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjIzMTE4MjksImV4cCI6MjA3Nzg4NzgyOX0.1NjRZZrgsPOg-2z_r2kRELWn9IVXNEQNpSxK6CktJRY'
-    );
+<script>
+// Initialize Supabase client globally
+window.supabaseClient = window.supabase.createClient(
+'https://ccetnqdqfrsitooestbh.supabase.co',
+'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImNjZXRucWRxZnJzaXRvb2VzdGJoIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjIzMTE4MjksImV4cCI6MjA3Nzg4NzgyOX0.1NjRZZrgsPOg-2z_r2kRELWn9IVXNEQNpSxK6CktJRY'
+);
 
-    function getAspectRatioClassFast(imageUrl) {
-      return '';
-    }
+function getAspectRatioClassFast(imageUrl) {
+return '';
+}
 
-    // Function to truncate text at 3 lines and add "Show More"
-    function createTruncatedText(text, postId) {
-      const div = document.createElement('div');
-      div.innerHTML = text;
-      div.style.lineHeight = '1.6';
-      div.style.position = 'absolute';
-      div.style.visibility = 'hidden';
-      div.style.width = '600px'; // Match max-width of post-content
-      div.style.overflow = 'hidden';
-      document.body.appendChild(div);
+// Function to truncate text at 3 lines and add "Show More"
+function createTruncatedText(text, postId) {
+const div = document.createElement('div');
+div.innerHTML = text;
+div.style.lineHeight = '1.6';
+div.style.position = 'absolute';
+div.style.visibility = 'hidden';
+div.style.width = '600px'; // Match max-width of post-content
+div.style.overflow = 'hidden';
+document.body.appendChild(div);
 
-      const lineHeight = parseFloat(window.getComputedStyle(div).lineHeight);
-      const maxHeight = lineHeight * 3;
-      
-      if (div.offsetHeight > maxHeight) {
-        // Text is longer than 3 lines
-        const words = text.split(' ');
-        let truncated = '';
-        
-        // Try to find the point where it exceeds 3 lines
-        for (let i = 0; i < words.length; i++) {
-          const testText = words.slice(0, i + 1).join(' ');
-          div.innerHTML = testText + '... <button class="read-more-btn" data-post-id="' + postId + '">Show More</button>';
-          
-          if (div.offsetHeight > maxHeight) {
-            truncated = words.slice(0, i).join(' ') + '...';
-            break;
-          }
-        }
-        
-        if (!truncated) {
-          // If we didn't find a truncation point, just use the full text
-          document.body.removeChild(div);
-          return text;
-        }
-        
-        document.body.removeChild(div);
-        return truncated + ' <button class="read-more-btn" data-post-id="' + postId + '" data-full-text="' + encodeURIComponent(text) + '">Show More</button>';
-      } else {
-        // Text fits in 3 lines or less
-        document.body.removeChild(div);
-        return text;
-      }
-    }
+const lineHeight = parseFloat(window.getComputedStyle(div).lineHeight);
+const maxHeight = lineHeight * 3;
 
-    async function loadAllPosts() {
-      const container = document.getElementById('all-posts-container');
-      container.innerHTML = 'Loading...';
+if (div.offsetHeight > maxHeight) {
+const words = text.split(' ');
+let truncated = '';
+let bestTruncation = '';
 
-      try {
-        const { data, error } = await window.supabaseClient
-          .from('memories')
-          .select('id, body, created_at')
-          .order('created_at', { ascending: false });
+for (let i = 0; i < words.length; i++) {
+const testText = words.slice(0, i + 1).join(' ');
+div.innerHTML = testText + '...';
 
-        if (error) throw error;
+if (div.offsetHeight > maxHeight) {
+// Use the previous successful truncation
+truncated = bestTruncation + '...';
+break;
+} else {
+bestTruncation = testText;
+}
+}
 
-        if (data.length === 0) {
-          container.innerHTML = 'No memories yet.';
-          return;
-        }
+if (!truncated) {
+truncated = bestTruncation + '...';
+}
 
-        const postsHTML = data.map(post => {
-          const mediaMatches = [...post.body.matchAll(/!\[([^\]]*)\]\s*\(\s*([^)]+)\s*\)/g)];
-          let contentHtml = post.body.replace(/!\[([^\]]*)\]\s*\(\s*([^)]+)\s*\)/g, '');
-          contentHtml = contentHtml.replace(/\n/g, '<br>');
+document.body.removeChild(div);
 
-          // Store the original full text for later use
-          const originalText = contentHtml;
-          
-          // Apply truncation to text content only
-          const truncatedContent = createTruncatedText(originalText, post.id);
-          
-          let mediaHtml = '';
-          for (const match of mediaMatches) {
-            const alt = match[1] || 'Media';
-            const url = match[2].trim();
-            const isVideo = url.includes('.mp4') || url.includes('.webm') || url.includes('.mov');
-            
-            if (isVideo) {
-              mediaHtml += `<div class="media-container"><video controls class="media-item-video"><source src="${url}" type="video/mp4"></video></div>`;
-            } else {
-              mediaHtml += `<div class="media-container"><img src="${url}" alt="${alt}" class="media-item"></div>`;
-            }
-          }
+// Store the original full text in a data attribute
+return truncated + ' <button class="read-more-btn" data-post-id="' + postId + '" data-full-text="' + encodeURIComponent(text) + '">Show More</button>';
+} else {
+document.body.removeChild(div);
+return text;
+}
+}
 
-          return `<div class="post-item">
-                    <div class="post-content">
-                      <p class="truncated" id="post-${post.id}">${truncatedContent}</p>
-                      ${mediaHtml}
-                      <small>${new Date(post.created_at).toLocaleString()}</small>
-                    </div>
-                  </div>`;
-        }).join('');
+async function loadAllPosts() {
+const container = document.getElementById('all-posts-container');
+container.innerHTML = 'Loading...';
 
-        container.innerHTML = postsHTML;
-      } catch (err) {
-        console.error('Error loading posts:', err);
-        container.innerHTML = 'Failed to load memories.';
-      }
-    }
+try {
+const { data, error } = await window.supabaseClient
+.from('memories')
+.select('id, body, created_at')
+.order('created_at', { ascending: false });
 
-    document.addEventListener('DOMContentLoaded', loadAllPosts);
-    
-    // Add event delegation for "Show More" and "Show Less" buttons
-    document.addEventListener('click', function(e) {
-      if (e.target.classList.contains('read-more-btn')) {
-        const postId = e.target.getAttribute('data-post-id');
-        const postElement = document.getElementById(`post-${postId}`);
-        const fullText = e.target.getAttribute('data-full-text');
-        
-        if (e.target.textContent === 'Show More') {
-          // Show full text with "Show Less" button
-          postElement.innerHTML = decodeURIComponent(fullText) + ' <button class="read-more-btn" data-post-id="' + postId + '">Show Less</button>';
-        } else if (e.target.textContent === 'Show Less') {
-          // Restore truncated text with "Show More" button
-          const originalText = decodeURIComponent(fullText);
-          const truncatedContent = createTruncatedText(originalText, postId);
-          postElement.innerHTML = truncatedContent;
-        }
-      }
-    });
-  </script>
+if (error) throw error;
+
+if (data.length === 0) {
+container.innerHTML = 'No memories yet.';
+return;
+}
+
+const postsHTML = data.map(post => {
+const mediaMatches = [...post.body.matchAll(/!\[([^\]]*)\]\s*\(\s*([^)]+)\s*\)/g)];
+let contentHtml = post.body.replace(/!\[([^\]]*)\]\s*\(\s*([^)]+)\s*\)/g, '');
+contentHtml = contentHtml.replace(/\n/g, '<br>');
+
+// Store the original full text for later use
+const originalText = contentHtml;
+
+// Apply truncation to text content only
+const truncatedContent = createTruncatedText(originalText, post.id);
+
+let mediaHtml = '';
+for (const match of mediaMatches) {
+const alt = match[1] || 'Media';
+const url = match[2].trim();
+const isVideo = url.includes('.mp4') || url.includes('.webm') || url.includes('.mov');
+
+if (isVideo) {
+mediaHtml += `<div class="media-container"><video controls class="media-item-video"><source src="${url}" type="video/mp4"></video></div>`;
+} else {
+mediaHtml += `<div class="media-container"><img src="${url}" alt="${alt}" class="media-item"></div>`;
+}
+}
+
+return `<div class="post-item">
+<div class="post-content">
+<p class="truncated" id="post-${post.id}">${truncatedContent}</p>
+${mediaHtml}
+<small>${new Date(post.created_at).toLocaleString()}</small>
+</div>
+</div>`;
+}).join('');
+
+container.innerHTML = postsHTML;
+} catch (err) {
+console.error('Error loading posts:', err);
+container.innerHTML = 'Failed to load memories.';
+}
+}
+
+document.addEventListener('DOMContentLoaded', loadAllPosts);
+
+// Add event delegation for "Show More" and "Show Less" buttons
+document.addEventListener('click', function(e) {
+if (e.target.classList.contains('read-more-btn')) {
+const postId = e.target.getAttribute('data-post-id');
+const postElement = document.getElementById(`post-${postId}`);
+const fullText = e.target.getAttribute('data-full-text');
+
+if (e.target.textContent === 'Show More') {
+// Show full text with "Show Less" button
+postElement.innerHTML = decodeURIComponent(fullText) + ' <button class="read-more-btn" data-post-id="' + postId + '">Show Less</button>';
+} else if (e.target.textContent === 'Show Less') {
+// Restore truncated text with "Show More" button
+const originalText = decodeURIComponent(fullText);
+const truncatedContent = createTruncatedText(originalText, postId);
+postElement.innerHTML = truncatedContent;
+}
+}
+});
+</script>
 </body>
 </html>
