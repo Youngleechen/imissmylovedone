@@ -43,6 +43,7 @@
       color: #1f2937;
     }
 
+    /* 🔥 KEY CHANGE: Remove fixed height or min-height */
     .post-item {
       background: white;
       border-radius: 8px;
@@ -55,6 +56,7 @@
       padding: 15px;
       display: flex;
       justify-content: center;
+      /* ❗ NO HEIGHT CONSTRAINTS — let it grow naturally */
     }
 
     .post-content {
@@ -69,6 +71,7 @@
       color: #374151;
     }
 
+    /* 🔥 KEY CHANGE: media-container has NO fixed aspect-ratio */
     .media-container {
       margin: 10px 0;
       border-radius: 8px;
@@ -78,15 +81,17 @@
       margin-left: auto;
       margin-right: auto;
       overflow: hidden;
+      /* ❗ NO aspect-ratio class applied here */
     }
 
+    /* 🔥 KEY CHANGE: Use object-fit: contain to show full image */
     .media-item,
     .media-item-video {
       width: 100%;
       display: block;
-      object-fit: contain; /* ✅ FIXED: Shows full image, no cropping */
-    
-      background-color: #f3f4f6; /* Optional: subtle background if image has transparency */
+      object-fit: contain; /* ✅ Shows full image, no cropping */
+      object-position: center;
+      background-color: #f3f4f6;
     }
 
     .post-content small {
@@ -97,6 +102,7 @@
       text-align: center;
     }
 
+    /* Optional: Define aspect ratios if you still want them for other use cases */
     .aspect-square { aspect-ratio: 1/1; }
     .aspect-video { aspect-ratio: 16/9; }
     .aspect-4-3 { aspect-ratio: 4/3; }
@@ -120,9 +126,9 @@
       'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImNjZXRucWRxZnJzaXRvb2VzdGJoIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjIzMTE4MjksImV4cCI6MjA3Nzg4NzgyOX0.1NjRZZrgsPOg-2z_r2kRELWn9IVXNEQNpSxK6CktJRY'
     );
 
-    // Function to get aspect ratio class without preloading
+    // Function to get aspect ratio class — now always returns empty string
     function getAspectRatioClassFast(imageUrl) {
-      return 'aspect-video'; // Default fallback
+      return ''; // 👈 Never apply aspect ratio classes
     }
 
     async function loadAllPosts() {
@@ -156,8 +162,8 @@
             if (isVideo) {
               mediaHtml += `<div class="media-container"><video controls class="media-item-video"><source src="${url}" type="video/mp4"></video></div>`;
             } else {
-              const aspectClass = getAspectRatioClassFast(url);
-              mediaHtml += `<div class="media-container ${aspectClass}"><img src="${url}" alt="${alt}" class="media-item"></div>`;
+              // ❗ No aspect class applied — let image determine height
+              mediaHtml += `<div class="media-container"><img src="${url}" alt="${alt}" class="media-item"></div>`;
             }
           }
 
