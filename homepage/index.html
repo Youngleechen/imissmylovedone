@@ -17,47 +17,55 @@
     .posts-section h2 { 
       margin-bottom: 15px; 
     }
+
+    /* FIXED: Post container now wraps content and centers */
     .post-item {
       background: white;
       border-radius: 8px;
       margin-bottom: 15px;
       box-shadow: 0 1px 3px rgba(0,0,0,0.1);
-      padding: 0; /* Remove padding from outer container */
+      display: inline-block; /* This is key — makes it wrap content */
+      max-width: 602px; /* Slightly wider than image to accommodate borders */
+      width: 100%; /* But still responsive on small screens */
+      text-align: center; /* Center everything inside */
+      padding: 15px; /* Add padding inside */
     }
-    .post-content-wrapper {
-      max-width: 602px; /* Slightly wider than image to accommodate borders/spacing */
-      margin: 0 auto; /* Center the entire post */
-      padding: 15px; /* Add padding inside the wrapper */
-    }
-    .post-content-wrapper p {
+
+    .post-item p {
       margin: 0;
       line-height: 1.6;
+      text-align: left; /* Text left-aligned within the post */
     }
-    .post-content-wrapper small {
-      display: block;
-      color: #718096;
-      font-size: 12px;
-      margin-top: 8px;
-      text-align: center; /* Center the date under the image */
-    }
+
     .media-container {
-      margin: 10px auto; /* Center the media container */
+      margin: 10px auto; /* Center the media */
       border-radius: 8px;
       position: relative;
       width: 100%;
       max-width: 600px; /* Image max width */
     }
+
     .media-item {
       width: 100%;
       display: block;
       object-fit: contain;
       max-height: 400px;
     }
+
     .media-item-video {
       width: 100%;
       display: block;
       max-height: 400px;
     }
+
+    .post-item small {
+      display: block;
+      color: #718096;
+      font-size: 12px;
+      margin-top: 8px;
+      text-align: center; /* Date centered under image */
+    }
+
     /* Specific aspect ratio classes */
     .aspect-square { aspect-ratio: 1/1; }
     .aspect-video { aspect-ratio: 16/9; }
@@ -106,7 +114,7 @@
           return;
         }
 
-        const postPromises = data.map(async post => {
+        const postsHTML = data.map(post => {
           const mediaMatches = [...post.body.matchAll(/!\[([^\]]*)\]\s*\(\s*([^)]+)\s*\)/g)];
           let contentHtml = post.body.replace(/!\[([^\]]*)\]\s*\(\s*([^)]+)\s*\)/g, '');
           contentHtml = contentHtml.replace(/\n/g, '<br>');
@@ -126,15 +134,11 @@
           }
 
           return `<div class="post-item">
-                    <div class="post-content-wrapper">
-                      <p>${contentHtml}</p>
-                      ${mediaHtml}
-                      <small>${new Date(post.created_at).toLocaleString()}</small>
-                    </div>
+                    <p>${contentHtml}</p>
+                    ${mediaHtml}
+                    <small>${new Date(post.created_at).toLocaleString()}</small>
                   </div>`;
-        });
-
-        const postsHTML = (await Promise.all(postPromises)).join('');
+        }).join('');
 
         container.innerHTML = postsHTML;
       } catch (err) {
