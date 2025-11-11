@@ -6,10 +6,10 @@
   <title>My Thoughts</title>
 
   <!-- Supabase Client (loaded first) -->
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2  "></script>
 
   <!-- Emoji Picker (module) -->
-  <script type="module" src="https://cdn.jsdelivr.net/npm/emoji-picker-element@^1/index.js"></script>
+  <script type="module" src="https://cdn.jsdelivr.net/npm/emoji-picker-element@  ^1/index.js"></script>
 
   <!-- Styles -->
   <link rel="stylesheet" href="style.css" />
@@ -17,7 +17,7 @@
   <!-- 👇 CREATE SUPABASE CLIENT ONCE, GLOBALLY, BEFORE ANY MODULES -->
   <script>
     window.supabaseClient = window.supabase.createClient(
-      'https://ccetnqdqfrsitooestbh.supabase.co',
+      'https://ccetnqdqfrsitooestbh.supabase.co  ',
       'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImNjZXRucWRxZnJzaXRvb2VzdGJoIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjIzMTE4MjksImV4cCI6MjA3Nzg4NzgyOX0.1NjRZZrgsPOg-2z_r2kRELWn9IVXNEQNpSxK6CktJRY'
     );
   </script>
@@ -48,6 +48,42 @@
   </div>
 
   <input type="file" id="mediaInput" accept="image/*,video/*" style="display:none;" multiple />
+
+  <!-- Edit Modal -->
+  <div id="editModal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 9999; padding: 20px; overflow-y: auto;">
+    <div style="background: white; padding: 20px; border-radius: 8px; max-width: 600px; margin: 50px auto; box-shadow: 0 4px 12px rgba(0,0,0,0.1);">
+      <h3>Edit Post</h3>
+      
+      <!-- Close Button -->
+      <button id="closeEditModal" style="position: absolute; top: 10px; right: 10px; background: #e53e3e; color: white; border: none; padding: 5px 10px; border-radius: 4px; cursor: pointer;">×</button>
+      
+      <!-- Text Editor -->
+      <textarea id="editBody" style="width: 100%; min-height: 100px; padding: 10px; border: 1px solid #ccc; border-radius: 4px; margin: 10px 0;"></textarea>
+      
+      <!-- Media Section -->
+      <div style="margin: 10px 0;">
+        <label>Existing Media:</label>
+        <div id="editMediaContainer" style="display: flex; flex-wrap: wrap; gap: 10px; margin: 10px 0;"></div>
+        
+        <button id="addMoreMediaButton" style="background: #4299e1; color: white; border: none; padding: 5px 10px; border-radius: 4px; cursor: pointer; font-size: 12px;">Add More Media</button>
+        <input type="file" id="addMoreMediaInput" multiple accept="image/*,video/*" style="display: none;" />
+      </div>
+      
+      <!-- Upload Progress -->
+      <div id="editUploadProgress" style="display: none; margin: 10px 0;">
+        <div style="width: 100%; background: #eee; border-radius: 4px; overflow: hidden;">
+          <div id="editProgressFill" style="height: 10px; background: #4299e1; width: 0%; transition: width 0.3s;"></div>
+        </div>
+        <div id="editProgressText" style="margin-top: 5px; font-size: 12px;">Uploading...</div>
+      </div>
+      
+      <!-- Action Buttons -->
+      <div style="display: flex; justify-content: space-between; margin-top: 20px;">
+        <button id="deleteEditButton" style="background: #e53e3e; color: white; border: none; padding: 8px 16px; border-radius: 4px; cursor: pointer; font-size: 14px;">Delete Post</button>
+        <button id="saveEditButton" style="background: #4299e1; color: white; border: none; padding: 8px 16px; border-radius: 4px; cursor: pointer; font-size: 14px;">Save Changes</button>
+      </div>
+    </div>
+  </div>
 
   <!-- Load media handling first as a module to ensure global functions are available -->
   <script type="module" src="media.js"></script>
