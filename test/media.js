@@ -1,4 +1,4 @@
-// script.js - Main application logic
+// script.js - Main application logic (Memories)
 
 document.addEventListener('DOMContentLoaded', async () => {
   const supabase = window.supabaseClient; // ✅ Use global client
@@ -11,7 +11,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   // Global state for current media files (managed by media.js)
   window.currentMediaFiles = [];
 
-  // NEW: Edit modal elements
+  // === EDIT MODAL ELEMENTS ===
   const editModal = document.getElementById('editModal');
   const editBody = document.getElementById('editBody');
   const closeEditModal = document.getElementById('closeEditModal');
@@ -24,10 +24,10 @@ document.addEventListener('DOMContentLoaded', async () => {
   const editProgressFill = document.getElementById('editProgressFill');
   const editProgressText = document.getElementById('editProgressText');
 
-  // NEW: Track edited post and media
+  // Edit state
   let currentEditPostId = null;
-  let currentEditMedia = []; // {url, name, type, isExisting: true/false, isDeleted: true/false}
-  let newMediaFiles = []; // For newly added files in edit mode
+  let currentEditMedia = [];
+  let newMediaFiles = [];
 
   async function checkAuth() {
     const { data: { user } } = await supabase.auth.getUser();
@@ -145,7 +145,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     autoResize();
     window.currentMediaFiles = []; // Reset media files
 
-    // 👇 Explicitly clear the preview container via media.js
+    // Clear previews via media.js
     if (typeof window.clearMediaPreviews === 'function') {
       window.clearMediaPreviews();
     }
@@ -154,7 +154,8 @@ document.addEventListener('DOMContentLoaded', async () => {
     loadUserPosts();
   });
 
-  // NEW: Edit Modal Functions
+  // === EDIT MODAL HANDLERS ===
+
   closeEditModal.addEventListener('click', () => {
     editModal.style.display = 'none';
     currentEditPostId = null;
@@ -162,7 +163,9 @@ document.addEventListener('DOMContentLoaded', async () => {
     newMediaFiles = [];
   });
 
-  addMoreMediaButton.addEventListener('click', () => {
+  addMoreMediaButton.addEventListener('click', async () => {
+    const user = await checkAuth();
+    if (!user) return;
     addMoreMediaInput.click();
   });
 
@@ -172,6 +175,9 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     const files = Array.from(e.target.files);
     if (!files.length) return;
+
+    // Override bucket for memories
+    window.CURRENT_BUCKET_OVERRIDE = 'memories';
 
     for (const file of files) {
       const allowedTypes = ['image/jpeg', 'image/png', 'image/gif', 'image/webp', 'video/mp4', 'video/webm', 'video/quicktime'];
@@ -184,7 +190,6 @@ document.addEventListener('DOMContentLoaded', async () => {
         continue;
       }
 
-      // Upload new file to memories bucket
       const fileExt = file.name.split('.').pop();
       const fileName = `${user.id}/${Date.now()}-${Math.random().toString(36).substring(2, 15)}.${fileExt}`;
 
@@ -195,12 +200,12 @@ document.addEventListener('DOMContentLoaded', async () => {
       }
 
       const { error: uploadError } = await supabase.storage
-        .from('memories') // Use correct bucket name
+        .from('memories')
         .upload(fileName, file, {
           upsert: false,
           onUploadProgress: (progressEvent) => {
             const percentCompleted = Math.round((progressEvent.loaded * 100) / progressEvent.total);
-            if (editProgressFill) editProgressFill.style.width = percentCompleted + '%';
+            if (editProgressFill) editProgressFill.style.width = `${percentCompleted}%`;
             if (editProgressText) editProgressText.textContent = `Uploading ${file.name}... ${percentCompleted}%`;
           }
         });
@@ -212,9 +217,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         return;
       }
 
-      const { data: { publicUrl } } = supabase.storage
-        .from('memories') // Use correct bucket name
-        .getPublicUrl(fileName);
+      const { data: { publicUrl } } = supabase.storage.from('memories').getPublicUrl(fileName);
 
       newMediaFiles.push({ url: publicUrl, name: file.name, type: file.type });
       addMediaPreviewToEdit(publicUrl, file.name, file.type, false);
@@ -222,14 +225,11 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     if (editUploadProgress) editUploadProgress.style.display = 'none';
     addMoreMediaInput.value = '';
+    window.CURRENT_BUCKET_OVERRIDE = null; // Reset override
   });
 
   function addMediaPreviewToEdit(url, filename, fileType, isExisting) {
-    // Create a unique ID for this preview element to avoid duplication
-    const previewId = `edit-media-${Date.now()}-${Math.random().toString(36).substr(2,9)}`;
-    
     const previewItem = document.createElement('div');
-    previewItem.id = previewId;
     previewItem.className = 'media-preview-item';
     previewItem.style.cssText = `
       position: relative;
@@ -238,6 +238,8 @@ document.addEventListener('DOMContentLoaded', async () => {
       border-radius: 8px;
       overflow: hidden;
       box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+      background: white;
+      padding: 5px;
     `;
 
     let previewElement;
@@ -246,19 +248,20 @@ document.addEventListener('DOMContentLoaded', async () => {
       previewElement.src = url;
       previewElement.alt = filename;
       previewElement.style.cssText = `
-        max-width: 100px;
-        height: 100px;
-        object-fit: cover;
-        border-radius: 8px;
+        max-width: 90px;
+        max-height: 90px;
+        object-fit: contain;
+        border-radius: 4px;
       `;
     } else if (fileType.startsWith('video')) {
       previewElement = document.createElement('video');
-      previewElement.controls = false;
+      previewElement.muted = true;
+      previewElement.playsInline = true;
       previewElement.style.cssText = `
-        max-width: 100px;
-        height: 100px;
-        object-fit: cover;
-        border-radius: 8px;
+        max-width: 90px;
+        max-height: 90px;
+        object-fit: contain;
+        border-radius: 4px;
       `;
       const source = document.createElement('source');
       source.src = url;
@@ -283,7 +286,13 @@ document.addEventListener('DOMContentLoaded', async () => {
     `;
     removeBtn.onclick = (e) => {
       e.stopPropagation();
-      removeMediaPreviewFromEdit(previewItem, url, isExisting);
+      previewItem.remove();
+      if (isExisting) {
+        const existing = currentEditMedia.find(m => m.url === url);
+        if (existing) existing.isDeleted = true;
+      } else {
+        newMediaFiles = newMediaFiles.filter(f => f.url !== url);
+      }
     };
 
     previewItem.appendChild(previewElement);
@@ -291,55 +300,40 @@ document.addEventListener('DOMContentLoaded', async () => {
     editMediaContainer.appendChild(previewItem);
   }
 
-  function removeMediaPreviewFromEdit(previewItem, url, isExisting) {
-    previewItem.remove();
-    if (isExisting) {
-      const existingMedia = currentEditMedia.find(m => m.url === url);
-      if (existingMedia) existingMedia.isDeleted = true;
-    } else {
-      newMediaFiles = newMediaFiles.filter(f => f.url !== url);
-    }
+  function getMediaType(url) {
+    if (url.match(/\.(mp4|webm|mov)$/i)) return 'video/mp4';
+    return 'image/jpeg';
   }
 
-  async function openEditModal(postId, currentBody) {
-    const user = await checkAuth();
-    if (!user) return;
-
+  // Make openEditModal globally available for inline onclick
+  window.openEditModal = function(postId, body) {
     currentEditPostId = postId;
-    
-    // ✅ FIX 1: Extract only text content for editing, remove media markdown
-    let textOnlyBody = currentBody.replace(/!\[([^\]]*)\]\s*\(\s*([^)]+)\s*\)/g, '');
-    editBody.value = textOnlyBody.trim(); // Set only the text content
 
-    // Extract and populate existing media
-    const mediaMatches = [...currentBody.matchAll(/!\[([^\]]*)\]\s*\(\s*([^)]+)\s*\)/g)];
-    currentEditMedia = mediaMatches.map(m => ({ 
-      url: m[2], 
-      name: m[1] || 'Media', 
-      isExisting: true, 
-      isDeleted: false 
+    // Extract text only (remove media markdown)
+    let textOnly = body.replace(/!\[([^\]]*)\]\s*\(\s*([^)]+)\s*\)/g, '').trim();
+    editBody.value = textOnly;
+
+    // Extract media
+    const mediaMatches = [...body.matchAll(/!\[([^\]]*)\]\s*\(\s*([^)]+)\s*\)/g)];
+    currentEditMedia = mediaMatches.map(m => ({
+      url: m[2].trim(),
+      name: m[1] || 'Media',
+      isExisting: true,
+      isDeleted: false
     }));
     newMediaFiles = [];
 
-    // ✅ FIX 2: Clear the container before adding previews to prevent duplicates
+    // Clear and render previews
     editMediaContainer.innerHTML = '';
-
-    // Add previews for existing media
-    currentEditMedia.forEach(media => {
-      addMediaPreviewToEdit(media.url, media.name, getMediaType(media.url), true);
+    currentEditMedia.forEach(m => {
+      addMediaPreviewToEdit(m.url, m.name, getMediaType(m.url), true);
     });
 
     editModal.style.display = 'flex';
-  }
-
-  function getMediaType(url) {
-    if (url.includes('.mp4') || url.includes('.webm') || url.includes('.mov')) return 'video/mp4';
-    return 'image/jpeg'; // Default to image
-  }
+  };
 
   saveEditButton.addEventListener('click', async () => {
     if (!currentEditPostId) return;
-
     const user = await checkAuth();
     if (!user) return;
 
@@ -349,16 +343,15 @@ document.addEventListener('DOMContentLoaded', async () => {
       ...newMediaFiles
     ];
 
-    // Append non-deleted media to body
-    for (const media of allMedia) {
-      body += `\n\n![${media.name || 'Media'}](${media.url})`;
-    }
+    allMedia.forEach(m => {
+      body += `\n\n![${m.name || 'Media'}](${m.url})`;
+    });
 
     const { error } = await supabase
       .from('memories')
       .update({ body })
       .eq('id', currentEditPostId)
-      .eq('user_id', user.id); // Ensure user owns the post
+      .eq('user_id', user.id);
 
     if (error) {
       alert('Failed to update: ' + error.message);
@@ -366,13 +359,12 @@ document.addEventListener('DOMContentLoaded', async () => {
     }
 
     editModal.style.display = 'none';
-    loadUserPosts(); // Reload posts to reflect changes
+    loadUserPosts();
   });
 
   deleteEditButton.addEventListener('click', async () => {
     if (!currentEditPostId) return;
-
-    if (!confirm('Are you sure you want to delete this post?')) return;
+    if (!confirm('Are you sure you want to delete this memory?')) return;
 
     const user = await checkAuth();
     if (!user) return;
@@ -381,7 +373,7 @@ document.addEventListener('DOMContentLoaded', async () => {
       .from('memories')
       .delete()
       .eq('id', currentEditPostId)
-      .eq('user_id', user.id); // Ensure user owns the post
+      .eq('user_id', user.id);
 
     if (error) {
       alert('Failed to delete: ' + error.message);
@@ -389,7 +381,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     }
 
     editModal.style.display = 'none';
-    loadUserPosts(); // Reload posts
+    loadUserPosts();
   });
 
   // Load posts
@@ -415,21 +407,19 @@ document.addEventListener('DOMContentLoaded', async () => {
     }
 
     postsContainer.innerHTML = data.map(post => {
-      // Extract media URLs from post body
       const mediaMatches = [...post.body.matchAll(/!\[([^\]]*)\]\s*\(\s*([^)]+)\s*\)/g)];
-      
+
       if (mediaMatches.length > 0) {
         let mediaGridHtml = '<div class="media-grid" style="position: relative; width: 100%; height: 300px; margin: 10px 0; background: white;">';
-        
-        // Show first media item as large
+
         const firstMedia = mediaMatches[0];
         const firstAlt = firstMedia[1] || 'Media';
         const firstUrl = firstMedia[2].trim();
         const isFirstVideo = firstUrl.includes('.mp4') || firstUrl.includes('.webm') || firstUrl.includes('.mov');
-        
+
         mediaGridHtml += `
           <div class="media-grid-item large" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; cursor: pointer;" onclick="openGallery('${post.id}', '${encodeURIComponent(JSON.stringify(mediaMatches.map(m => m[2])))}', 0)">
-            ${isFirstVideo ? 
+            ${isFirstVideo ?
               `<video muted playsinline style="width: 100%; height: 100%; object-fit: cover;">
                  <source src="${firstUrl}" type="video/mp4">
                </video>` :
@@ -438,17 +428,16 @@ document.addEventListener('DOMContentLoaded', async () => {
             }
           </div>
         `;
-        
-        // If there are more media items, show the +N overlay
+
         if (mediaMatches.length > 1) {
           const secondMedia = mediaMatches[1];
           const secondUrl = secondMedia[2].trim();
           const isSecondVideo = secondUrl.includes('.mp4') || secondUrl.includes('.webm') || secondUrl.includes('.mov');
-          
+
           mediaGridHtml += `
             <div class="media-grid-overlay" style="position: absolute; bottom: 10px; right: 10px; width: 80px; height: 80px; cursor: pointer;" onclick="openGallery('${post.id}', '${encodeURIComponent(JSON.stringify(mediaMatches.map(m => m[2])))}', 1)">
               <div class="second-thumbnail" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; border-radius: 8px; overflow: hidden; box-shadow: 0 2px 4px rgba(0,0,0,0.3); background: white;">
-                ${isSecondVideo ? 
+                ${isSecondVideo ?
                   `<video muted playsinline style="width: 100%; height: 100%; object-fit: cover;">
                      <source src="${secondUrl}" type="video/mp4">
                    </video>` :
@@ -462,13 +451,12 @@ document.addEventListener('DOMContentLoaded', async () => {
             </div>
           `;
         }
-        
+
         mediaGridHtml += '</div>';
 
-        // Remove media markdown from text body
         let textOnlyBody = post.body.replace(/!\[([^\]]*)\]\s*\(\s*([^)]+)\s*\)/g, '');
         textOnlyBody = textOnlyBody.replace(/\n/g, '<br>');
-        
+
         return `
           <div class="post-item" style="background: white; padding: 15px; border-radius: 8px; margin-bottom: 15px; box-shadow: 0 1px 3px rgba(0,0,0,0.1);">
             <p style="margin: 0; line-height: 1.6;">${textOnlyBody}</p>
@@ -476,15 +464,12 @@ document.addEventListener('DOMContentLoaded', async () => {
             <small style="display: block; color: #718096; font-size: 12px; margin-top: 8px;">
               ${new Date(post.created_at).toLocaleString()}
             </small>
-            <!-- NEW: Edit/Delete Buttons -->
             <div style="margin-top: 10px;">
-              <button onclick="openEditModal('${post.id}', \`${post.body.replace(/`/g, '&#96;')}\`)" style="background: #4299e1; color: white; border: none; padding: 5px 10px; border-radius: 4px; cursor: pointer; font-size: 12px; margin-right: 5px;">Edit</button>
-              <button onclick="deletePost('${post.id}')" style="background: #e53e3e; color: white; border: none; padding: 5px 10px; border-radius: 4px; cursor: pointer; font-size: 12px;">Delete</button>
+              <button onclick="openEditModal('${post.id}', \`${post.body.replace(/`/g, '&#96;')}\`)" style="background: #4299e1; color: white; border: none; padding: 5px 10px; border-radius: 4px; cursor: pointer; font-size: 12px;">Edit</button>
             </div>
           </div>
         `;
       } else {
-        // Handle posts without media
         let processedBody = post.body.replace(/\n/g, '<br>');
         return `
           <div class="post-item" style="background: white; padding: 15px; border-radius: 8px; margin-bottom: 15px; box-shadow: 0 1px 3px rgba(0,0,0,0.1);">
@@ -492,10 +477,8 @@ document.addEventListener('DOMContentLoaded', async () => {
             <small style="display: block; color: #718096; font-size: 12px; margin-top: 8px;">
               ${new Date(post.created_at).toLocaleString()}
             </small>
-            <!-- NEW: Edit/Delete Buttons -->
             <div style="margin-top: 10px;">
-              <button onclick="openEditModal('${post.id}', \`${post.body.replace(/`/g, '&#96;')}\`)" style="background: #4299e1; color: white; border: none; padding: 5px 10px; border-radius: 4px; cursor: pointer; font-size: 12px; margin-right: 5px;">Edit</button>
-              <button onclick="deletePost('${post.id}')" style="background: #e53e3e; color: white; border: none; padding: 5px 10px; border-radius: 4px; cursor: pointer; font-size: 12px;">Delete</button>
+              <button onclick="openEditModal('${post.id}', \`${post.body.replace(/`/g, '&#96;')}\`)" style="background: #4299e1; color: white; border: none; padding: 5px 10px; border-radius: 4px; cursor: pointer; font-size: 12px;">Edit</button>
             </div>
           </div>
         `;
@@ -503,37 +486,13 @@ document.addEventListener('DOMContentLoaded', async () => {
     }).join('');
   }
 
-  // NEW: Delete post function
-  async function deletePost(postId) {
-    const user = await checkAuth();
-    if (!user) return;
-
-    if (!confirm('Are you sure you want to delete this post?')) return;
-
-    const { error } = await supabase
-      .from('memories')
-      .delete()
-      .eq('id', postId)
-      .eq('user_id', user.id); // Ensure user owns the post
-
-    if (error) {
-      alert('Failed to delete: ' + error.message);
-      return;
-    }
-
-    // Reload posts
-    loadUserPosts();
-  }
-
-  // Function to detect image aspect ratio and adjust fit
+  // Image fit helpers (already in your script)
   window.adjustImageFit = function(img) {
     if (img.complete) {
-      // Image already loaded
       applyFitBasedOnAspectRatio(img);
     } else {
-      // Wait for image to load
       img.onload = function() {
-        img.onload = null; // Prevent multiple calls
+        img.onload = null;
         applyFitBasedOnAspectRatio(img);
       };
     }
@@ -541,12 +500,10 @@ document.addEventListener('DOMContentLoaded', async () => {
 
   window.adjustThumbnailFit = function(img) {
     if (img.complete) {
-      // Image already loaded
       applyFitBasedOnAspectRatio(img);
     } else {
-      // Wait for image to load
       img.onload = function() {
-        img.onload = null; // Prevent multiple calls
+        img.onload = null;
         applyFitBasedOnAspectRatio(img);
       };
     }
@@ -555,22 +512,17 @@ document.addEventListener('DOMContentLoaded', async () => {
   function applyFitBasedOnAspectRatio(img) {
     if (img.naturalWidth && img.naturalHeight) {
       const aspectRatio = img.naturalWidth / img.naturalHeight;
-      if (aspectRatio < 1) { // Portrait (height > width)
+      if (aspectRatio < 1) {
         img.style.objectFit = 'contain';
-      } else if (aspectRatio > 1.2) { // Landscape (width > height by more than 20%)
+      } else if (aspectRatio > 1.2) {
         img.style.objectFit = 'cover';
-      } else { // Square or nearly square
+      } else {
         img.style.objectFit = 'contain';
       }
     } else {
-      // Default to contain for images that can't determine aspect ratio
       img.style.objectFit = 'contain';
     }
   }
-
-  // Make functions available globally for inline onclick
-  window.openEditModal = openEditModal;
-  window.deletePost = deletePost;
 
   // Initialize
   checkAuth().then(user => {
