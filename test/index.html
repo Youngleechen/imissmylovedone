@@ -5,7 +5,10 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
   <title>Healing Connections</title>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
+  <link rel="stylesheet" href="test/style.css"> <!-- Link to external CSS -->
   <style>
+    /* This style block is temporary to ensure functionality before external CSS is ready.
+       It should be removed once the content is fully moved to test/style.css */
     /* === BASE STYLES (MOBILE-FIRST) === */
     * {
       margin: 0;
@@ -352,12 +355,15 @@
   </style>
 </head>
 <body>
-
-  <!-- Header will be inserted here by script -->
-  <script type="module">
-    import { Header } from './header.js';
-    document.body.insertAdjacentHTML('afterbegin', Header());
-  </script>
+  <!-- Header -->
+  <div class="header">
+    <div class="logo">
+      <i class="fas fa-heart-circle"></i> Healing
+    </div>
+    <div class="user-menu">
+      <div class="user-avatar" id="userAvatar">U</div>
+    </div>
+  </div>
 
   <!-- Profile Completion Banner -->
   <div class="profile-banner" id="profileBanner">
@@ -400,10 +406,10 @@
 
   <!-- Bottom Navigation -->
   <div class="bottom-nav">
-    <div class="nav-item active" data-page="home">
+    <a href="/homepage" class="nav-item active" data-page="home">
       <i class="fas fa-home"></i>
       <span>Home</span>
-    </div>
+    </a>
     <div class="nav-item" data-page="community">
       <i class="fas fa-users"></i>
       <span>Community</span>
@@ -411,6 +417,10 @@
     <div class="nav-item" data-page="memories">
       <i class="fas fa-book"></i>
       <span>Memories</span>
+    </div>
+    <div class="nav-item" data-page="notifications">
+      <i class="fas fa-bell"></i>
+      <span>Notifications</span>
     </div>
     <div class="nav-item" data-page="resources">
       <i class="fas fa-leaf"></i>
@@ -488,8 +498,8 @@
       });
 
       // Close modal
-      closeProfileModal.addEventListener('click', () => profileModal.style.display = 'none');
-      cancelProfileBtn.addEventListener('click', () => profileModal.style.display = 'none');
+      closeProfileModal.addEventListener('click', () => profileModal.style.display = 'none';
+      cancelProfileBtn.addEventListener('click', () => profileModal.style.display = 'none';
 
       // Save profile
       saveProfileBtn.addEventListener('click', () => {
@@ -508,7 +518,9 @@
       });
 
       // Bottom Nav
-      document.querySelectorAll('.nav-item').forEach(item => {
+      // Note: The Home nav item is now an <a> tag linking to /homepage
+      // Other nav items still use JavaScript for internal page switching
+      document.querySelectorAll('.nav-item:not([href])').forEach(item => { // Selects nav items without an 'href' attribute
         item.addEventListener('click', () => {
           document.querySelectorAll('.nav-item').forEach(i => i.classList.remove('active'));
           item.classList.add('active');
