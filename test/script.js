@@ -6,7 +6,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   // Initialize Supabase client globally
   if (typeof window.supabase !== 'undefined') {
     supabase = window.supabase.createClient(
-      'https://ccetnqdqfrsitooestbh.supabase.co',
+      'https://ccetnqdqfrsitooestbh.supabase.co  ',
       'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImNjZXRucWRxZnJzaXRvb2VzdGJoIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjIzMTE4MjksImV4cCI6MjA3Nzg4NzgyOX0.1NjRZZrgsPOg-2z_r2kRELWn9IVXNEQNpSxK6CktJRY'
     );
   } else {
@@ -42,7 +42,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   let newMediaFiles = []; // newly added during edit
 
   async function checkAuth() {
-    const {  { user } } = await supabase.auth.getUser();
+    const { data: { user } } = await supabase.auth.getUser();
     if (!user) {
       window.location.href = 'signin.html';
       return null;
@@ -80,6 +80,9 @@ document.addEventListener('DOMContentLoaded', async () => {
       pickerInstance.id = 'actual-emoji-picker';
       pickerInstance.style.cssText = `
         position: absolute;
+        bottom: 100%;
+        right: 0;
+        margin-bottom: 10px;
         z-index: 1001;
         border: 1px solid #e2e8f0;
         border-radius: 12px;
@@ -117,41 +120,29 @@ document.addEventListener('DOMContentLoaded', async () => {
       // Position the picker relative to the emoji button
       const buttonRect = emojiButton.getBoundingClientRect();
       const pickerRect = pickerInstance.getBoundingClientRect();
-      const windowHeight = window.innerHeight;
-      const windowScrollY = window.scrollY || window.pageYOffset;
+      const windowWidth = window.innerWidth;
+      const windowScrollX = window.scrollX || window.pageXOffset;
       
-      // Calculate available space above and below
-      const spaceAbove = buttonRect.top;
-      const spaceBelow = windowHeight - buttonRect.bottom;
+      // Position above the button
+      pickerInstance.style.top = (buttonRect.top - pickerRect.height - 10) + 'px';
+      pickerInstance.style.left = (buttonRect.right - pickerRect.width) + 'px';
       
-      // Default: position above button
-      let topPosition = buttonRect.top - pickerRect.height - 10;
-      let leftPosition = buttonRect.right - pickerRect.width;
+      // Ensure picker stays within viewport
+      const pickerLeft = parseFloat(pickerInstance.style.left);
+      const pickerRight = pickerLeft + pickerRect.width;
       
-      // If not enough space above, position below
-      if (spaceAbove < pickerRect.height + 20) {
-        topPosition = buttonRect.bottom + 10;
+      if (pickerLeft < 0) {
+        // Align to left edge of viewport
+        pickerInstance.style.left = '0px';
+      } else if (pickerRight > windowWidth) {
+        // Align to right edge of viewport
+        pickerInstance.style.left = (windowWidth - pickerRect.width) + 'px';
       }
       
-      // Ensure it doesn't go off screen horizontally
-      if (leftPosition < 0) {
-        leftPosition = 0;
+      // Ensure picker is not positioned off the top of the screen
+      if (parseFloat(pickerInstance.style.top) < 0) {
+        pickerInstance.style.top = (buttonRect.bottom + 10) + 'px';
       }
-      if (leftPosition + pickerRect.width > window.innerWidth) {
-        leftPosition = window.innerWidth - pickerRect.width - 10;
-      }
-      
-      // Ensure it doesn't go off screen vertically
-      if (topPosition < 0) {
-        topPosition = 0;
-      }
-      if (topPosition + pickerRect.height > windowHeight) {
-        topPosition = windowHeight - pickerRect.height - 10;
-      }
-      
-      // Apply positions
-      pickerInstance.style.top = `${topPosition}px`;
-      pickerInstance.style.left = `${leftPosition}px`;
       
       // Show picker
       emojiPicker.style.display = 'block';
@@ -300,7 +291,7 @@ document.addEventListener('DOMContentLoaded', async () => {
           continue; // try next file
         }
 
-        const {  { publicUrl } } = supabase.storage.from('memories').getPublicUrl(fileName);
+        const { data: { publicUrl } } = supabase.storage.from('memories').getPublicUrl(fileName);
 
         newMediaFiles.push({ url: publicUrl, name: file.name, type: file.type });
         addMediaPreviewToEdit(publicUrl, file.name, file.type, false);
