@@ -4,7 +4,7 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
   <title>Healing Connections</title>
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css    " />
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css      " />
   <link rel="stylesheet" href="test/style.css"> <!-- Link to external CSS -->
   <style>
     /* This style block is temporary to ensure functionality before external CSS is ready.
@@ -51,6 +51,12 @@
       display: flex;
       align-items: center;
       gap: 8px;
+      text-decoration: none;
+    }
+
+    .logo:hover {
+      color: #4f46e5;
+      text-decoration: underline;
     }
 
     .user-menu {
@@ -71,6 +77,17 @@
       font-weight: 600;
       font-size: 1.1rem;
       cursor: pointer;
+    }
+
+    .login-btn {
+      background-color: #4f46e5;
+      color: white;
+      border: none;
+      padding: 8px 16px;
+      border-radius: 6px;
+      cursor: pointer;
+      font-size: 0.9rem;
+      margin-left: 12px;
     }
 
     /* === PROFILE COMPLETION BANNER === */
@@ -165,6 +182,28 @@
       margin-bottom: 16px;
       color: #2d3748;
       font-weight: 600;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .progress-header-actions {
+      display: flex;
+      gap: 8px;
+    }
+
+    .feedback-btn-inline {
+      padding: 6px 12px;
+      background-color: #007bff;
+      color: white;
+      border: none;
+      border-radius: 20px;
+      cursor: pointer;
+      font-size: 14px;
+    }
+
+    .feedback-btn-inline:hover {
+      background-color: #0056b3;
     }
 
     .post {
@@ -355,19 +394,20 @@
   </style>
 </head>
 <body>
-    <!-- Header -->
+  <!-- Header -->
   <div class="header">
-    <div class="logo">
-      <i class="fas fa-heart-circle"></i> Healing <!-- Kept "Healing" -->
-    </div>
+    <a href="/homepage" class="logo">
+      <i class="fas fa-heart-circle"></i> Healing
+    </a>
     <div class="user-menu">
-      <button class="action-btn" id="messageButton" style="background: none; border: none; padding: 8px; cursor: pointer;"> <!-- Message button -->
-        <i class="fas fa-envelope"></i> <!-- Message icon -->
+      <button class="action-btn" id="messageButton" style="background: none; border: none; padding: 8px; cursor: pointer;">
+        <i class="fas fa-envelope"></i>
       </button>
-      <button class="action-btn" id="callButton" style="background: none; border: none; padding: 8px; cursor: pointer;"> <!-- Call button -->
-        <i class="fas fa-phone"></i> <!-- Call icon -->
+      <button class="action-btn" id="callButton" style="background: none; border: none; padding: 8px; cursor: pointer;">
+        <i class="fas fa-phone"></i>
       </button>
-      <div class="user-avatar" id="userAvatar">U</div> <!-- Existing avatar -->
+      <div class="user-avatar" id="userAvatar">U</div>
+      <button id="loginButton" class="login-btn">Login</button>
     </div>
   </div>
 
@@ -403,7 +443,12 @@
 
     <!-- Posts -->
     <div class="posts-section">
-      <h2>Your Posts</h2>
+      <h2>
+        Your Posts
+        <div class="progress-header-actions">
+          <button id="feedbackBtnInline" class="feedback-btn-inline" onclick="openFeedbackModal()">Feedback?</button>
+        </div>
+      </h2>
       <div id="postsContainer">
         <!-- Posts will load here -->
       </div>
@@ -483,17 +528,59 @@
       </div>
     </div>
   </div>
+
+  <!-- Feedback Modal -->
+  <div id="feedbackModal" class="modal">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h2>Your Thoughts</h2>
+        <button class="close-modal" onclick="closeFeedbackModal()">&times;</button>
+      </div>
+      <form id="feedbackForm">
+        <div class="form-group">
+          <label for="name">Name (optional):</label>
+          <input type="text" id="name" name="name" class="form-control">
+        </div>
+        
+        <div class="form-group">
+          <label for="email">Email (optional):</label>
+          <input type="email" id="email" name="email" class="form-control">
+        </div>
+        
+        <div class="form-group">
+          <label for="feedbackType">Type:</label>
+          <select id="feedbackType" name="feedback_type" class="form-control">
+            <option value="suggestion">Suggestion</option>
+            <option value="improvement">Improvement</option>
+            <option value="thought">General Thought</option>
+            <option value="bug">Bug Report</option>
+          </select>
+        </div>
+        
+        <div class="form-group">
+          <label for="message">Your Feedback:</label>
+          <textarea id="message" name="message" rows="5" class="form-control" required></textarea>
+        </div>
+        
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" onclick="closeFeedbackModal()">Cancel</button>
+          <button type="submit" class="btn btn-primary">Submit Feedback</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
   <!-- Media Input -->
   <input type="file" id="mediaInput" accept="image/*,video/*" style="display:none;" multiple />
 
   <!-- Supabase & Emoji Picker -->
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2    "></script>
-  <script type="module" src="https://cdn.jsdelivr.net/npm/emoji-picker-element@    ^1/index.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2      "></script>
+  <script type="module" src="https://cdn.jsdelivr.net/npm/emoji-picker-element@      ^1/index.js"></script>
 
   <script>
     // Initialize Supabase
     window.supabaseClient = window.supabase.createClient(
-      'https://ccetnqdqfrsitooestbh.supabase.co    ',
+      'https://ccetnqdqfrsitooestbh.supabase.co      ',
       'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImNjZXRucWRxZnJzaXRvb2VzdGJoIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjIzMTE4MjksImV4cCI6MjA3Nzg4NzgyOX0.1NjRZZrgsPOg-2z_r2kRELWn9IVXNEQNpSxK6CktJRY'
     );
 
@@ -508,8 +595,48 @@
     const preferredNameInput = document.getElementById('preferredName');
     const aboutInput = document.getElementById('about');
 
+    // Modal functions
+    function openFeedbackModal() {
+      const modal = document.getElementById('feedbackModal');
+      if (modal) {
+        modal.style.display = 'flex';
+      } else {
+        console.error('Feedback modal element not found');
+      }
+    }
+    
+    function closeFeedbackModal() {
+      const modal = document.getElementById('feedbackModal');
+      if (modal) {
+        modal.style.display = 'none';
+      }
+    }
+    
+    // Close modal if clicking outside of it
+    window.onclick = function(event) {
+      const modal = document.getElementById('feedbackModal');
+      if (modal && event.target === modal) {
+        modal.style.display = 'none';
+      }
+    }
+
+    // Get current user (requires auth session)
+    async function getCurrentUser() {
+      try {
+        const { data: { user }, error } = await window.supabaseClient.auth.getUser();
+        if (error) {
+          console.error('Auth error:', error);
+          return null;
+        }
+        return user;
+      } catch (err) {
+        console.error('Error getting user:', err);
+        return null;
+      }
+    }
+
     // Check profile status on load
-    document.addEventListener('DOMContentLoaded', () => {
+    document.addEventListener('DOMContentLoaded', async () => {
       const savedName = localStorage.getItem('userFirstName');
       const profileComplete = localStorage.getItem('profileComplete') === 'true';
 
@@ -526,9 +653,9 @@
         profileModal.style.display = 'flex';
       });
 
-      // Close modal
-      closeProfileModal.addEventListener('click', () => profileModal.style.display = 'none';
-      cancelProfileBtn.addEventListener('click', () => profileModal.style.display = 'none';
+      // Close profile modal
+      closeProfileModal.addEventListener('click', () => profileModal.style.display = 'none');
+      cancelProfileBtn.addEventListener('click', () => profileModal.style.display = 'none');
 
       // Save profile
       saveProfileBtn.addEventListener('click', () => {
@@ -564,6 +691,68 @@
           document.body.classList.toggle('dark');
         }
       });
+
+      // Function to check login status and update button
+      async function updateLoginButton() {
+        const loginButton = document.getElementById('loginButton');
+        if (!loginButton) {
+          console.error('Login button not found');
+          return;
+        }
+        
+        const user = await getCurrentUser();
+        
+        if (user) {
+          // User is logged in
+          loginButton.textContent = 'Logout';
+          loginButton.onclick = async function() {
+            await window.supabaseClient.auth.signOut();
+            window.location.href = '/'; // Redirect to home after logout
+          };
+        } else {
+          // User is not logged in
+          loginButton.textContent = 'Login';
+          loginButton.onclick = function() {
+            window.location.href = '/login/';
+          };
+        }
+      }
+
+      // Form submission
+      const feedbackForm = document.getElementById('feedbackForm');
+      if (feedbackForm) {
+        feedbackForm.addEventListener('submit', async function(e) {
+          e.preventDefault();
+          
+          // Get current user if logged in
+          const user = await getCurrentUser();
+          
+          const formData = {
+            name: document.getElementById('name').value,
+            email: document.getElementById('email').value,
+            feedback_type: document.getElementById('feedbackType').value,
+            message: document.getElementById('message').value,
+            user_id: user?.id || null  // Only include if user is logged in
+          };
+          
+          try {
+            const { error } = await window.supabaseClient
+              .from('feedback')
+              .insert([formData]);
+              
+            if (error) throw error;
+            
+            alert('Thank you for your feedback!');
+            document.getElementById('feedbackForm').reset();
+            closeFeedbackModal();
+          } catch (error) {
+            console.error('Error submitting feedback:', error);
+            alert('Error submitting feedback. Please try again.');
+          }
+        });
+      }
+
+      updateLoginButton(); // Check login status when page loads
     });
   </script>
 
