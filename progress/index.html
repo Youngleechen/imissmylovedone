@@ -257,21 +257,22 @@
       font-size: 1.4rem;
     }
 
-    /* Modal Styles */
-    .floating-feedback-btn {
-      position: fixed;
-      bottom: 20px;
-      right: 20px;
-      padding: 15px 20px;
+    /* Feedback Button in Top Right Corner */
+    .feedback-btn-top {
+      position: absolute;
+      top: 16px;
+      right: 16px;
+      padding: 8px 16px;
       background-color: #007bff;
       color: white;
       border: none;
-      border-radius: 50px;
+      border-radius: 20px;
       cursor: pointer;
+      font-size: 14px;
       z-index: 1000;
-      font-size: 16px;
     }
 
+    /* Modal Styles */
     .modal {
       display: none;
       position: fixed;
@@ -358,8 +359,8 @@
     <div id="updatesContainer"></div>
   </div>
 
-  <!-- Feedback Button -->
-  <button id="feedbackBtn" class="floating-feedback-btn" onclick="openFeedbackModal()">Feedback</button>
+  <!-- Feedback Button in Top Right Corner -->
+  <button id="feedbackBtnTop" class="feedback-btn-top" onclick="openFeedbackModal()">Feedback?</button>
 
   <!-- Feedback Modal -->
   <div id="feedbackModal" class="modal">
@@ -436,7 +437,7 @@
     
     // Get current user (requires auth session)
     async function getCurrentUser() {
-      const { data: { user }, error } = await window.supabaseClient.auth.getUser();
+      const {  { user }, error } = await window.supabaseClient.auth.getUser();
       if (error) {
         console.error('Auth error:', error);
         return null;
