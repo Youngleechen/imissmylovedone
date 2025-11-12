@@ -539,6 +539,41 @@
       font-size: 0.85rem;
       color: #718096;
     }
+
+    /* Help Resources */
+    .help-resources {
+      display: none;
+      flex-direction: column;
+      gap: 12px;
+      margin-top: 15px;
+    }
+
+    .help-item {
+      padding: 15px;
+      background: #f8fafc;
+      border-radius: 8px;
+      border-left: 4px solid #48bb78;
+    }
+
+    .help-title {
+      font-weight: 600;
+      color: #1f2937;
+      margin-bottom: 8px;
+    }
+
+    .help-content {
+      color: #374151;
+      line-height: 1.5;
+      font-size: 0.95rem;
+    }
+
+    .help-link {
+      color: #4f46e5;
+      text-decoration: none;
+      display: block;
+      margin-top: 8px;
+      font-weight: 600;
+    }
   </style>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
 </head>
@@ -625,6 +660,9 @@
     <div id="social-features" class="social-features">
       <!-- Social features will be populated here -->
     </div>
+    <div id="help-resources" class="help-resources">
+      <!-- Help resources will be populated here -->
+    </div>
   </div>
 
   <!-- Bottom Navigation -->
@@ -684,6 +722,7 @@
       const groupList = document.getElementById('group-list');
       const notificationList = document.getElementById('notification-list');
       const socialFeatures = document.getElementById('social-features');
+      const helpResources = document.getElementById('help-resources');
       const sectionTitle = document.getElementById('section-title');
       
       // Reset displays
@@ -691,6 +730,7 @@
       groupList.style.display = 'none';
       notificationList.style.display = 'none';
       socialFeatures.style.display = 'none';
+      helpResources.style.display = 'none';
       sectionTitle.textContent = 'Community Memories';
 
       container.innerHTML = 'Loading...';
@@ -839,6 +879,7 @@
       const groupList = document.getElementById('group-list');
       const notificationList = document.getElementById('notification-list');
       const socialFeatures = document.getElementById('social-features');
+      const helpResources = document.getElementById('help-resources');
       const sectionTitle = document.getElementById('section-title');
       
       // Reset displays
@@ -846,6 +887,7 @@
       groupList.style.display = 'flex';
       notificationList.style.display = 'none';
       socialFeatures.style.display = 'none';
+      helpResources.style.display = 'none';
       sectionTitle.textContent = 'Your Groups';
 
       // 20+ grief groups with real loss types
@@ -894,6 +936,7 @@
       const groupList = document.getElementById('group-list');
       const notificationList = document.getElementById('notification-list');
       const socialFeatures = document.getElementById('social-features');
+      const helpResources = document.getElementById('help-resources');
       const sectionTitle = document.getElementById('section-title');
       
       // Reset displays
@@ -901,6 +944,7 @@
       groupList.style.display = 'none';
       notificationList.style.display = 'flex';
       socialFeatures.style.display = 'none';
+      helpResources.style.display = 'none';
       sectionTitle.textContent = 'Notifications';
 
       // Sample notifications with personal context
@@ -932,6 +976,7 @@
       const groupList = document.getElementById('group-list');
       const notificationList = document.getElementById('notification-list');
       const socialFeatures = document.getElementById('social-features');
+      const helpResources = document.getElementById('help-resources');
       const sectionTitle = document.getElementById('section-title');
       
       // Reset displays
@@ -939,6 +984,7 @@
       groupList.style.display = 'none';
       notificationList.style.display = 'none';
       socialFeatures.style.display = 'flex';
+      helpResources.style.display = 'none';
       sectionTitle.textContent = 'Connect & Share';
 
       // Sample social features data
@@ -967,6 +1013,68 @@
       `).join('');
 
       socialFeatures.innerHTML = featuresHTML;
+    }
+
+    // Function to show help resources
+    function showHelp() {
+      const container = document.getElementById('all-posts-container');
+      const groupList = document.getElementById('group-list');
+      const notificationList = document.getElementById('notification-list');
+      const socialFeatures = document.getElementById('social-features');
+      const helpResources = document.getElementById('help-resources');
+      const sectionTitle = document.getElementById('section-title');
+      
+      // Reset displays
+      container.style.display = 'none';
+      groupList.style.display = 'none';
+      notificationList.style.display = 'none';
+      socialFeatures.style.display = 'none';
+      helpResources.style.display = 'flex';
+      sectionTitle.textContent = 'Help & Resources';
+
+      // Help resources data
+      const resources = [
+        {
+          title: 'Crisis Support',
+          content: 'If you\'re in crisis, please reach out for immediate help. You are not alone.',
+          link: 'https://suicidepreventionlifeline.org/',
+          linkText: 'National Suicide Prevention Lifeline: 988'
+        },
+        {
+          title: 'Grief Support Groups',
+          content: 'Connect with others who understand your loss. Find local and online support groups based on your specific type of grief.',
+          link: '#',
+          linkText: 'Find a Support Group'
+        },
+        {
+          title: 'Coping Strategies',
+          content: 'Explore healthy ways to manage grief, including journaling, meditation, and physical activity.',
+          link: '#',
+          linkText: 'View Coping Resources'
+        },
+        {
+          title: 'Professional Help',
+          content: 'Find licensed therapists, counselors, and grief specialists in your area.',
+          link: '#',
+          linkText: 'Find Professional Help'
+        },
+        {
+          title: 'Emergency Resources',
+          content: 'In case of emergency, contact local emergency services or go to the nearest emergency room.',
+          link: 'tel:911',
+          linkText: 'Emergency: 911'
+        }
+      ];
+
+      const resourcesHTML = resources.map(resource => `
+        <div class="help-item">
+          <div class="help-title">${resource.title}</div>
+          <div class="help-content">${resource.content}</div>
+          <a href="${resource.link}" class="help-link">${resource.linkText}</a>
+        </div>
+      `).join('');
+
+      helpResources.innerHTML = resourcesHTML;
     }
 
     // Track current active page
@@ -1004,7 +1112,7 @@
           showNotifications();
           currentActivePage = 'notifications';
         } else if (page === 'resources') {
-          showSocialFeatures();
+          showHelp();
           currentActivePage = 'resources';
         } else {
           // For other pages, just reset to default
@@ -1026,6 +1134,7 @@
       const groupList = document.getElementById('group-list');
       const notificationList = document.getElementById('notification-list');
       const socialFeatures = document.getElementById('social-features');
+      const helpResources = document.getElementById('help-resources');
       const sectionTitle = document.getElementById('section-title');
       
       // Hide everything else
@@ -1033,6 +1142,7 @@
       groupList.style.display = 'none';
       notificationList.style.display = 'none';
       socialFeatures.style.display = 'none';
+      helpResources.style.display = 'none';
       
       // Show message inbox
       inbox.style.display = 'flex';
