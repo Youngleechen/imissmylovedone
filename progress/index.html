@@ -8,6 +8,9 @@
   <!-- Supabase Client -->
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2  "></script>
 
+  <!-- Font Awesome -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
+
   <!-- Styles (reuse from test/) -->
   <link rel="stylesheet" href="../test/style.css" />
 
@@ -20,6 +23,240 @@
   </script>
   
   <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: Arial, sans-serif;
+      background-color: #f8f9fa;
+      padding: 2px;
+      max-width: 800px;
+      margin: 0 auto;
+    }
+
+    /* Header styles */
+    .header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 16px;
+      background: white;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+      position: sticky;
+      top: 0;
+      z-index: 100;
+    }
+
+    .logo {
+      font-size: 1.2rem;
+      font-weight: 700;
+      color: #5a67d8;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .user-menu {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .user-avatar {
+      width: 44px;
+      height: 44px;
+      border-radius: 50%;
+      background: linear-gradient(45deg, #5a67d8, #9f7aea);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: white;
+      font-weight: 600;
+      font-size: 1.1rem;
+      cursor: pointer;
+    }
+    
+    .login-btn {
+      background-color: #4f46e5;
+      color: white;
+      border: none;
+      padding: 8px 16px;
+      border-radius: 6px;
+      cursor: pointer;
+      font-size: 0.9rem;
+      margin-left: 12px;
+    }
+
+    .posts-section { 
+      margin-top: 20px; 
+      padding: 20px; 
+      background-color: white; 
+      border-radius: 8px; 
+      box-shadow: 0 1px 3px rgba(0,0,0,0.1); 
+    }
+
+    .posts-section h2 { 
+      margin-bottom: 15px; 
+      color: #1f2937;
+    }
+
+    .post-item {
+      background: white;
+      border-radius: 8px;
+      margin-bottom: 40px;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+      width: 100%;
+      max-width: 600px;
+      margin-left: auto;
+      margin-right: auto;
+      padding: 15px;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .post-header {
+      display: flex;
+      align-items: center;
+      margin-bottom: 12px;
+      gap: 12px;
+    }
+
+    .profile-image {
+      width: 48px;
+      height: 48px;
+      border-radius: 50%;
+      object-fit: cover;
+      background-color: #e5e7eb;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: bold;
+      color: #6b7280;
+    }
+
+    .profile-info {
+      display: flex;
+      flex-direction: column;
+    }
+
+    .username {
+      font-weight: 600;
+      color: #1f2937;
+      margin-bottom: 2px;
+    }
+
+    .post-date {
+      font-size: 0.85rem;
+      color: #718096;
+    }
+
+    .post-content {
+      width: 100%;
+      text-align: left;
+    }
+
+    .text-container {
+      position: relative;
+      display: -webkit-box;
+      -webkit-line-clamp: 2;
+      -webkit-box-orient: vertical;
+      overflow: hidden;
+      margin-bottom: 8px;
+    }
+
+    .text-container.expanded {
+      -webkit-line-clamp: unset;
+      -webkit-box-orient: unset;
+      display: block;
+    }
+
+    .text-container::after {
+      content: '...';
+      position: absolute;
+      bottom: 0;
+      right: 0;
+      background: white;
+      padding-left: 5px;
+    }
+
+    .text-container.expanded::after {
+      content: '';
+    }
+
+    .post-content p {
+      margin: 0;
+      line-height: 1.6;
+      color: #374151;
+    }
+
+    .show-more-btn {
+      background: none;
+      border: none;
+      color: #4f46e5;
+      cursor: pointer;
+      font-size: 0.9em;
+      padding: 0;
+      margin-top: 4px;
+      text-decoration: underline;
+      font-weight: 600;
+      display: none;
+    }
+
+    .show-more-btn.visible {
+      display: inline;
+    }
+
+    .media-container {
+      margin: 10px 0;
+      border-radius: 8px;
+      position: relative;
+      width: 100%;
+      overflow: hidden;
+    }
+
+    .media-item,
+    .media-item-video {
+      width: 100%;
+      display: block;
+      object-fit: contain;
+      object-position: center;
+      background-color: #f3f4f6;
+    }
+
+    /* Bottom Navigation Styles */
+    .bottom-nav {
+      position: fixed;
+      bottom: 0;
+      left: 0;
+      width: 100%;
+      background: white;
+      display: flex;
+      justify-content: space-around;
+      padding: 12px 0;
+      box-shadow: 0 -2px 10px rgba(0,0,0,0.05);
+      z-index: 99;
+    }
+
+    .nav-item {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 4px;
+      font-size: 0.8rem;
+      color: #718096;
+    }
+
+    .nav-item.active {
+      color: #5a67d8;
+    }
+
+    .nav-item i {
+      font-size: 1.4rem;
+    }
+
     /* Modal Styles */
     .floating-feedback-btn {
       position: fixed;
@@ -99,6 +336,23 @@
   </style>
 </head>
 <body>
+  <!-- Header -->
+  <div class="header">
+    <div class="logo">
+      <i class="fas fa-heart-circle"></i> Healing <!-- Kept "Healing" -->
+    </div>
+    <div class="user-menu">
+      <button class="action-btn" id="messageButton" style="background: none; border: none; padding: 8px; cursor: pointer;"> <!-- Message button -->
+        <i class="fas fa-envelope"></i> <!-- Message icon -->
+      </button>
+      <button class="action-btn" id="callButton" style="background: none; border: none; padding: 8px; cursor: pointer;"> <!-- Call button -->
+        <i class="fas fa-phone"></i> <!-- Call icon -->
+      </button>
+      <div class="user-avatar" id="userAvatar">U</div> <!-- Existing avatar -->
+      <button id="loginButton" class="login-btn">Login</button>
+    </div>
+  </div>
+
   <div class="posts-section">
     <h2>Development Progress Updates</h2>
     <div id="updatesContainer"></div>
@@ -132,6 +386,30 @@
         
         <button type="submit">Submit Feedback</button>
       </form>
+    </div>
+  </div>
+
+  <!-- Bottom Navigation -->
+  <div class="bottom-nav">
+    <a href="/test" class="nav-item active" data-page="dashboard">
+      <i class="fas fa-tachboard-alt"></i>
+      <span>Dashboard</span>
+    </a>
+    <div class="nav-item" data-page="community">
+      <i class="fas fa-users"></i>
+      <span>Community</span>
+    </div>
+    <a href="/progress" class="nav-item" data-page="progress">
+      <i class="fas fa-book"></i>
+      <span>Progress</span>
+    </a>
+    <div class="nav-item" data-page="notifications">
+      <i class="fas fa-bell"></i>
+      <span>Notifications</span>
+    </div>
+    <div class="nav-item" data-page="resources">
+      <i class="fas fa-leaf"></i>
+      <span>Help</span>
     </div>
   </div>
 
@@ -195,6 +473,31 @@
         console.error('Error submitting feedback:', error);
         alert('Error submitting feedback. Please try again.');
       }
+    });
+
+    // Function to check login status and update button
+    async function updateLoginButton() {
+      const loginButton = document.getElementById('loginButton');
+      const user = await window.supabaseClient.auth.getUser();
+      
+      if (user.data.user) {
+        // User is logged in
+        loginButton.textContent = 'Logout';
+        loginButton.onclick = async function() {
+          await window.supabaseClient.auth.signOut();
+          window.location.href = '/'; // Redirect to home after logout
+        };
+      } else {
+        // User is not logged in
+        loginButton.textContent = 'Login';
+        loginButton.onclick = function() {
+          window.location.href = '/login/';
+        };
+      }
+    }
+
+    document.addEventListener('DOMContentLoaded', function() {
+      updateLoginButton(); // Check login status when page loads
     });
   </script>
 </body>
