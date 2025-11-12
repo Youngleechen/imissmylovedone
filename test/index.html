@@ -352,15 +352,12 @@
   </style>
 </head>
 <body>
-  <!-- Header -->
-  <div class="header">
-    <div class="logo">
-      <i class="fas fa-heart-circle"></i> Healing
-    </div>
-    <div class="user-menu">
-      <div class="user-avatar" id="userAvatar">U</div>
-    </div>
-  </div>
+
+  <!-- Header will be inserted here by script -->
+  <script type="module">
+    import { Header } from './header.js';
+    document.body.insertAdjacentHTML('afterbegin', Header());
+  </script>
 
   <!-- Profile Completion Banner -->
   <div class="profile-banner" id="profileBanner">
