@@ -355,13 +355,19 @@
   </style>
 </head>
 <body>
-  <!-- Header -->
+    <!-- Header -->
   <div class="header">
     <div class="logo">
-      <i class="fas fa-heart-circle"></i> Healing
+      <i class="fas fa-heart-circle"></i> Healing <!-- Kept "Healing" -->
     </div>
     <div class="user-menu">
-      <div class="user-avatar" id="userAvatar">U</div>
+      <button class="action-btn" id="messageButton" style="background: none; border: none; padding: 8px; cursor: pointer;"> <!-- Message button -->
+        <i class="fas fa-envelope"></i> <!-- Message icon -->
+      </button>
+      <button class="action-btn" id="callButton" style="background: none; border: none; padding: 8px; cursor: pointer;"> <!-- Call button -->
+        <i class="fas fa-phone"></i> <!-- Call icon -->
+      </button>
+      <div class="user-avatar" id="userAvatar">U</div> <!-- Existing avatar -->
     </div>
   </div>
 
