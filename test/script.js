@@ -111,39 +111,42 @@ document.addEventListener('DOMContentLoaded', async () => {
       });
     };
 
-    // Open emoji picker
+    // Open emoji picker — RECALCULATE POSITION EVERY TIME
     const openEmojiPicker = () => {
       if (isPickerOpen) return;
       
-      createEmojiPicker();
+      createEmojiPicker(); // Ensure picker exists
       
-      // Position the picker relative to the emoji button
+      // Get current button and picker dimensions
       const buttonRect = emojiButton.getBoundingClientRect();
       const pickerRect = pickerInstance.getBoundingClientRect();
       const windowWidth = window.innerWidth;
       const windowScrollX = window.scrollX || window.pageXOffset;
-      
-      // Position above the button
-      pickerInstance.style.top = (buttonRect.top - pickerRect.height - 10) + 'px';
-      pickerInstance.style.left = (buttonRect.right - pickerRect.width) + 'px';
-      
-      // Ensure picker stays within viewport
-      const pickerLeft = parseFloat(pickerInstance.style.left);
-      const pickerRight = pickerLeft + pickerRect.width;
-      
-      if (pickerLeft < 0) {
-        // Align to left edge of viewport
-        pickerInstance.style.left = '0px';
-      } else if (pickerRight > windowWidth) {
-        // Align to right edge of viewport
-        pickerInstance.style.left = (windowWidth - pickerRect.width) + 'px';
+      const windowScrollY = window.scrollY || window.pageYOffset;
+
+      // Calculate ideal position: above button, aligned right edge
+      let leftPos = buttonRect.right - pickerRect.width;
+      let topPos = buttonRect.top - pickerRect.height - 10;
+
+      // Adjust if picker would go off-screen left
+      if (leftPos < 0) {
+        leftPos = 0;
       }
-      
-      // Ensure picker is not positioned off the top of the screen
-      if (parseFloat(pickerInstance.style.top) < 0) {
-        pickerInstance.style.top = (buttonRect.bottom + 10) + 'px';
+
+      // Adjust if picker would go off-screen right
+      if (leftPos + pickerRect.width > windowWidth) {
+        leftPos = windowWidth - pickerRect.width;
       }
-      
+
+      // Adjust if picker would go off-screen top
+      if (topPos < 0) {
+        topPos = buttonRect.bottom + 10; // Place below button instead
+      }
+
+      // Apply calculated positions
+      pickerInstance.style.left = `${leftPos}px`;
+      pickerInstance.style.top = `${topPos}px`;
+
       // Show picker
       emojiPicker.style.display = 'block';
       isPickerOpen = true;
