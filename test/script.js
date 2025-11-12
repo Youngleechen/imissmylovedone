@@ -1,7 +1,19 @@
 // script.js - Main application logic for Memories
 
+let supabase;
+
 document.addEventListener('DOMContentLoaded', async () => {
-  const supabase = window.supabaseClient;
+  // Initialize Supabase client globally
+  if (typeof window.supabase !== 'undefined') {
+    supabase = window.supabase.createClient(
+      'https://ccetnqdqfrsitooestbh.supabase.co',
+      'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImNjZXRucWRxZnJzaXRvb2VzdGJoIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjIzMTE4MjksImV4cCI6MjA3Nzg4NzgyOX0.1NjRZZrgsPOg-2z_r2kRELWn9IVXNEQNpSxK6CktJRY'
+    );
+  } else {
+    console.error('Supabase library not loaded!');
+    return;
+  }
+
   const memoryBody = document.getElementById('memory-body');
   const emojiButton = document.getElementById('emojiButton');
   const emojiPicker = document.getElementById('emojiPicker');
@@ -438,7 +450,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         const isFirstVideo = firstUrl.includes('.mp4') || firstUrl.includes('.webm') || firstUrl.includes('.mov');
 
         mediaGridHtml += `
-          <div class="media-grid-item large" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; cursor: pointer;" onclick="openGallery('${post.id}', '${encodeURIComponent(JSON.stringify(mediaMatches.map(m => m[2])))}', 0)">
+          <div class="media-grid-item large" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; cursor: pointer;" onclick="openGallery(\'${post.id}\', \'${encodeURIComponent(JSON.stringify(mediaMatches.map(m => m[2])))}\', 0)">
             ${isFirstVideo ?
               `<video muted playsinline style="width: 100%; height: 100%; object-fit: cover;">
                  <source src="${firstUrl}" type="video/mp4">
@@ -454,7 +466,7 @@ document.addEventListener('DOMContentLoaded', async () => {
           const isSecondVideo = secondUrl.includes('.mp4') || secondUrl.includes('.webm') || secondUrl.includes('.mov');
 
           mediaGridHtml += `
-            <div class="media-grid-overlay" style="position: absolute; bottom: 10px; right: 10px; width: 80px; height: 80px; cursor: pointer;" onclick="openGallery('${post.id}', '${encodeURIComponent(JSON.stringify(mediaMatches.map(m => m[2])))}', 1)">
+            <div class="media-grid-overlay" style="position: absolute; bottom: 10px; right: 10px; width: 80px; height: 80px; cursor: pointer;" onclick="openGallery(\'${post.id}\', \'${encodeURIComponent(JSON.stringify(mediaMatches.map(m => m[2])))}\', 1)">
               <div class="second-thumbnail" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; border-radius: 8px; overflow: hidden; box-shadow: 0 2px 4px rgba(0,0,0,0.3); background: white;">
                 ${isSecondVideo ?
                   `<video muted playsinline style="width: 100%; height: 100%; object-fit: cover;">
@@ -487,7 +499,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             ${new Date(post.created_at).toLocaleString()}
           </small>
           <div style="margin-top: 10px;">
-            <button onclick="openEditModal('${post.id}', \`${post.body.replace(/`/g, '&#96;')}\`)" 
+            <button onclick="openEditModal(\'${post.id}\', \`${post.body.replace(/`/g, '&#96;')}\`)" 
                     style="background: #4299e1; color: white; border: none; padding: 5px 10px; border-radius: 4px; cursor: pointer; font-size: 12px;">
               Edit
             </button>
