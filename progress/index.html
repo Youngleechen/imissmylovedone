@@ -57,6 +57,12 @@
       display: flex;
       align-items: center;
       gap: 8px;
+      text-decoration: none;
+    }
+
+    .logo:hover {
+      color: #4f46e5;
+      text-decoration: underline;
     }
 
     .user-menu {
@@ -259,9 +265,7 @@
 
     /* Feedback Button in Top Right Corner */
     .feedback-btn-top {
-      position: absolute;
-      top: 16px;
-      right: 16px;
+      position: relative;
       padding: 8px 16px;
       background-color: #007bff;
       color: white;
@@ -270,6 +274,11 @@
       cursor: pointer;
       font-size: 14px;
       z-index: 1000;
+      margin-left: 12px;
+    }
+
+    .feedback-btn-top:hover {
+      background-color: #0056b3;
     }
 
     /* Modal Styles */
@@ -339,18 +348,20 @@
 <body>
   <!-- Header -->
   <div class="header">
-    <div class="logo">
-      <i class="fas fa-heart-circle"></i> Healing <!-- Kept "Healing" -->
-    </div>
+    <a href="/" class="logo">
+      <i class="fas fa-heart-circle"></i> Healing
+    </a>
     <div class="user-menu">
-      <button class="action-btn" id="messageButton" style="background: none; border: none; padding: 8px; cursor: pointer;"> <!-- Message button -->
-        <i class="fas fa-envelope"></i> <!-- Message icon -->
+      <button class="action-btn" id="messageButton" style="background: none; border: none; padding: 8px; cursor: pointer;">
+        <i class="fas fa-envelope"></i>
       </button>
-      <button class="action-btn" id="callButton" style="background: none; border: none; padding: 8px; cursor: pointer;"> <!-- Call button -->
-        <i class="fas fa-phone"></i> <!-- Call icon -->
+      <button class="action-btn" id="callButton" style="background: none; border: none; padding: 8px; cursor: pointer;">
+        <i class="fas fa-phone"></i>
       </button>
-      <div class="user-avatar" id="userAvatar">U</div> <!-- Existing avatar -->
+      <div class="user-avatar" id="userAvatar">U</div>
       <button id="loginButton" class="login-btn">Login</button>
+      <!-- Feedback Button in Top Right Corner -->
+      <button id="feedbackBtnTop" class="feedback-btn-top" onclick="openFeedbackModal()">Feedback?</button>
     </div>
   </div>
 
@@ -358,9 +369,6 @@
     <h2>Development Progress Updates</h2>
     <div id="updatesContainer"></div>
   </div>
-
-  <!-- Feedback Button in Top Right Corner -->
-  <button id="feedbackBtnTop" class="feedback-btn-top" onclick="openFeedbackModal()">Feedback?</button>
 
   <!-- Feedback Modal -->
   <div id="feedbackModal" class="modal">
