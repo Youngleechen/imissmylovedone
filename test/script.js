@@ -6,7 +6,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   // Initialize Supabase client globally
   if (typeof window.supabase !== 'undefined') {
     supabase = window.supabase.createClient(
-      'https://ccetnqdqfrsitooestbh.supabase.co',
+      'https://ccetnqdqfrsitooestbh.supabase.co       ',
       'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImNjZXRucWRxZnJzaXRvb2VzdGJoIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjIzMTE4MjksImV4cCI6MjA3Nzg4NzgyOX0.1NjRZZrgsPOg-2z_r2kRELWn9IVXNEQNpSxK6CktJRY'
     );
   } else {
@@ -41,20 +41,13 @@ document.addEventListener('DOMContentLoaded', async () => {
   let currentEditMedia = []; // { url, name, isExisting: true, isDeleted: false }
   let newMediaFiles = []; // newly added during edit
 
-  // Fixed auth check function
   async function checkAuth() {
-    try {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) {
-        window.location.href = 'signin.html';
-        return null;
-      }
-      return user;
-    } catch (error) {
-      console.error('Auth check failed:', error);
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) {
       window.location.href = 'signin.html';
       return null;
     }
+    return user;
   }
 
   // Auto-resize textarea
@@ -70,114 +63,76 @@ document.addEventListener('DOMContentLoaded', async () => {
     autoResize();
   }
 
-  // Emoji picker - Updated for multiple selection and proper positioning
+  // Emoji picker
   if (emojiButton && emojiPicker) {
     let pickerInstance = null;
-    let isPickerOpen = false;
+    let isPickerVisible = false;
 
-    // Create and configure emoji picker
-    const createEmojiPicker = () => {
-      if (pickerInstance) return;
-      
-      // Clear any existing picker
-      emojiPicker.innerHTML = '';
-      
-      // Create new emoji picker element
-      pickerInstance = document.createElement('emoji-picker');
-      pickerInstance.id = 'actual-emoji-picker';
-      pickerInstance.style.cssText = `
-        position: absolute;
-        z-index: 1001;
-        border: 1px solid #e2e8f0;
-        border-radius: 12px;
-        box-shadow: 0 4px 12px rgba(0,0,0,0.15);
-        background: white;
-        width: 320px;
-        height: 380px;
-        overflow: hidden;
-      `;
-      
-      // Add to container
-      emojiPicker.appendChild(pickerInstance);
-      
-      // Handle emoji selection
-      pickerInstance.addEventListener('emoji-click', (event) => {
-        const emoji = event.detail.unicode;
-        const start = memoryBody.selectionStart;
-        const end = memoryBody.selectionEnd;
-        const text = memoryBody.value;
-        memoryBody.value = text.slice(0, start) + emoji + text.slice(end);
-        autoResize();
-        const newCursorPos = start + emoji.length;
-        memoryBody.setSelectionRange(newCursorPos, newCursorPos);
-        memoryBody.focus();
-        
-        // Picker stays open after selection (for multiple emojis)
-      });
-    };
-
-    // Open emoji picker
-    const openEmojiPicker = () => {
-      if (isPickerOpen) return;
-      
-      createEmojiPicker();
-      
-      // Position the picker relative to the emoji button
-      const buttonRect = emojiButton.getBoundingClientRect();
-      const pickerRect = pickerInstance.getBoundingClientRect();
-      
-      // Calculate position above the button
-      let top = buttonRect.top - pickerRect.height - 10;
-      let left = buttonRect.left;
-      
-      // Adjust if picker would go off screen
-      if (top < 0) {
-        // Position below the button instead
-        top = buttonRect.bottom + 10;
-      }
-      
-      // Ensure picker stays within viewport
-      const windowWidth = window.innerWidth;
-      if (left + pickerRect.width > windowWidth) {
-        left = windowWidth - pickerRect.width - 10;
-      }
-      
-      // Apply calculated positions
-      pickerInstance.style.top = top + 'px';
-      pickerInstance.style.left = left + 'px';
-      
-      // Show picker
-      emojiPicker.style.display = 'block';
-      isPickerOpen = true;
-    };
-
-    // Close emoji picker
-    const closeEmojiPicker = () => {
-      emojiPicker.style.display = 'none';
-      isPickerOpen = false;
-    };
-
-    // Toggle emoji picker
     emojiButton.addEventListener('click', (e) => {
       e.stopPropagation();
-      if (isPickerOpen) {
-        closeEmojiPicker();
+      
+      if (!pickerInstance) {
+        pickerInstance = document.createElement('emoji-picker');
+        pickerInstance.setAttribute('id', 'actual-emoji-picker');
+        emojiPicker.appendChild(pickerInstance);
+
+        pickerInstance.addEventListener('emoji-click', (event) => {
+          const emoji = event.detail.unicode;
+          const start = memoryBody.selectionStart;
+          const end = memoryBody.selectionEnd;
+          const text = memoryBody.value;
+          memoryBody.value = text.slice(0, start) + emoji + text.slice(end);
+          autoResize();
+          const newCursorPos = start + emoji.length;
+          memoryBody.setSelectionRange(newCursorPos, newCursorPos);
+          memoryBody.focus();
+          // Picker remains open - no closing code here
+        });
+      }
+
+      // Toggle visibility
+      if (isPickerVisible) {
+        emojiPicker.classList.remove('show');
+        isPickerVisible = false;
       } else {
-        openEmojiPicker();
+        // Position the picker
+        const wrapper = emojiButton.closest('.thought-actions') || emojiButton.closest('.thought-box');
+        if (!wrapper) {
+          console.error('Emoji button wrapper not found!');
+          return;
+        }
+        const wrapperRect = wrapper.getBoundingClientRect();
+        const pickerHeight = 380;
+        const spaceBelow = window.innerHeight - wrapperRect.bottom;
+        const spaceAbove = wrapperRect.top;
+
+        emojiPicker.style.top = 'auto';
+        emojiPicker.style.bottom = 'auto';
+        emojiPicker.style.left = 'auto';
+        emojiPicker.style.right = '0';
+
+        if (spaceBelow >= pickerHeight) {
+          emojiPicker.style.top = (wrapperRect.height + 8) + 'px';
+        } else if (spaceAbove >= pickerHeight) {
+          emojiPicker.style.bottom = (wrapperRect.height + 8) + 'px';
+        } else {
+          emojiPicker.style.top = (wrapperRect.height + 8) + 'px';
+        }
+
+        emojiPicker.classList.add('show');
+        isPickerVisible = true;
       }
     });
 
-    // Close picker when clicking outside
+    // Click away handler
     document.addEventListener('click', (e) => {
-      if (!emojiButton.contains(e.target) && !emojiPicker.contains(e.target) && !memoryBody.contains(e.target)) {
-        closeEmojiPicker();
-      }
-    });
-
-    // Close picker when pressing escape key
-    document.addEventListener('keydown', (e) => {
-      if (e.key === 'Escape' && isPickerOpen) {
-        closeEmojiPicker();
+      if (
+        !emojiButton.contains(e.target) &&
+        !emojiPicker.contains(e.target) &&
+        !memoryBody.contains(e.target)
+      ) {
+        emojiPicker.classList.remove('show');
+        isPickerVisible = false;
       }
     });
   }
@@ -293,7 +248,6 @@ document.addEventListener('DOMContentLoaded', async () => {
           continue; // try next file
         }
 
-        // ✅ CORRECTED LINE - Fixed destructuring syntax
         const { data: { publicUrl } } = supabase.storage.from('memories').getPublicUrl(fileName);
 
         newMediaFiles.push({ url: publicUrl, name: file.name, type: file.type });
@@ -409,65 +363,6 @@ document.addEventListener('DOMContentLoaded', async () => {
       editModal.style.display = 'flex';
     };
 
-    // Save edited post — ✅ PRESERVES MEDIA
-    saveEditButton.addEventListener('click', async () => {
-      if (!currentEditPostId) return;
-      const user = await checkAuth();
-      if (!user) return;
-
-      let body = editBody.value.trim();
-
-      // Combine non-deleted existing + new media
-      const allMedia = [
-        ...currentEditMedia.filter(m => !m.isDeleted),
-        ...newMediaFiles
-      ];
-
-      // Reconstruct body with media markdown
-      allMedia.forEach(m => {
-        body += `\n\n![${m.name || 'Media'}](${m.url})`;
-      });
-
-      const { error } = await supabase
-        .from('memories')
-        .update({ body })
-        .eq('id', currentEditPostId)
-        .eq('user_id', user.id);
-
-      if (error) {
-        alert('Failed to update: ' + error.message);
-        return;
-      }
-
-      editModal.style.display = 'none';
-      loadUserPosts();
-    });
-
-    // Delete post
-    deleteEditButton.addEventListener('click', async () => {
-      if (!currentEditPostId) return;
-      if (!confirm('Delete this memory permanently?')) return;
-
-      const user = await checkAuth();
-      if (!user) return;
-
-      const { error } = await supabase
-        .from('memories')
-        .delete()
-        .eq('id', currentEditPostId)
-        .eq('user_id', user.id);
-
-      if (error) {
-        alert('Failed to delete: ' + error.message);
-        return;
-      }
-
-      editModal.style.display = 'none';
-      loadUserPosts();
-    });
-  } else {
-    console.warn('Edit modal elements not found - edit functionality disabled');
-  }
     // Save edited post — ✅ PRESERVES MEDIA
     saveEditButton.addEventListener('click', async () => {
       if (!currentEditPostId) return;
@@ -668,4 +563,3 @@ document.addEventListener('DOMContentLoaded', async () => {
     }
   });
 });
-
