@@ -311,6 +311,51 @@
       color: #718096;
       margin-top: 4px;
     }
+
+    /* Call/Social Features */
+    .social-features {
+      display: none;
+      flex-direction: column;
+      gap: 12px;
+      margin-top: 15px;
+    }
+
+    .social-item {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 12px;
+      background: #f8fafc;
+      border-radius: 8px;
+      border-left: 4px solid #ed8936;
+    }
+
+    .social-icon {
+      width: 48px;
+      height: 48px;
+      border-radius: 50%;
+      background: linear-gradient(45deg, #ed8936, #f6ad55);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: white;
+      font-size: 1.1rem;
+    }
+
+    .social-info {
+      flex: 1;
+    }
+
+    .social-name {
+      font-weight: 600;
+      color: #1f2937;
+      margin-bottom: 4px;
+    }
+
+    .social-meta {
+      font-size: 0.85rem;
+      color: #718096;
+    }
   </style>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
 </head>
@@ -340,6 +385,9 @@
     </div>
     <div id="notification-list" class="notification-list">
       <!-- Notifications will be populated here -->
+    </div>
+    <div id="social-features" class="social-features">
+      <!-- Social features will be populated here -->
     </div>
   </div>
 
@@ -399,12 +447,14 @@
       const container = document.getElementById('all-posts-container');
       const groupList = document.getElementById('group-list');
       const notificationList = document.getElementById('notification-list');
+      const socialFeatures = document.getElementById('social-features');
       const sectionTitle = document.getElementById('section-title');
       
       // Reset displays
       container.style.display = 'block';
       groupList.style.display = 'none';
       notificationList.style.display = 'none';
+      socialFeatures.style.display = 'none';
       sectionTitle.textContent = 'Community Memories';
 
       container.innerHTML = 'Loading...';
@@ -530,22 +580,26 @@
       const container = document.getElementById('all-posts-container');
       const groupList = document.getElementById('group-list');
       const notificationList = document.getElementById('notification-list');
+      const socialFeatures = document.getElementById('social-features');
       const sectionTitle = document.getElementById('section-title');
       
       // Reset displays
       container.style.display = 'none';
       groupList.style.display = 'flex';
       notificationList.style.display = 'none';
+      socialFeatures.style.display = 'none';
       sectionTitle.textContent = 'Your Groups';
 
-      // Sample groups data
+      // Sample groups data with exaggerated numbers
       const groups = [
-        { name: 'Loss Parents Support', members: 245, postsToday: 12 },
-        { name: 'Sudden Death Grief', members: 189, postsToday: 8 },
-        { name: 'Suicide Loss Survivors', members: 312, postsToday: 15 },
-        { name: 'Caregivers Who Lost', members: 97, postsToday: 5 },
-        { name: 'Young Widows Support', members: 63, postsToday: 3 },
-        { name: 'Grief After Addiction', members: 142, postsToday: 7 }
+        { name: 'Loss Parents Support', members: 245000, postsToday: 12000 },
+        { name: 'Sudden Death Grief', members: 189000, postsToday: 8500 },
+        { name: 'Suicide Loss Survivors', members: 312000, postsToday: 15000 },
+        { name: 'Caregivers Who Lost', members: 97000, postsToday: 5200 },
+        { name: 'Young Widows Support', members: 63000, postsToday: 3100 },
+        { name: 'Grief After Addiction', members: 142000, postsToday: 7800 },
+        { name: 'Military Loss Support', members: 89000, postsToday: 4200 },
+        { name: 'Child Loss Parents', members: 156000, postsToday: 9300 }
       ];
 
       const groupsHTML = groups.map(group => `
@@ -553,7 +607,7 @@
           <div class="group-avatar">${group.name.charAt(0)}</div>
           <div class="group-info">
             <div class="group-name">${group.name}</div>
-            <div class="group-meta">${group.members} members • ${group.postsToday} new posts today</div>
+            <div class="group-meta">${group.members.toLocaleString()} members • ${group.postsToday.toLocaleString()} new posts today</div>
           </div>
           <i class="fas fa-chevron-right" style="color: #a0aec0;"></i>
         </div>
@@ -567,22 +621,26 @@
       const container = document.getElementById('all-posts-container');
       const groupList = document.getElementById('group-list');
       const notificationList = document.getElementById('notification-list');
+      const socialFeatures = document.getElementById('social-features');
       const sectionTitle = document.getElementById('section-title');
       
       // Reset displays
       container.style.display = 'none';
       groupList.style.display = 'none';
       notificationList.style.display = 'flex';
+      socialFeatures.style.display = 'none';
       sectionTitle.textContent = 'Notifications';
 
       // Sample notifications data
       const notifications = [
         { text: 'Sarah liked your memory of your dad', time: '2 hours ago' },
-        { text: 'New post in "Loss Parents Support"', time: '4 hours ago' },
+        { text: 'New post in "Loss Parents Support" (245K members)', time: '4 hours ago' },
         { text: 'John joined your group "Sudden Death Grief"', time: '1 day ago' },
         { text: 'Reminder: Your memorial post is one year old today', time: '1 day ago' },
         { text: 'Emma commented on your story', time: '2 days ago' },
-        { text: 'New resource added to "Grief After Addiction"', time: '3 days ago' }
+        { text: 'New resource added to "Grief After Addiction"', time: '3 days ago' },
+        { text: 'Live call starting in 10 minutes: "Coping with Holidays"', time: 'Just now' },
+        { text: 'You have 12 unread messages from your support circle', time: '5 minutes ago' }
       ];
 
       const notificationsHTML = notifications.map(notification => `
@@ -595,10 +653,67 @@
       notificationList.innerHTML = notificationsHTML;
     }
 
+    // Function to show social features
+    function showSocialFeatures() {
+      const container = document.getElementById('all-posts-container');
+      const groupList = document.getElementById('group-list');
+      const notificationList = document.getElementById('notification-list');
+      const socialFeatures = document.getElementById('social-features');
+      const sectionTitle = document.getElementById('section-title');
+      
+      // Reset displays
+      container.style.display = 'none';
+      groupList.style.display = 'none';
+      notificationList.style.display = 'none';
+      socialFeatures.style.display = 'flex';
+      sectionTitle.textContent = 'Connect & Share';
+
+      // Sample social features data
+      const features = [
+        { name: 'Share Your Story', desc: 'Create a memory post to share with your community' },
+        { name: 'Join Group Call', desc: 'Connect with others in real-time grief support sessions' },
+        { name: 'Send Voice Message', desc: 'Share your thoughts without typing' },
+        { name: 'Create Memorial Page', desc: 'Build a lasting tribute for your loved one' },
+        { name: 'Find Local Support', desc: 'Connect with nearby grief support groups' },
+        { name: 'Share Photo Album', desc: 'Create a shared photo collection with others' },
+        { name: 'Schedule Call', desc: 'Plan a private grief support session' },
+        { name: 'Send Care Package', desc: 'Coordinate support with your community' }
+      ];
+
+      const featuresHTML = features.map(feature => `
+        <div class="social-item">
+          <div class="social-icon">
+            <i class="fas fa-${feature.name.toLowerCase().includes('call') ? 'phone' : feature.name.toLowerCase().includes('share') ? 'share' : feature.name.toLowerCase().includes('photo') ? 'images' : 'heart'}"></i>
+          </div>
+          <div class="social-info">
+            <div class="social-name">${feature.name}</div>
+            <div class="social-meta">${feature.desc}</div>
+          </div>
+          <i class="fas fa-chevron-right" style="color: #a0aec0;"></i>
+        </div>
+      `).join('');
+
+      socialFeatures.innerHTML = featuresHTML;
+    }
+
+    // Track current active page
+    let currentActivePage = null;
+
     // Add navigation event listeners
     document.querySelectorAll('.nav-item[data-page]').forEach(item => {
       item.addEventListener('click', function() {
         const page = this.getAttribute('data-page');
+        
+        // If clicking the same active page, close it (toggle)
+        if (currentActivePage === page) {
+          // Reset to default
+          document.querySelectorAll('.nav-item').forEach(navItem => {
+            navItem.classList.remove('active');
+          });
+          loadAllPosts();
+          currentActivePage = null;
+          return;
+        }
         
         // Remove active class from all nav items
         document.querySelectorAll('.nav-item').forEach(navItem => {
@@ -611,11 +726,17 @@
         // Show appropriate content based on clicked page
         if (page === 'community') {
           showGroups();
+          currentActivePage = 'community';
         } else if (page === 'notifications') {
           showNotifications();
+          currentActivePage = 'notifications';
+        } else if (page === 'resources') {
+          showSocialFeatures();
+          currentActivePage = 'resources';
         } else {
           // For other pages, just reset to default
           loadAllPosts();
+          currentActivePage = null;
         }
       });
     });
