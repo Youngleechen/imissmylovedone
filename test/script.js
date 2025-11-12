@@ -6,7 +6,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   // Initialize Supabase client globally
   if (typeof window.supabase !== 'undefined') {
     supabase = window.supabase.createClient(
-      'https://ccetnqdqfrsitooestbh.supabase.co',
+      'https://ccetnqdqfrsitooestbh.supabase.co  ',
       'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImNjZXRucWRxZnJzaXRvb2VzdGJoIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjIzMTE4MjksImV4cCI6MjA3Nzg4NzgyOX0.1NjRZZrgsPOg-2z_r2kRELWn9IVXNEQNpSxK6CktJRY'
     );
   } else {
@@ -73,6 +73,11 @@ document.addEventListener('DOMContentLoaded', async () => {
         pickerInstance.setAttribute('id', 'actual-emoji-picker');
         emojiPicker.appendChild(pickerInstance);
 
+        // Add click event to the picker container to stop propagation
+        emojiPicker.addEventListener('click', (e) => {
+          e.stopPropagation();
+        });
+
         pickerInstance.addEventListener('emoji-click', (event) => {
           const emoji = event.detail.unicode;
           const start = memoryBody.selectionStart;
@@ -84,6 +89,7 @@ document.addEventListener('DOMContentLoaded', async () => {
           memoryBody.setSelectionRange(newCursorPos, newCursorPos);
           memoryBody.focus();
           emojiPicker.classList.remove('show');
+          event.stopPropagation(); // Prevent bubbling that would close the picker
         });
       }
 
@@ -376,7 +382,7 @@ document.addEventListener('DOMContentLoaded', async () => {
       const { error } = await supabase
         .from('memories')
         .update({ body })
-        .eq('id', currentEditPostId)
+        .eq('id', currentEditId)
         .eq('user_id', user.id);
 
       if (error) {
