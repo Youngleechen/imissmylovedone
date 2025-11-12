@@ -312,7 +312,7 @@
       margin-top: 4px;
     }
 
-    /* Call System Styles */
+    /* Call Request Modal */
     .call-request-modal {
       display: none;
       position: fixed;
@@ -373,6 +373,7 @@
       color: #374151;
     }
 
+    /* Listener Banner — Personalized */
     .call-listener-banner {
       display: none;
       position: fixed;
@@ -381,37 +382,58 @@
       transform: translateX(-50%);
       background: #48bb78;
       color: white;
-      padding: 15px 20px;
+      padding: 18px 20px;
       border-radius: 8px;
       z-index: 999;
       width: 90%;
       max-width: 500px;
       box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+      font-size: 0.95rem;
     }
 
     .banner-content {
       display: flex;
-      justify-content: space-between;
-      align-items: center;
+      flex-direction: column;
+      gap: 8px;
     }
 
-    .banner-text {
-      flex: 1;
+    .banner-person {
       font-weight: 600;
-      margin-right: 15px;
+      font-size: 1.1rem;
+    }
+
+    .banner-location {
+      font-size: 0.9rem;
+      opacity: 0.9;
+    }
+
+    .banner-loss {
+      font-size: 0.9rem;
+      margin: 6px 0;
+      padding: 6px;
+      background: rgba(255,255,255,0.2);
+      border-radius: 6px;
+      word-break: break-word;
+    }
+
+    .banner-time {
+      font-size: 0.8rem;
+      opacity: 0.8;
     }
 
     .banner-buttons {
       display: flex;
       gap: 10px;
+      margin-top: 10px;
     }
 
     .banner-btn {
-      padding: 6px 12px;
+      padding: 7px 14px;
       border-radius: 6px;
       border: none;
       font-weight: 600;
       cursor: pointer;
+      font-size: 0.9rem;
     }
 
     .accept-btn {
@@ -422,6 +444,55 @@
     .decline-btn {
       background-color: rgba(255,255,255,0.3);
       color: white;
+    }
+
+    /* Message Inbox Preview */
+    .message-inbox {
+      display: none;
+      flex-direction: column;
+      gap: 12px;
+      margin-top: 15px;
+      padding: 15px;
+      background: #f8fafc;
+      border-radius: 8px;
+    }
+
+    .message-item {
+      padding: 12px;
+      background: white;
+      border-radius: 10px;
+      max-width: 85%;
+      margin-bottom: 8px;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+    }
+
+    .message-sender {
+      font-weight: 600;
+      color: #1f2937;
+      margin-bottom: 4px;
+    }
+
+    .message-content {
+      color: #374151;
+      line-height: 1.5;
+    }
+
+    .message-time {
+      font-size: 0.8rem;
+      color: #718096;
+      margin-top: 6px;
+      text-align: right;
+    }
+
+    .message-received {
+      align-self: flex-start;
+      border-left: 3px solid #5a67d8;
+    }
+
+    .message-sent {
+      align-self: flex-end;
+      background: #e0e7ff;
+      border-right: 3px solid #5a67d8;
     }
 
     /* Social Features */
@@ -499,7 +570,7 @@
           <i class="fas fa-user"></i> One-on-One Call
         </button>
         <button id="groupCall" class="call-request-btn call-btn-primary">
-          <i class="fas fa-users"></i> Group Support (3-5 people)
+          <i class="fas fa-users"></i> Group Support (3–5 people)
         </button>
         <button id="cancelCall" class="call-request-btn call-btn-secondary">
           Cancel
@@ -508,14 +579,37 @@
     </div>
   </div>
 
-  <!-- Listener Banner (appears when someone needs support) -->
+  <!-- Listener Banner — Personalized -->
   <div id="listenerBanner" class="call-listener-banner">
     <div class="banner-content">
-      <div class="banner-text">Someone needs support right now. You can help.</div>
+      <div class="banner-person">Mary, United States</div>
+      <div class="banner-location">📍 New York, NY</div>
+      <div class="banner-loss">Lost her son, 18, to suicide — 3 days ago</div>
+      <div class="banner-time">Requested support 2 minutes ago</div>
       <div class="banner-buttons">
-        <button id="acceptCall" class="banner-btn accept-btn">Accept</button>
+        <button id="acceptCall" class="banner-btn accept-btn">Accept Call</button>
         <button id="declineCall" class="banner-btn decline-btn">Not Now</button>
       </div>
+    </div>
+  </div>
+
+  <!-- Message Inbox Preview -->
+  <div id="messageInbox" class="message-inbox">
+    <h2>Your Messages</h2>
+    <div class="message-item message-received">
+      <div class="message-sender">David (Canada)</div>
+      <div class="message-content">I saw your post about your daughter. I lost mine to cancer last year. I didn’t think I’d ever feel anything but numb. But today, I smiled at a song she loved. It didn’t hurt as much. Just… different. I’m here if you want to talk.</div>
+      <div class="message-time">1 hour ago</div>
+    </div>
+    <div class="message-item message-sent">
+      <div class="message-sender">You</div>
+      <div class="message-content">Thank you, David. That meant more than I can say. I’ve been holding my breath for months. Just reading that… I felt like I could exhale.</div>
+      <div class="message-time">45 minutes ago</div>
+    </div>
+    <div class="message-item message-received">
+      <div class="message-sender">Lena (Australia)</div>
+      <div class="message-content">I lost my husband to suicide. I didn’t tell anyone for 8 months. I thought I was broken. But now I know — I was just grieving. You’re not alone.</div>
+      <div class="message-time">2 hours ago</div>
     </div>
   </div>
 
@@ -620,31 +714,50 @@
           return date.toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
         };
 
-        // List of generic names to simulate different users
-        const genericNames = [
-          'Sarah Johnson', 'Michael Chen', 'Emma Rodriguez', 'David Kim',
-          'Lisa Thompson', 'James Wilson', 'Maria Garcia', 'Robert Taylor',
-          'Jennifer Lee', 'William Brown', 'Amanda Davis', 'Christopher Miller',
-          'Michelle Jackson', 'Daniel Smith', 'Ashley White', 'Matthew Anderson',
-          'Stephanie Martinez', 'Joshua Thomas', 'Nicole Hernandez', 'Ryan Moore',
-          'Angela Davis', 'Brian Wilson', 'Cathy Brown', 'Derek Taylor',
-          'Eva Martinez', 'Frank Anderson', 'Grace Thomas', 'Henry Moore',
-          'Ivy Jackson', 'Jack White', 'Katie Harris', 'Liam Clark'
+        // List of names with locations and loss types
+        const users = [
+          { name: 'Mary', location: 'New York, NY', loss: 'son to suicide', avatar: 'M' },
+          { name: 'James', location: 'Austin, TX', loss: 'wife to cancer', avatar: 'J' },
+          { name: 'Lena', location: 'Sydney, Australia', loss: 'husband to suicide', avatar: 'L' },
+          { name: 'David', location: 'Toronto, Canada', loss: 'daughter to overdose', avatar: 'D' },
+          { name: 'Elena', location: 'Chicago, IL', loss: 'brother to suicide', avatar: 'E' },
+          { name: 'Robert', location: 'Seattle, WA', loss: 'son to suicide', avatar: 'R' },
+          { name: 'Nina', location: 'London, UK', loss: 'partner to sudden cardiac arrest', avatar: 'N' },
+          { name: 'Marcus', location: 'Denver, CO', loss: 'mother to suicide', avatar: 'M' },
+          { name: 'Aisha', location: 'Los Angeles, CA', loss: 'son to accident', avatar: 'A' },
+          { name: 'Thomas', location: 'Boston, MA', loss: 'wife to suicide', avatar: 'T' },
+          { name: 'Samantha', location: 'Portland, OR', loss: 'daughter to suicide', avatar: 'S' },
+          { name: 'Carlos', location: 'Miami, FL', loss: 'father to cancer', avatar: 'C' },
+          { name: 'Grace', location: 'Philadelphia, PA', loss: 'sister to suicide', avatar: 'G' },
+          { name: 'Brian', location: 'Phoenix, AZ', loss: 'son to suicide', avatar: 'B' },
+          { name: 'Julia', location: 'San Diego, CA', loss: 'best friend to suicide', avatar: 'J' },
+          { name: 'Michael', location: 'Atlanta, GA', loss: 'daughter to overdose', avatar: 'M' },
+          { name: 'Rachel', location: 'Minneapolis, MN', loss: 'husband to suicide', avatar: 'R' },
+          { name: 'Daniel', location: 'Nashville, TN', loss: 'brother to suicide', avatar: 'D' },
+          { name: 'Tina', location: 'Seattle, WA', loss: 'son to suicide', avatar: 'T' },
+          { name: 'Eric', location: 'Denver, CO', loss: 'wife to cancer', avatar: 'E' },
+          { name: 'Megan', location: 'Charlotte, NC', loss: 'daughter to suicide', avatar: 'M' },
+          { name: 'Frank', location: 'Columbus, OH', loss: 'son to suicide', avatar: 'F' },
+          { name: 'Katie', location: 'San Francisco, CA', loss: 'father to suicide', avatar: 'K' },
+          { name: 'Paul', location: 'Baltimore, MD', loss: 'sister to suicide', avatar: 'P' },
+          { name: 'Hannah', location: 'Orlando, FL', loss: 'daughter to suicide', avatar: 'H' },
+          { name: 'Steven', location: 'Raleigh, NC', loss: 'wife to suicide', avatar: 'S' },
+          { name: 'Olivia', location: 'Seattle, WA', loss: 'son to suicide', avatar: 'O' },
+          { name: 'Mark', location: 'Phoenix, AZ', loss: 'daughter to overdose', avatar: 'M' },
+          { name: 'Diana', location: 'Austin, TX', loss: 'mother to suicide', avatar: 'D' },
+          { name: 'Jordan', location: 'Boston, MA', loss: 'brother to suicide', avatar: 'J' },
         ];
 
         const postsHTML = data.map((post, index) => {
-          // Use a generic name based on the post index
-          const authorName = genericNames[index % genericNames.length];
+          const user = users[index % users.length];
+          const authorName = user.name;
+          const initials = user.avatar;
           
           // Extract media
           const mediaMatches = [...post.body.matchAll(/!\[([^\]]*)\]\s*\(\s*([^)]+)\s*\)/g)];
           let contentHtml = post.body.replace(/!\[([^\]]*)\]\s*\(\s*([^)]+)\s*\)/g, '');
           contentHtml = contentHtml.replace(/\n/g, '<br>');
 
-          // Generate user initials from the generic name
-          const nameParts = authorName.split(' ');
-          const initials = nameParts.map(part => part[0]).join('').toUpperCase();
-          
           // Format date to show only month and year
           const postDate = formatDate(post.created_at);
 
@@ -735,30 +848,30 @@
       socialFeatures.style.display = 'none';
       sectionTitle.textContent = 'Your Groups';
 
-      // Sample groups data with 20+ groups
+      // 20+ grief groups with real loss types
       const groups = [
-        { name: 'Loss Parents Support', members: 245000, postsToday: 12000 },
-        { name: 'Sudden Death Grief', members: 189000, postsToday: 8500 },
-        { name: 'Suicide Loss Survivors', members: 312000, postsToday: 15000 },
-        { name: 'Caregivers Who Lost', members: 97000, postsToday: 5200 },
-        { name: 'Young Widows Support', members: 63000, postsToday: 3100 },
-        { name: 'Grief After Addiction', members: 142000, postsToday: 7800 },
-        { name: 'Military Loss Support', members: 89000, postsToday: 4200 },
-        { name: 'Child Loss Parents', members: 156000, postsToday: 9300 },
-        { name: 'Spouse Loss Support', members: 112000, postsToday: 6700 },
-        { name: 'Sibling Loss Community', members: 78000, postsToday: 4500 },
-        { name: 'Pet Loss Grief', members: 54000, postsToday: 2800 },
-        { name: 'Pregnancy Loss Support', members: 91000, postsToday: 5100 },
-        { name: 'Elder Caregiver Grief', members: 43000, postsToday: 2300 },
-        { name: 'Grief After Divorce', members: 37000, postsToday: 1900 },
-        { name: 'Loss of Dreams Support', members: 29000, postsToday: 1500 },
-        { name: 'Sudden Illness Loss', members: 103000, postsToday: 5800 },
-        { name: 'Friend Loss Support', members: 67000, postsToday: 3400 },
-        { name: 'Grandparent Loss', members: 52000, postsToday: 2700 },
-        { name: 'Grief After Abuse', members: 48000, postsToday: 2600 },
-        { name: 'Multiple Loss Support', members: 35000, postsToday: 1800 },
-        { name: 'Grief After Natural Disaster', members: 28000, postsToday: 1400 },
-        { name: 'Support for Grief Helpers', members: 41000, postsToday: 2100 }
+        { name: 'Parents Who Lost a Child to Suicide', members: 245000, postsToday: 12000 },
+        { name: 'Spouses Who Lost Partner to Suicide', members: 189000, postsToday: 8500 },
+        { name: 'Siblings Who Lost Brother or Sister to Suicide', members: 312000, postsToday: 15000 },
+        { name: 'Caregivers Who Lost Loved One to Illness', members: 97000, postsToday: 5200 },
+        { name: 'Parents Who Lost Child to Overdose', members: 63000, postsToday: 3100 },
+        { name: 'Those Who Lost a Friend to Suicide', members: 142000, postsToday: 7800 },
+        { name: 'Military Families After Loss', members: 89000, postsToday: 4200 },
+        { name: 'Parents Who Lost Child to Accident', members: 156000, postsToday: 9300 },
+        { name: 'Spouses Who Lost Partner to Cancer', members: 112000, postsToday: 6700 },
+        { name: 'Adults Who Lost Parent to Suicide', members: 78000, postsToday: 4500 },
+        { name: 'Those Who Lost a Pet After Long Illness', members: 54000, postsToday: 2800 },
+        { name: 'Parents Who Lost Child to Pregnancy Loss', members: 91000, postsToday: 5100 },
+        { name: 'Elder Caregivers Who Lost Their Loved One', members: 43000, postsToday: 2300 },
+        { name: 'Those Who Lost a Partner to Sudden Death', members: 37000, postsToday: 1900 },
+        { name: 'Survivors of Multiple Losses', members: 29000, postsToday: 1500 },
+        { name: 'Those Who Lost a Child to Sudden Infant Death', members: 103000, postsToday: 5800 },
+        { name: 'Friends Who Lost Someone to Suicide', members: 67000, postsToday: 3400 },
+        { name: 'Grandparents Who Lost Grandchild to Suicide', members: 52000, postsToday: 2700 },
+        { name: 'Those Who Lost a Loved One to Suicide After Trauma', members: 48000, postsToday: 2600 },
+        { name: 'Those Who Lost a Child to Suicide After Mental Health Struggle', members: 35000, postsToday: 1800 },
+        { name: 'Survivors of Suicide Loss in the LGBTQ+ Community', members: 28000, postsToday: 1400 },
+        { name: 'Grief Support for First Responders', members: 41000, postsToday: 2100 }
       ];
 
       const groupsHTML = groups.map(group => `
@@ -790,15 +903,16 @@
       socialFeatures.style.display = 'none';
       sectionTitle.textContent = 'Notifications';
 
-      // Sample notifications data
+      // Sample notifications with personal context
       const notifications = [
+        { text: 'Mary, United States — Lost her son to suicide — 3 days ago', time: 'Just now' },
         { text: 'Sarah liked your memory of your dad', time: '2 hours ago' },
-        { text: 'New post in "Loss Parents Support" (245K members)', time: '4 hours ago' },
-        { text: 'John joined your group "Sudden Death Grief"', time: '1 day ago' },
+        { text: 'New post in "Parents Who Lost a Child to Suicide" (245K members)', time: '4 hours ago' },
+        { text: 'John joined your group "Spouses Who Lost Partner to Suicide"', time: '1 day ago' },
         { text: 'Reminder: Your memorial post is one year old today', time: '1 day ago' },
         { text: 'Emma commented on your story', time: '2 days ago' },
-        { text: 'New resource added to "Grief After Addiction"', time: '3 days ago' },
-        { text: 'Live call starting in 10 minutes: "Coping with Holidays"', time: 'Just now' },
+        { text: 'New resource added to "Those Who Lost a Child to Overdose"', time: '3 days ago' },
+        { text: 'Live call starting in 10 minutes: "First Year After Suicide Loss"', time: 'Just now' },
         { text: 'You have 12 unread messages from your support circle', time: '5 minutes ago' }
       ];
 
@@ -905,10 +1019,24 @@
       document.getElementById('callRequestModal').style.display = 'flex';
     });
 
-    // Message button functionality
+    // Message button functionality — show inbox preview
     document.getElementById('messageButton').addEventListener('click', function() {
-      // For now, just show a placeholder
-      alert('Message inbox would open here');
+      const inbox = document.getElementById('messageInbox');
+      const container = document.getElementById('all-posts-container');
+      const groupList = document.getElementById('group-list');
+      const notificationList = document.getElementById('notification-list');
+      const socialFeatures = document.getElementById('social-features');
+      const sectionTitle = document.getElementById('section-title');
+      
+      // Hide everything else
+      container.style.display = 'none';
+      groupList.style.display = 'none';
+      notificationList.style.display = 'none';
+      socialFeatures.style.display = 'none';
+      
+      // Show message inbox
+      inbox.style.display = 'flex';
+      sectionTitle.textContent = 'Your Messages';
     });
 
     // Call modal buttons
@@ -917,16 +1045,16 @@
     });
 
     document.getElementById('oneToOneCall').addEventListener('click', function() {
-      alert('Connecting to a support partner...');
+      alert('Looking for someone who’s experienced a similar loss…');
       document.getElementById('callRequestModal').style.display = 'none';
     });
 
     document.getElementById('groupCall').addEventListener('click', function() {
-      alert('Finding group support partners...');
+      alert('Finding 3–5 people who’ve walked this path…');
       document.getElementById('callRequestModal').style.display = 'none';
     });
 
-    // Simulate listener banner appearing after 5 seconds (for demo purposes)
+    // Simulate listener banner appearing after 5 seconds
     setTimeout(() => {
       const banner = document.getElementById('listenerBanner');
       banner.style.display = 'flex';
@@ -935,7 +1063,7 @@
     // Banner buttons
     document.getElementById('acceptCall').addEventListener('click', function() {
       document.getElementById('listenerBanner').style.display = 'none';
-      alert('Connecting to someone who needs support...');
+      alert('Connecting you to Mary…\n\nShe’s lost her son to suicide. 3 days ago.\n\nYou’re not alone.');
     });
 
     document.getElementById('declineCall').addEventListener('click', function() {
