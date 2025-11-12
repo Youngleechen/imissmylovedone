@@ -41,13 +41,20 @@ document.addEventListener('DOMContentLoaded', async () => {
   let currentEditMedia = []; // { url, name, isExisting: true, isDeleted: false }
   let newMediaFiles = []; // newly added during edit
 
+  // Fixed auth check function
   async function checkAuth() {
-    const {  { user } } = await supabase.auth.getUser();
-    if (!user) {
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) {
+        window.location.href = 'signin.html';
+        return null;
+      }
+      return user;
+    } catch (error) {
+      console.error('Auth check failed:', error);
       window.location.href = 'signin.html';
       return null;
     }
-    return user;
   }
 
   // Auto-resize textarea
