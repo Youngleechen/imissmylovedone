@@ -40,352 +40,367 @@ document.addEventListener('DOMContentLoaded', async () => {
 
   // Auto-resize textarea
   const autoResize = () => {
-    memoryBody.style.height = 'auto';
-    const newHeight = Math.min(memoryBody.scrollHeight, 300);
-    memoryBody.style.height = newHeight + 'px';
+    if (memoryBody) {
+      memoryBody.style.height = 'auto';
+      const newHeight = Math.min(memoryBody.scrollHeight, 300);
+      memoryBody.style.height = newHeight + 'px';
+    }
   };
-  memoryBody.addEventListener('input', autoResize);
-  autoResize();
+  if (memoryBody) {
+    memoryBody.addEventListener('input', autoResize);
+    autoResize();
+  }
 
   // Emoji picker
-  let pickerInstance = null;
-  emojiButton.addEventListener('click', (e) => {
-    e.stopPropagation();
-    if (!pickerInstance) {
-      pickerInstance = document.createElement('emoji-picker');
-      pickerInstance.setAttribute('id', 'actual-emoji-picker');
-      emojiPicker.appendChild(pickerInstance);
+  if (emojiButton && emojiPicker) {
+    let pickerInstance = null;
+    emojiButton.addEventListener('click', (e) => {
+      e.stopPropagation();
+      if (!pickerInstance) {
+        pickerInstance = document.createElement('emoji-picker');
+        pickerInstance.setAttribute('id', 'actual-emoji-picker');
+        emojiPicker.appendChild(pickerInstance);
 
-      pickerInstance.addEventListener('emoji-click', (event) => {
-        const emoji = event.detail.unicode;
-        const start = memoryBody.selectionStart;
-        const end = memoryBody.selectionEnd;
-        const text = memoryBody.value;
-        memoryBody.value = text.slice(0, start) + emoji + text.slice(end);
-        autoResize();
-        const newCursorPos = start + emoji.length;
-        memoryBody.setSelectionRange(newCursorPos, newCursorPos);
-        memoryBody.focus();
-        emojiPicker.classList.remove('show');
-      });
-    }
+        pickerInstance.addEventListener('emoji-click', (event) => {
+          const emoji = event.detail.unicode;
+          const start = memoryBody.selectionStart;
+          const end = memoryBody.selectionEnd;
+          const text = memoryBody.value;
+          memoryBody.value = text.slice(0, start) + emoji + text.slice(end);
+          autoResize();
+          const newCursorPos = start + emoji.length;
+          memoryBody.setSelectionRange(newCursorPos, newCursorPos);
+          memoryBody.focus();
+          emojiPicker.classList.remove('show');
+        });
+      }
 
-    const isShowing = emojiPicker.classList.contains('show');
-    emojiPicker.classList.remove('show');
-    if (isShowing) return;
-
-    const wrapper = emojiButton.closest('.thought-actions') || emojiButton.closest('.thought-box');
-    if (!wrapper) {
-      console.error('Emoji button wrapper not found!');
-      return;
-    }
-    const wrapperRect = wrapper.getBoundingClientRect();
-    const pickerHeight = 380;
-    const spaceBelow = window.innerHeight - wrapperRect.bottom;
-    const spaceAbove = wrapperRect.top;
-
-    emojiPicker.style.top = 'auto';
-    emojiPicker.style.bottom = 'auto';
-    emojiPicker.style.left = 'auto';
-    emojiPicker.style.right = '0';
-
-    if (spaceBelow >= pickerHeight) {
-      emojiPicker.style.top = (wrapperRect.height + 8) + 'px';
-    } else if (spaceAbove >= pickerHeight) {
-      emojiPicker.style.bottom = (wrapperRect.height + 8) + 'px';
-    } else {
-      emojiPicker.style.top = (wrapperRect.height + 8) + 'px';
-    }
-
-    emojiPicker.classList.add('show');
-  });
-
-  document.addEventListener('click', (e) => {
-    if (
-      !emojiButton.contains(e.target) &&
-      !emojiPicker.contains(e.target) &&
-      !memoryBody.contains(e.target)
-    ) {
+      const isShowing = emojiPicker.classList.contains('show');
       emojiPicker.classList.remove('show');
-    }
-  });
+      if (isShowing) return;
+
+      const wrapper = emojiButton.closest('.thought-actions') || emojiButton.closest('.thought-box');
+      if (!wrapper) {
+        console.error('Emoji button wrapper not found!');
+        return;
+      }
+      const wrapperRect = wrapper.getBoundingClientRect();
+      const pickerHeight = 380;
+      const spaceBelow = window.innerHeight - wrapperRect.bottom;
+      const spaceAbove = wrapperRect.top;
+
+      emojiPicker.style.top = 'auto';
+      emojiPicker.style.bottom = 'auto';
+      emojiPicker.style.left = 'auto';
+      emojiPicker.style.right = '0';
+
+      if (spaceBelow >= pickerHeight) {
+        emojiPicker.style.top = (wrapperRect.height + 8) + 'px';
+      } else if (spaceAbove >= pickerHeight) {
+        emojiPicker.style.bottom = (wrapperRect.height + 8) + 'px';
+      } else {
+        emojiPicker.style.top = (wrapperRect.height + 8) + 'px';
+      }
+
+      emojiPicker.classList.add('show');
+    });
+
+    document.addEventListener('click', (e) => {
+      if (
+        !emojiButton.contains(e.target) &&
+        !emojiPicker.contains(e.target) &&
+        !memoryBody.contains(e.target)
+      ) {
+        emojiPicker.classList.remove('show');
+      }
+    });
+  }
 
   // Post handler
-  postButton.addEventListener('click', async () => {
-    const user = await checkAuth();
-    if (!user) return;
+  if (postButton) {
+    postButton.addEventListener('click', async () => {
+      const user = await checkAuth();
+      if (!user) return;
 
-    let body = memoryBody.value.trim();
+      let body = memoryBody.value.trim();
 
-    for (const media of window.currentMediaFiles) {
-      body += `\n\n![${media.name}](${media.url})`;
-    }
-
-    if (!body) {
-      alert('Please write something or attach media first.');
-      return;
-    }
-
-    const { error } = await supabase
-      .from('memories')
-      .insert({
-        user_id: user.id,
-        title: 'Untitled',
-        body
-      });
-
-    if (error) {
-      alert('Failed to post: ' + error.message);
-      return;
-    }
-
-    // Clear UI
-    memoryBody.value = '';
-    autoResize();
-    window.currentMediaFiles = [];
-
-    // Clear previews via media.js
-    if (typeof window.clearMediaPreviews === 'function') {
-      window.clearMediaPreviews();
-    }
-
-    loadUserPosts();
-  });
-
-  // === EDIT MODAL LOGIC ===
-
-  closeEditModal.addEventListener('click', () => {
-    editModal.style.display = 'none';
-    currentEditPostId = null;
-    currentEditMedia = [];
-    newMediaFiles = [];
-  });
-
-  addMoreMediaButton.addEventListener('click', async () => {
-    const user = await checkAuth();
-    if (!user) return;
-    addMoreMediaInput.click();
-  });
-
-  addMoreMediaInput.addEventListener('change', async (e) => {
-    const user = await checkAuth();
-    if (!user) return;
-
-    const files = Array.from(e.target.files);
-    if (!files.length) return;
-
-    // Use correct bucket for memories
-    window.CURRENT_BUCKET_OVERRIDE = 'memories';
-
-    for (const file of files) {
-      const allowedTypes = ['image/jpeg', 'image/png', 'image/gif', 'image/webp', 'video/mp4', 'video/webm', 'video/quicktime'];
-      if (!allowedTypes.includes(file.type)) {
-        alert(`File ${file.name} is not an allowed type.`);
-        continue; // allow partial upload
-      }
-      if (file.size > 50 * 1024 * 1024) {
-        alert(`File ${file.name} exceeds 50MB limit.`);
-        continue;
+      for (const media of window.currentMediaFiles) {
+        body += `\n\n![${media.name}](${media.url})`;
       }
 
-      const fileExt = file.name.split('.').pop();
-      const fileName = `${user.id}/${Date.now()}-${Math.random().toString(36).substring(2, 15)}.${fileExt}`;
-
-      if (editUploadProgress) {
-        editUploadProgress.style.display = 'block';
-        editProgressFill.style.width = '0%';
-        editProgressText.textContent = `Uploading ${file.name}...`;
+      if (!body) {
+        alert('Please write something or attach media first.');
+        return;
       }
 
-      const { error: uploadError } = await supabase.storage
+      const { error } = await supabase
         .from('memories')
-        .upload(fileName, file, {
-          upsert: false,
-          onUploadProgress: (progressEvent) => {
-            const percentCompleted = Math.round((progressEvent.loaded * 100) / progressEvent.total);
-            if (editProgressFill) editProgressFill.style.width = `${percentCompleted}%`;
-            if (editProgressText) editProgressText.textContent = `Uploading ${file.name}... ${percentCompleted}%`;
-          }
+        .insert({
+          user_id: user.id,
+          title: 'Untitled',
+          body
         });
 
-      if (uploadError) {
-        console.error('Upload error:', uploadError);
-        alert('Upload failed: ' + uploadError.message);
-        if (editUploadProgress) editUploadProgress.style.display = 'none';
-        continue; // try next file
+      if (error) {
+        alert('Failed to post: ' + error.message);
+        return;
       }
 
-      const { data: { publicUrl } } = supabase.storage.from('memories').getPublicUrl(fileName);
+      // Clear UI
+      memoryBody.value = '';
+      autoResize();
+      window.currentMediaFiles = [];
 
-      newMediaFiles.push({ url: publicUrl, name: file.name, type: file.type });
-      addMediaPreviewToEdit(publicUrl, file.name, file.type, false);
-    }
-
-    if (editUploadProgress) editUploadProgress.style.display = 'none';
-    addMoreMediaInput.value = '';
-    window.CURRENT_BUCKET_OVERRIDE = null; // reset
-  });
-
-  function addMediaPreviewToEdit(url, filename, fileType, isExisting) {
-    const previewItem = document.createElement('div');
-    previewItem.className = 'media-preview-item';
-    previewItem.style.cssText = `
-      position: relative;
-      display: inline-block;
-      margin: 5px;
-      border-radius: 8px;
-      overflow: hidden;
-      box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-      background: white;
-      padding: 5px;
-    `;
-
-    let previewElement;
-    if (fileType.startsWith('image')) {
-      previewElement = document.createElement('img');
-      previewElement.src = url;
-      previewElement.alt = filename;
-      previewElement.style.cssText = `
-        max-width: 90px;
-        max-height: 90px;
-        object-fit: contain;
-        border-radius: 4px;
-      `;
-    } else if (fileType.startsWith('video')) {
-      previewElement = document.createElement('video');
-      previewElement.muted = true;
-      previewElement.playsInline = true;
-      previewElement.style.cssText = `
-        max-width: 90px;
-        max-height: 90px;
-        object-fit: contain;
-        border-radius: 4px;
-      `;
-      const source = document.createElement('source');
-      source.src = url;
-      source.type = fileType;
-      previewElement.appendChild(source);
-    }
-
-    const removeBtn = document.createElement('button');
-    removeBtn.textContent = '×';
-    removeBtn.style.cssText = `
-      position: absolute;
-      top: 5px;
-      right: 5px;
-      background: rgba(0,0,0,0.7);
-      color: white;
-      border: none;
-      border-radius: 50%;
-      width: 20px;
-      height: 20px;
-      cursor: pointer;
-      font-weight: bold;
-    `;
-    removeBtn.onclick = (e) => {
-      e.stopPropagation();
-      previewItem.remove();
-      if (isExisting) {
-        const existing = currentEditMedia.find(m => m.url === url);
-        if (existing) existing.isDeleted = true;
-      } else {
-        newMediaFiles = newMediaFiles.filter(f => f.url !== url);
+      // Clear previews via media.js
+      if (typeof window.clearMediaPreviews === 'function') {
+        window.clearMediaPreviews();
       }
+
+      loadUserPosts();
+    });
+  }
+
+  // === EDIT MODAL LOGIC ===
+  // Only set up edit modal if all required elements exist
+  if (
+    closeEditModal && editModal && saveEditButton && deleteEditButton &&
+    addMoreMediaButton && addMoreMediaInput && editBody && editMediaContainer
+  ) {
+    closeEditModal.addEventListener('click', () => {
+      editModal.style.display = 'none';
+      currentEditPostId = null;
+      currentEditMedia = [];
+      newMediaFiles = [];
+    });
+
+    addMoreMediaButton.addEventListener('click', async () => {
+      const user = await checkAuth();
+      if (!user) return;
+      addMoreMediaInput.click();
+    });
+
+    addMoreMediaInput.addEventListener('change', async (e) => {
+      const user = await checkAuth();
+      if (!user) return;
+
+      const files = Array.from(e.target.files);
+      if (!files.length) return;
+
+      // Use correct bucket for memories
+      window.CURRENT_BUCKET_OVERRIDE = 'memories';
+
+      for (const file of files) {
+        const allowedTypes = ['image/jpeg', 'image/png', 'image/gif', 'image/webp', 'video/mp4', 'video/webm', 'video/quicktime'];
+        if (!allowedTypes.includes(file.type)) {
+          alert(`File ${file.name} is not an allowed type.`);
+          continue; // allow partial upload
+        }
+        if (file.size > 50 * 1024 * 1024) {
+          alert(`File ${file.name} exceeds 50MB limit.`);
+          continue;
+        }
+
+        const fileExt = file.name.split('.').pop();
+        const fileName = `${user.id}/${Date.now()}-${Math.random().toString(36).substring(2, 15)}.${fileExt}`;
+
+        if (editUploadProgress) {
+          editUploadProgress.style.display = 'block';
+          editProgressFill.style.width = '0%';
+          editProgressText.textContent = `Uploading ${file.name}...`;
+        }
+
+        const { error: uploadError } = await supabase.storage
+          .from('memories')
+          .upload(fileName, file, {
+            upsert: false,
+            onUploadProgress: (progressEvent) => {
+              const percentCompleted = Math.round((progressEvent.loaded * 100) / progressEvent.total);
+              if (editProgressFill) editProgressFill.style.width = `${percentCompleted}%`;
+              if (editProgressText) editProgressText.textContent = `Uploading ${file.name}... ${percentCompleted}%`;
+            }
+          });
+
+        if (uploadError) {
+          console.error('Upload error:', uploadError);
+          alert('Upload failed: ' + uploadError.message);
+          if (editUploadProgress) editUploadProgress.style.display = 'none';
+          continue; // try next file
+        }
+
+        const { data: { publicUrl } } = supabase.storage.from('memories').getPublicUrl(fileName);
+
+        newMediaFiles.push({ url: publicUrl, name: file.name, type: file.type });
+        addMediaPreviewToEdit(publicUrl, file.name, file.type, false);
+      }
+
+      if (editUploadProgress) editUploadProgress.style.display = 'none';
+      addMoreMediaInput.value = '';
+      window.CURRENT_BUCKET_OVERRIDE = null; // reset
+    });
+
+    function addMediaPreviewToEdit(url, filename, fileType, isExisting) {
+      const previewItem = document.createElement('div');
+      previewItem.className = 'media-preview-item';
+      previewItem.style.cssText = `
+        position: relative;
+        display: inline-block;
+        margin: 5px;
+        border-radius: 8px;
+        overflow: hidden;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        background: white;
+        padding: 5px;
+      `;
+
+      let previewElement;
+      if (fileType.startsWith('image')) {
+        previewElement = document.createElement('img');
+        previewElement.src = url;
+        previewElement.alt = filename;
+        previewElement.style.cssText = `
+          max-width: 90px;
+          max-height: 90px;
+          object-fit: contain;
+          border-radius: 4px;
+        `;
+      } else if (fileType.startsWith('video')) {
+        previewElement = document.createElement('video');
+        previewElement.muted = true;
+        previewElement.playsInline = true;
+        previewElement.style.cssText = `
+          max-width: 90px;
+          max-height: 90px;
+          object-fit: contain;
+          border-radius: 4px;
+        `;
+        const source = document.createElement('source');
+        source.src = url;
+        source.type = fileType;
+        previewElement.appendChild(source);
+      }
+
+      const removeBtn = document.createElement('button');
+      removeBtn.textContent = '×';
+      removeBtn.style.cssText = `
+        position: absolute;
+        top: 5px;
+        right: 5px;
+        background: rgba(0,0,0,0.7);
+        color: white;
+        border: none;
+        border-radius: 50%;
+        width: 20px;
+        height: 20px;
+        cursor: pointer;
+        font-weight: bold;
+      `;
+      removeBtn.onclick = (e) => {
+        e.stopPropagation();
+        previewItem.remove();
+        if (isExisting) {
+          const existing = currentEditMedia.find(m => m.url === url);
+          if (existing) existing.isDeleted = true;
+        } else {
+          newMediaFiles = newMediaFiles.filter(f => f.url !== url);
+        }
+      };
+
+      previewItem.appendChild(previewElement);
+      previewItem.appendChild(removeBtn);
+      editMediaContainer.appendChild(previewItem);
+    }
+
+    function getMediaType(url) {
+      if (url.match(/\.(mp4|webm|mov)$/i)) return 'video/mp4';
+      return 'image/jpeg';
+    }
+
+    // Global function for inline onclick in posts
+    window.openEditModal = function(postId, bodyRaw) {
+      currentEditPostId = postId;
+
+      // Extract text only (remove all ![alt](url) patterns)
+      let textOnly = bodyRaw.replace(/!\[[^\]]*\]\s*\([^)]+\)/g, '').trim();
+      editBody.value = textOnly;
+
+      // Extract media
+      const mediaMatches = [...bodyRaw.matchAll(/!\[([^\]]*)\]\s*\(\s*([^)]+)\s*\)/g)];
+      currentEditMedia = mediaMatches.map(m => ({
+        url: m[2].trim(),
+        name: m[1] || 'Media',
+        isExisting: true,
+        isDeleted: false
+      }));
+      newMediaFiles = [];
+
+      // Clear and rebuild previews
+      editMediaContainer.innerHTML = '';
+      currentEditMedia.forEach(m => {
+        addMediaPreviewToEdit(m.url, m.name, getMediaType(m.url), true);
+      });
+
+      editModal.style.display = 'flex';
     };
 
-    previewItem.appendChild(previewElement);
-    previewItem.appendChild(removeBtn);
-    editMediaContainer.appendChild(previewItem);
-  }
+    // Save edited post — ✅ PRESERVES MEDIA
+    saveEditButton.addEventListener('click', async () => {
+      if (!currentEditPostId) return;
+      const user = await checkAuth();
+      if (!user) return;
 
-  function getMediaType(url) {
-    if (url.match(/\.(mp4|webm|mov)$/i)) return 'video/mp4';
-    return 'image/jpeg';
-  }
+      let body = editBody.value.trim();
 
-  // Global function for inline onclick in posts
-  window.openEditModal = function(postId, bodyRaw) {
-    currentEditPostId = postId;
+      // Combine non-deleted existing + new media
+      const allMedia = [
+        ...currentEditMedia.filter(m => !m.isDeleted),
+        ...newMediaFiles
+      ];
 
-    // Extract text only (remove all ![alt](url) patterns)
-    let textOnly = bodyRaw.replace(/!\[[^\]]*\]\s*\([^)]+\)/g, '').trim();
-    editBody.value = textOnly;
+      // Reconstruct body with media markdown
+      allMedia.forEach(m => {
+        body += `\n\n![${m.name || 'Media'}](${m.url})`;
+      });
 
-    // Extract media
-    const mediaMatches = [...bodyRaw.matchAll(/!\[([^\]]*)\]\s*\(\s*([^)]+)\s*\)/g)];
-    currentEditMedia = mediaMatches.map(m => ({
-      url: m[2].trim(),
-      name: m[1] || 'Media',
-      isExisting: true,
-      isDeleted: false
-    }));
-    newMediaFiles = [];
+      const { error } = await supabase
+        .from('memories')
+        .update({ body })
+        .eq('id', currentEditPostId)
+        .eq('user_id', user.id);
 
-    // Clear and rebuild previews
-    editMediaContainer.innerHTML = '';
-    currentEditMedia.forEach(m => {
-      addMediaPreviewToEdit(m.url, m.name, getMediaType(m.url), true);
+      if (error) {
+        alert('Failed to update: ' + error.message);
+        return;
+      }
+
+      editModal.style.display = 'none';
+      loadUserPosts();
     });
 
-    editModal.style.display = 'flex';
-  };
+    // Delete post
+    deleteEditButton.addEventListener('click', async () => {
+      if (!currentEditPostId) return;
+      if (!confirm('Delete this memory permanently?')) return;
 
-  // Save edited post — ✅ PRESERVES MEDIA
-  saveEditButton.addEventListener('click', async () => {
-    if (!currentEditPostId) return;
-    const user = await checkAuth();
-    if (!user) return;
+      const user = await checkAuth();
+      if (!user) return;
 
-    let body = editBody.value.trim();
+      const { error } = await supabase
+        .from('memories')
+        .delete()
+        .eq('id', currentEditPostId)
+        .eq('user_id', user.id);
 
-    // Combine non-deleted existing + new media
-    const allMedia = [
-      ...currentEditMedia.filter(m => !m.isDeleted),
-      ...newMediaFiles
-    ];
+      if (error) {
+        alert('Failed to delete: ' + error.message);
+        return;
+      }
 
-    // Reconstruct body with media markdown
-    allMedia.forEach(m => {
-      body += `\n\n![${m.name || 'Media'}](${m.url})`;
+      editModal.style.display = 'none';
+      loadUserPosts();
     });
-
-    const { error } = await supabase
-      .from('memories')
-      .update({ body })
-      .eq('id', currentEditPostId)
-      .eq('user_id', user.id);
-
-    if (error) {
-      alert('Failed to update: ' + error.message);
-      return;
-    }
-
-    editModal.style.display = 'none';
-    loadUserPosts();
-  });
-
-  // Delete post
-  deleteEditButton.addEventListener('click', async () => {
-    if (!currentEditPostId) return;
-    if (!confirm('Delete this memory permanently?')) return;
-
-    const user = await checkAuth();
-    if (!user) return;
-
-    const { error } = await supabase
-      .from('memories')
-      .delete()
-      .eq('id', currentEditPostId)
-      .eq('user_id', user.id);
-
-    if (error) {
-      alert('Failed to delete: ' + error.message);
-      return;
-    }
-
-    editModal.style.display = 'none';
-    loadUserPosts();
-  });
+  } else {
+    console.warn('Edit modal elements not found - edit functionality disabled');
+  }
 
   // Load user posts
   async function loadUserPosts() {
