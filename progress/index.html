@@ -107,6 +107,28 @@
     .posts-section h2 { 
       margin-bottom: 15px; 
       color: #1f2937;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .progress-header-actions {
+      display: flex;
+      gap: 8px;
+    }
+
+    .feedback-btn-inline {
+      padding: 6px 12px;
+      background-color: #007bff;
+      color: white;
+      border: none;
+      border-radius: 20px;
+      cursor: pointer;
+      font-size: 14px;
+    }
+
+    .feedback-btn-inline:hover {
+      background-color: #0056b3;
     }
 
     .post-item {
@@ -263,24 +285,6 @@
       font-size: 1.4rem;
     }
 
-    /* Feedback Button in Top Right Corner */
-    .feedback-btn-top {
-      position: relative;
-      padding: 8px 16px;
-      background-color: #007bff;
-      color: white;
-      border: none;
-      border-radius: 20px;
-      cursor: pointer;
-      font-size: 14px;
-      z-index: 1000;
-      margin-left: 12px;
-    }
-
-    .feedback-btn-top:hover {
-      background-color: #0056b3;
-    }
-
     /* Modal Styles */
     .modal {
       display: none;
@@ -348,7 +352,7 @@
 <body>
   <!-- Header -->
   <div class="header">
-    <a href="/" class="logo">
+    <a href="/homepage" class="logo">
       <i class="fas fa-heart-circle"></i> Healing
     </a>
     <div class="user-menu">
@@ -360,13 +364,16 @@
       </button>
       <div class="user-avatar" id="userAvatar">U</div>
       <button id="loginButton" class="login-btn">Login</button>
-      <!-- Feedback Button in Top Right Corner -->
-      <button id="feedbackBtnTop" class="feedback-btn-top" onclick="openFeedbackModal()">Feedback?</button>
     </div>
   </div>
 
   <div class="posts-section">
-    <h2>Development Progress Updates</h2>
+    <h2>
+      Development Progress Updates
+      <div class="progress-header-actions">
+        <button id="feedbackBtnInline" class="feedback-btn-inline" onclick="openFeedbackModal()">Feedback?</button>
+      </div>
+    </h2>
     <div id="updatesContainer"></div>
   </div>
 
@@ -401,7 +408,7 @@
   <!-- Bottom Navigation -->
   <div class="bottom-nav">
     <a href="/test" class="nav-item active" data-page="dashboard">
-      <i class="fas fa-tachboard-alt"></i>
+      <i class="fas fa-tachometer-alt"></i>
       <span>Dashboard</span>
     </a>
     <div class="nav-item" data-page="community">
