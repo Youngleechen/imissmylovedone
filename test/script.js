@@ -6,7 +6,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   // Initialize Supabase client globally
   if (typeof window.supabase !== 'undefined') {
     supabase = window.supabase.createClient(
-      'https://ccetnqdqfrsitooestbh.supabase.co',
+      'https://ccetnqdqfrsitooestbh.supabase.co  ',
       'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImNjZXRucWRxZnJzaXRvb2VzdGJoIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjIzMTE4MjksImV4cCI6MjA3Nzg4NzgyOX0.1NjRZZrgsPOg-2z_r2kRELWn9IVXNEQNpSxK6CktJRY'
     );
   } else {
@@ -41,6 +41,9 @@ document.addEventListener('DOMContentLoaded', async () => {
   let currentEditMedia = []; // { url, name, isExisting: true, isDeleted: false }
   let newMediaFiles = []; // newly added during edit
 
+  // Store picker position data persistently
+  let pickerPosition = null;
+
   async function checkAuth() {
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) {
@@ -63,7 +66,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     autoResize();
   }
 
-  // Emoji picker — Fully fixed for mobile
+  // Emoji picker — Fixed positioning that persists
   if (emojiButton && emojiPicker) {
     let pickerInstance = null;
     let isPickerOpen = false;
@@ -75,7 +78,6 @@ document.addEventListener('DOMContentLoaded', async () => {
       pickerInstance.id = 'actual-emoji-picker';
       pickerInstance.style.cssText = `
         position: absolute;
-        bottom: 100%;
         z-index: 1001;
         border: 1px solid #e2e8f0;
         border-radius: 12px;
@@ -84,7 +86,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         width: 320px;
         height: 380px;
         overflow: hidden;
-        margin-bottom: 10px;
+        display: none;
       `;
       emojiPicker.appendChild(pickerInstance);
 
@@ -105,37 +107,48 @@ document.addEventListener('DOMContentLoaded', async () => {
       if (isPickerOpen) return;
       createEmojiPicker();
 
-      const buttonRect = emojiButton.getBoundingClientRect();
-      const pickerRect = pickerInstance.getBoundingClientRect();
-      const windowWidth = window.innerWidth;
+      // Calculate position only if not previously stored
+      if (!pickerPosition) {
+        const buttonRect = emojiButton.getBoundingClientRect();
+        const windowWidth = window.innerWidth;
+        const windowHeight = window.innerHeight;
 
-      // Position above button, centered to button's right edge
-      let left = buttonRect.right - pickerRect.width;
-      let top = buttonRect.top - pickerRect.height - 10;
+        // Calculate ideal position
+        let left = buttonRect.right - 320; // 320 is picker width
+        let top = buttonRect.top - 390; // 390 is picker height + buffer
 
-      // Fix left overflow
-      if (left < 0) left = 0;
-      // Fix right overflow
-      if (left + pickerRect.width > windowWidth) left = windowWidth - pickerRect.width;
-      // Fix top overflow — flip to bottom if needed
-      if (top < 0) {
-        top = buttonRect.bottom + 10;
-        pickerInstance.style.bottom = 'unset';
-        pickerInstance.style.top = top + 'px';
-      } else {
-        pickerInstance.style.bottom = 'unset';
-        pickerInstance.style.top = top + 'px';
+        // Adjust for left boundary
+        if (left < 0) left = 0;
+        // Adjust for right boundary
+        if (left + 320 > windowWidth) left = windowWidth - 320;
+        // Adjust for top boundary (flip below if not enough space above)
+        if (top < 0) {
+          top = buttonRect.bottom + 10;
+        }
+
+        pickerPosition = { left, top };
       }
 
-      pickerInstance.style.left = left + 'px';
+      // Apply stored position
+      pickerInstance.style.left = pickerPosition.left + 'px';
+      pickerInstance.style.top = pickerPosition.top + 'px';
+      pickerInstance.style.display = 'block';
       emojiPicker.style.display = 'block';
       isPickerOpen = true;
     };
 
     const closeEmojiPicker = () => {
+      if (pickerInstance) {
+        pickerInstance.style.display = 'none';
+      }
       emojiPicker.style.display = 'none';
       isPickerOpen = false;
     };
+
+    // Reset position when window resizes
+    window.addEventListener('resize', () => {
+      pickerPosition = null;
+    });
 
     emojiButton.addEventListener('click', (e) => {
       e.stopPropagation();
