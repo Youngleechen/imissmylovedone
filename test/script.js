@@ -6,7 +6,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   // Initialize Supabase client globally
   if (typeof window.supabase !== 'undefined') {
     supabase = window.supabase.createClient(
-      'https://ccetnqdqfrsitooestbh.supabase.co  ',
+      'https://ccetnqdqfrsitooestbh.supabase.co',
       'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImNjZXRucWRxZnJzaXRvb2VzdGJoIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjIzMTE4MjksImV4cCI6MjA3Nzg4NzgyOX0.1NjRZZrgsPOg-2z_r2kRELWn9IVXNEQNpSxK6CktJRY'
     );
   } else {
@@ -63,26 +63,19 @@ document.addEventListener('DOMContentLoaded', async () => {
     autoResize();
   }
 
-  // Emoji picker - Completely rewritten for reliability
+  // Emoji picker — Fully fixed for mobile
   if (emojiButton && emojiPicker) {
     let pickerInstance = null;
     let isPickerOpen = false;
 
-    // Create and configure emoji picker
     const createEmojiPicker = () => {
       if (pickerInstance) return;
-      
-      // Clear any existing picker
       emojiPicker.innerHTML = '';
-      
-      // Create new emoji picker element
       pickerInstance = document.createElement('emoji-picker');
       pickerInstance.id = 'actual-emoji-picker';
       pickerInstance.style.cssText = `
         position: absolute;
         bottom: 100%;
-        right: 0;
-        margin-bottom: 10px;
         z-index: 1001;
         border: 1px solid #e2e8f0;
         border-radius: 12px;
@@ -91,12 +84,10 @@ document.addEventListener('DOMContentLoaded', async () => {
         width: 320px;
         height: 380px;
         overflow: hidden;
+        margin-bottom: 10px;
       `;
-      
-      // Add to container
       emojiPicker.appendChild(pickerInstance);
-      
-      // Handle emoji selection
+
       pickerInstance.addEventListener('emoji-click', (event) => {
         const emoji = event.detail.unicode;
         const start = memoryBody.selectionStart;
@@ -107,79 +98,59 @@ document.addEventListener('DOMContentLoaded', async () => {
         const newCursorPos = start + emoji.length;
         memoryBody.setSelectionRange(newCursorPos, newCursorPos);
         memoryBody.focus();
-        // Do not close picker after selection - allow multiple emojis
       });
     };
 
-    // Open emoji picker — RECALCULATE POSITION EVERY TIME
     const openEmojiPicker = () => {
       if (isPickerOpen) return;
-      
-      createEmojiPicker(); // Ensure picker exists
-      
-      // Get current button and picker dimensions
+      createEmojiPicker();
+
       const buttonRect = emojiButton.getBoundingClientRect();
       const pickerRect = pickerInstance.getBoundingClientRect();
       const windowWidth = window.innerWidth;
-      const windowScrollX = window.scrollX || window.pageXOffset;
-      const windowScrollY = window.scrollY || window.pageYOffset;
 
-      // Calculate ideal position: above button, aligned right edge
-      let leftPos = buttonRect.right - pickerRect.width;
-      let topPos = buttonRect.top - pickerRect.height - 10;
+      // Position above button, centered to button's right edge
+      let left = buttonRect.right - pickerRect.width;
+      let top = buttonRect.top - pickerRect.height - 10;
 
-      // Adjust if picker would go off-screen left
-      if (leftPos < 0) {
-        leftPos = 0;
+      // Fix left overflow
+      if (left < 0) left = 0;
+      // Fix right overflow
+      if (left + pickerRect.width > windowWidth) left = windowWidth - pickerRect.width;
+      // Fix top overflow — flip to bottom if needed
+      if (top < 0) {
+        top = buttonRect.bottom + 10;
+        pickerInstance.style.bottom = 'unset';
+        pickerInstance.style.top = top + 'px';
+      } else {
+        pickerInstance.style.bottom = 'unset';
+        pickerInstance.style.top = top + 'px';
       }
 
-      // Adjust if picker would go off-screen right
-      if (leftPos + pickerRect.width > windowWidth) {
-        leftPos = windowWidth - pickerRect.width;
-      }
-
-      // Adjust if picker would go off-screen top
-      if (topPos < 0) {
-        topPos = buttonRect.bottom + 10; // Place below button instead
-      }
-
-      // Apply calculated positions
-      pickerInstance.style.left = `${leftPos}px`;
-      pickerInstance.style.top = `${topPos}px`;
-
-      // Show picker
+      pickerInstance.style.left = left + 'px';
       emojiPicker.style.display = 'block';
       isPickerOpen = true;
     };
 
-    // Close emoji picker
     const closeEmojiPicker = () => {
       emojiPicker.style.display = 'none';
       isPickerOpen = false;
     };
 
-    // Toggle emoji picker
     emojiButton.addEventListener('click', (e) => {
       e.stopPropagation();
-      if (isPickerOpen) {
-        closeEmojiPicker();
-      } else {
-        openEmojiPicker();
-      }
+      if (isPickerOpen) closeEmojiPicker();
+      else openEmojiPicker();
     });
 
-    // Close picker when clicking outside
     document.addEventListener('click', (e) => {
       if (!emojiButton.contains(e.target) && !emojiPicker.contains(e.target) && !memoryBody.contains(e.target)) {
         closeEmojiPicker();
       }
     });
 
-    // Close picker when pressing escape key
     document.addEventListener('keydown', (e) => {
-      if (e.key === 'Escape' && isPickerOpen) {
-        closeEmojiPicker();
-      }
+      if (e.key === 'Escape' && isPickerOpen) closeEmojiPicker();
     });
   }
 
@@ -213,12 +184,10 @@ document.addEventListener('DOMContentLoaded', async () => {
         return;
       }
 
-      // Clear UI
       memoryBody.value = '';
       autoResize();
       window.currentMediaFiles = [];
 
-      // Clear previews via media.js
       if (typeof window.clearMediaPreviews === 'function') {
         window.clearMediaPreviews();
       }
@@ -227,8 +196,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     });
   }
 
-  // === EDIT MODAL LOGIC ===
-  // Only set up edit modal if all required elements exist
+  // Edit Modal — Only if all elements exist
   if (
     closeEditModal && editModal && saveEditButton && deleteEditButton &&
     addMoreMediaButton && addMoreMediaInput && editBody && editMediaContainer
@@ -253,14 +221,13 @@ document.addEventListener('DOMContentLoaded', async () => {
       const files = Array.from(e.target.files);
       if (!files.length) return;
 
-      // Use correct bucket for memories
       window.CURRENT_BUCKET_OVERRIDE = 'memories';
 
       for (const file of files) {
         const allowedTypes = ['image/jpeg', 'image/png', 'image/gif', 'image/webp', 'video/mp4', 'video/webm', 'video/quicktime'];
         if (!allowedTypes.includes(file.type)) {
           alert(`File ${file.name} is not an allowed type.`);
-          continue; // allow partial upload
+          continue;
         }
         if (file.size > 50 * 1024 * 1024) {
           alert(`File ${file.name} exceeds 50MB limit.`);
@@ -291,7 +258,7 @@ document.addEventListener('DOMContentLoaded', async () => {
           console.error('Upload error:', uploadError);
           alert('Upload failed: ' + uploadError.message);
           if (editUploadProgress) editUploadProgress.style.display = 'none';
-          continue; // try next file
+          continue;
         }
 
         const { data: { publicUrl } } = supabase.storage.from('memories').getPublicUrl(fileName);
@@ -302,7 +269,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
       if (editUploadProgress) editUploadProgress.style.display = 'none';
       addMoreMediaInput.value = '';
-      window.CURRENT_BUCKET_OVERRIDE = null; // reset
+      window.CURRENT_BUCKET_OVERRIDE = null;
     });
 
     function addMediaPreviewToEdit(url, filename, fileType, isExisting) {
@@ -382,15 +349,12 @@ document.addEventListener('DOMContentLoaded', async () => {
       return 'image/jpeg';
     }
 
-    // Global function for inline onclick in posts
     window.openEditModal = function(postId, bodyRaw) {
       currentEditPostId = postId;
 
-      // Extract text only (remove all ![alt](url) patterns)
       let textOnly = bodyRaw.replace(/!\[[^\]]*\]\s*\([^)]+\)/g, '').trim();
       editBody.value = textOnly;
 
-      // Extract media
       const mediaMatches = [...bodyRaw.matchAll(/!\[([^\]]*)\]\s*\(\s*([^)]+)\s*\)/g)];
       currentEditMedia = mediaMatches.map(m => ({
         url: m[2].trim(),
@@ -400,7 +364,6 @@ document.addEventListener('DOMContentLoaded', async () => {
       }));
       newMediaFiles = [];
 
-      // Clear and rebuild previews
       editMediaContainer.innerHTML = '';
       currentEditMedia.forEach(m => {
         addMediaPreviewToEdit(m.url, m.name, getMediaType(m.url), true);
@@ -409,21 +372,17 @@ document.addEventListener('DOMContentLoaded', async () => {
       editModal.style.display = 'flex';
     };
 
-    // Save edited post — ✅ PRESERVES MEDIA
     saveEditButton.addEventListener('click', async () => {
       if (!currentEditPostId) return;
       const user = await checkAuth();
       if (!user) return;
 
       let body = editBody.value.trim();
-
-      // Combine non-deleted existing + new media
       const allMedia = [
         ...currentEditMedia.filter(m => !m.isDeleted),
         ...newMediaFiles
       ];
 
-      // Reconstruct body with media markdown
       allMedia.forEach(m => {
         body += `\n\n![${m.name || 'Media'}](${m.url})`;
       });
@@ -443,7 +402,6 @@ document.addEventListener('DOMContentLoaded', async () => {
       loadUserPosts();
     });
 
-    // Delete post
     deleteEditButton.addEventListener('click', async () => {
       if (!currentEditPostId) return;
       if (!confirm('Delete this memory permanently?')) return;
@@ -539,8 +497,6 @@ document.addEventListener('DOMContentLoaded', async () => {
         }
 
         mediaGridHtml += '</div>';
-
-        // Remove media from text
         textOnlyBody = post.body.replace(/!\[[^\]]*\]\s*\([^)]+\)/g, '');
       }
 
@@ -564,39 +520,21 @@ document.addEventListener('DOMContentLoaded', async () => {
     }).join('');
   }
 
-  // Image fit helpers (for gallery previews)
+  // Image fit helpers
   window.adjustImageFit = function(img) {
-    if (img.complete) {
-      applyFitBasedOnAspectRatio(img);
-    } else {
-      img.onload = function() {
-        img.onload = null;
-        applyFitBasedOnAspectRatio(img);
-      };
-    }
+    if (img.complete) applyFitBasedOnAspectRatio(img);
+    else img.onload = () => { img.onload = null; applyFitBasedOnAspectRatio(img); };
   };
 
   window.adjustThumbnailFit = function(img) {
-    if (img.complete) {
-      applyFitBasedOnAspectRatio(img);
-    } else {
-      img.onload = function() {
-        img.onload = null;
-        applyFitBasedOnAspectRatio(img);
-      };
-    }
+    if (img.complete) applyFitBasedOnAspectRatio(img);
+    else img.onload = () => { img.onload = null; applyFitBasedOnAspectRatio(img); };
   };
 
   function applyFitBasedOnAspectRatio(img) {
     if (img.naturalWidth && img.naturalHeight) {
       const aspectRatio = img.naturalWidth / img.naturalHeight;
-      if (aspectRatio < 1) {
-        img.style.objectFit = 'contain';
-      } else if (aspectRatio > 1.2) {
-        img.style.objectFit = 'cover';
-      } else {
-        img.style.objectFit = 'contain';
-      }
+      img.style.objectFit = aspectRatio > 1.2 ? 'cover' : 'contain';
     } else {
       img.style.objectFit = 'contain';
     }
@@ -604,8 +542,6 @@ document.addEventListener('DOMContentLoaded', async () => {
 
   // Initialize
   checkAuth().then(user => {
-    if (user) {
-      loadUserPosts();
-    }
+    if (user) loadUserPosts();
   });
 });
