@@ -6,7 +6,7 @@
   <title>Progress Updates</title>
 
   <!-- Supabase Client -->
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2  "></script>
 
   <!-- Styles (reuse from test/) -->
   <link rel="stylesheet" href="../test/style.css" />
@@ -14,7 +14,7 @@
   <!-- Create Supabase client globally -->
   <script>
     window.supabaseClient = window.supabase.createClient(
-      'https://ccetnqdqfrsitooestbh.supabase.co',
+      'https://ccetnqdqfrsitooestbh.supabase.co  ',
       'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImNjZXRucWRxZnJzaXRvb2VzdGJoIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjIzMTE4MjksImV4cCI6MjA3Nzg4NzgyOX0.1NjRZZrgsPOg-2z_r2kRELWn9IVXNEQNpSxK6CktJRY'
     );
   </script>
@@ -25,7 +25,84 @@
     <div id="updatesContainer"></div>
   </div>
 
+  <!-- Feedback Button -->
+  <button id="feedbackBtn" class="floating-feedback-btn" onclick="openFeedbackModal()">Feedback</button>
+
+  <!-- Feedback Modal -->
+  <div id="feedbackModal" class="modal">
+    <div class="modal-content">
+      <span class="close" onclick="closeFeedbackModal()">&times;</span>
+      <h3>Your Thoughts</h3>
+      <form id="feedbackForm">
+        <label for="name">Name (optional):</label>
+        <input type="text" id="name" name="name">
+        
+        <label for="email">Email (optional):</label>
+        <input type="email" id="email" name="email">
+        
+        <label for="feedbackType">Type:</label>
+        <select id="feedbackType" name="feedback_type">
+          <option value="suggestion">Suggestion</option>
+          <option value="improvement">Improvement</option>
+          <option value="thought">General Thought</option>
+          <option value="bug">Bug Report</option>
+        </select>
+        
+        <label for="message">Your Feedback:</label>
+        <textarea id="message" name="message" rows="5" required></textarea>
+        
+        <button type="submit">Submit Feedback</button>
+      </form>
+    </div>
+  </div>
+
   <!-- Load viewer script -->
   <script type="module" src="/progress/progress-viewer-script.js"></script>
+  
+  <script>
+    // Modal functions
+    function openFeedbackModal() {
+      document.getElementById('feedbackModal').style.display = 'block';
+    }
+    
+    function closeFeedbackModal() {
+      document.getElementById('feedbackModal').style.display = 'none';
+    }
+    
+    // Close modal if clicking outside of it
+    window.onclick = function(event) {
+      const modal = document.getElementById('feedbackModal');
+      if (event.target === modal) {
+        modal.style.display = 'none';
+      }
+    }
+    
+    // Form submission
+    document.getElementById('feedbackForm').addEventListener('submit', async function(e) {
+      e.preventDefault();
+      
+      const formData = {
+        name: document.getElementById('name').value,
+        email: document.getElementById('email').value,
+        feedback_type: document.getElementById('feedbackType').value,
+        message: document.getElementById('message').value
+      };
+      
+      try {
+        const { error } = await window.supabaseClient
+          .from('feedback')
+          .insert([formData]);
+          
+        if (error) throw error;
+        
+        alert('Thank you for your feedback!');
+        document.getElementById('feedbackForm').reset();
+        closeFeedbackModal();
+      } catch (error) {
+        console.error('Error submitting feedback:', error);
+        alert('Error submitting feedback. Please try again.');
+      }
+    });
+  </script>
 </body>
 </html>
