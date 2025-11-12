@@ -239,6 +239,78 @@
     .nav-item i {
       font-size: 1.4rem;
     }
+
+    /* Group List Styles */
+    .group-list {
+      display: none;
+      flex-direction: column;
+      gap: 12px;
+      margin-top: 15px;
+    }
+
+    .group-item {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 12px;
+      background: #f8fafc;
+      border-radius: 8px;
+      border-left: 4px solid #5a67d8;
+    }
+
+    .group-avatar {
+      width: 48px;
+      height: 48px;
+      border-radius: 50%;
+      background: linear-gradient(45deg, #5a67d8, #9f7aea);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: white;
+      font-weight: 600;
+      font-size: 1.1rem;
+    }
+
+    .group-info {
+      flex: 1;
+    }
+
+    .group-name {
+      font-weight: 600;
+      color: #1f2937;
+      margin-bottom: 4px;
+    }
+
+    .group-meta {
+      font-size: 0.85rem;
+      color: #718096;
+    }
+
+    /* Notification List Styles */
+    .notification-list {
+      display: none;
+      flex-direction: column;
+      gap: 12px;
+      margin-top: 15px;
+    }
+
+    .notification-item {
+      padding: 12px;
+      background: #f8fafc;
+      border-radius: 8px;
+      border-left: 4px solid #48bb78;
+    }
+
+    .notification-text {
+      color: #374151;
+      line-height: 1.5;
+    }
+
+    .notification-time {
+      font-size: 0.8rem;
+      color: #718096;
+      margin-top: 4px;
+    }
   </style>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
 </head>
@@ -246,29 +318,35 @@
   <!-- Header -->
   <div class="header">
     <div class="logo">
-      <i class="fas fa-heart-circle"></i> Healing <!-- Kept "Healing" -->
+      <i class="fas fa-heart-circle"></i> Healing
     </div>
     <div class="user-menu">
-      <button class="action-btn" id="messageButton" style="background: none; border: none; padding: 8px; cursor: pointer;"> <!-- Message button -->
-        <i class="fas fa-envelope"></i> <!-- Message icon -->
+      <button class="action-btn" id="messageButton" style="background: none; border: none; padding: 8px; cursor: pointer;">
+        <i class="fas fa-envelope"></i>
       </button>
-      <button class="action-btn" id="callButton" style="background: none; border: none; padding: 8px; cursor: pointer;"> <!-- Call button -->
-        <i class="fas fa-phone"></i> <!-- Call icon -->
+      <button class="action-btn" id="callButton" style="background: none; border: none; padding: 8px; cursor: pointer;">
+        <i class="fas fa-phone"></i>
       </button>
-      <div class="user-avatar" id="userAvatar">U</div> <!-- Existing avatar -->
+      <div class="user-avatar" id="userAvatar">U</div>
       <button id="loginButton" class="login-btn">Login</button>
     </div>
   </div>
 
   <div class="posts-section">
-    <h2>Community Memories</h2>
+    <h2 id="section-title">Community Memories</h2>
     <div id="all-posts-container">Loading...</div>
+    <div id="group-list" class="group-list">
+      <!-- Groups will be populated here -->
+    </div>
+    <div id="notification-list" class="notification-list">
+      <!-- Notifications will be populated here -->
+    </div>
   </div>
 
   <!-- Bottom Navigation -->
   <div class="bottom-nav">
-    <a href="/test" class="nav-item active" data-page="dashboard">
-      <i class="fas fa-tachboard-alt"></i>
+    <a href="/test" class="nav-item" data-page="dashboard">
+      <i class="fas fa-tachometer-alt"></i>
       <span>Dashboard</span>
     </a>
     <div class="nav-item" data-page="community">
@@ -306,7 +384,7 @@
         loginButton.textContent = 'Logout';
         loginButton.onclick = async function() {
           await window.supabaseClient.auth.signOut();
-          window.location.href = '/'; // Redirect to home after logout
+          window.location.href = '/';
         };
       } else {
         // User is not logged in
@@ -319,6 +397,16 @@
 
     async function loadAllPosts() {
       const container = document.getElementById('all-posts-container');
+      const groupList = document.getElementById('group-list');
+      const notificationList = document.getElementById('notification-list');
+      const sectionTitle = document.getElementById('section-title');
+      
+      // Reset displays
+      container.style.display = 'block';
+      groupList.style.display = 'none';
+      notificationList.style.display = 'none';
+      sectionTitle.textContent = 'Community Memories';
+
       container.innerHTML = 'Loading...';
 
       try {
@@ -436,6 +524,101 @@
         container.innerHTML = 'Failed to load memories.';
       }
     }
+
+    // Function to show groups
+    function showGroups() {
+      const container = document.getElementById('all-posts-container');
+      const groupList = document.getElementById('group-list');
+      const notificationList = document.getElementById('notification-list');
+      const sectionTitle = document.getElementById('section-title');
+      
+      // Reset displays
+      container.style.display = 'none';
+      groupList.style.display = 'flex';
+      notificationList.style.display = 'none';
+      sectionTitle.textContent = 'Your Groups';
+
+      // Sample groups data
+      const groups = [
+        { name: 'Loss Parents Support', members: 245, postsToday: 12 },
+        { name: 'Sudden Death Grief', members: 189, postsToday: 8 },
+        { name: 'Suicide Loss Survivors', members: 312, postsToday: 15 },
+        { name: 'Caregivers Who Lost', members: 97, postsToday: 5 },
+        { name: 'Young Widows Support', members: 63, postsToday: 3 },
+        { name: 'Grief After Addiction', members: 142, postsToday: 7 }
+      ];
+
+      const groupsHTML = groups.map(group => `
+        <div class="group-item">
+          <div class="group-avatar">${group.name.charAt(0)}</div>
+          <div class="group-info">
+            <div class="group-name">${group.name}</div>
+            <div class="group-meta">${group.members} members • ${group.postsToday} new posts today</div>
+          </div>
+          <i class="fas fa-chevron-right" style="color: #a0aec0;"></i>
+        </div>
+      `).join('');
+
+      groupList.innerHTML = groupsHTML;
+    }
+
+    // Function to show notifications
+    function showNotifications() {
+      const container = document.getElementById('all-posts-container');
+      const groupList = document.getElementById('group-list');
+      const notificationList = document.getElementById('notification-list');
+      const sectionTitle = document.getElementById('section-title');
+      
+      // Reset displays
+      container.style.display = 'none';
+      groupList.style.display = 'none';
+      notificationList.style.display = 'flex';
+      sectionTitle.textContent = 'Notifications';
+
+      // Sample notifications data
+      const notifications = [
+        { text: 'Sarah liked your memory of your dad', time: '2 hours ago' },
+        { text: 'New post in "Loss Parents Support"', time: '4 hours ago' },
+        { text: 'John joined your group "Sudden Death Grief"', time: '1 day ago' },
+        { text: 'Reminder: Your memorial post is one year old today', time: '1 day ago' },
+        { text: 'Emma commented on your story', time: '2 days ago' },
+        { text: 'New resource added to "Grief After Addiction"', time: '3 days ago' }
+      ];
+
+      const notificationsHTML = notifications.map(notification => `
+        <div class="notification-item">
+          <div class="notification-text">${notification.text}</div>
+          <div class="notification-time">${notification.time}</div>
+        </div>
+      `).join('');
+
+      notificationList.innerHTML = notificationsHTML;
+    }
+
+    // Add navigation event listeners
+    document.querySelectorAll('.nav-item[data-page]').forEach(item => {
+      item.addEventListener('click', function() {
+        const page = this.getAttribute('data-page');
+        
+        // Remove active class from all nav items
+        document.querySelectorAll('.nav-item').forEach(navItem => {
+          navItem.classList.remove('active');
+        });
+        
+        // Add active class to clicked item
+        this.classList.add('active');
+        
+        // Show appropriate content based on clicked page
+        if (page === 'community') {
+          showGroups();
+        } else if (page === 'notifications') {
+          showNotifications();
+        } else {
+          // For other pages, just reset to default
+          loadAllPosts();
+        }
+      });
+    });
 
     document.addEventListener('DOMContentLoaded', function() {
       loadAllPosts();
