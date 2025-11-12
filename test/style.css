@@ -11,7 +11,15 @@ body {
   max-width: 600px;
   margin: 0 auto;
 }
-
+@media (max-width: 768px) {
+  #actual-emoji-picker {
+    width: 90vw;
+    max-width: 320px;
+    height: auto;
+    max-height: 300px;
+    overflow-y: auto;
+  }
+}
 .thought-box {
   background: white;
   border-radius: 12px;
@@ -460,3 +468,4 @@ button {
 .dot.active {
   background: #5a67d8;
 }
+
