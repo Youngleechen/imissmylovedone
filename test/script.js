@@ -42,7 +42,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   let newMediaFiles = []; // newly added during edit
 
   async function checkAuth() {
-    const { data: { user } } = await supabase.auth.getUser();
+    const {  { user } } = await supabase.auth.getUser();
     if (!user) {
       window.location.href = 'signin.html';
       return null;
@@ -80,9 +80,6 @@ document.addEventListener('DOMContentLoaded', async () => {
       pickerInstance.id = 'actual-emoji-picker';
       pickerInstance.style.cssText = `
         position: absolute;
-        bottom: 100%;
-        right: 0;
-        margin-bottom: 10px;
         z-index: 1001;
         border: 1px solid #e2e8f0;
         border-radius: 12px;
@@ -120,22 +117,41 @@ document.addEventListener('DOMContentLoaded', async () => {
       // Position the picker relative to the emoji button
       const buttonRect = emojiButton.getBoundingClientRect();
       const pickerRect = pickerInstance.getBoundingClientRect();
-      
-      // Position above the button
-      pickerInstance.style.top = (buttonRect.top - pickerRect.height - 10) + 'px';
-      pickerInstance.style.left = (buttonRect.right - pickerRect.width) + 'px';
-      
-      // Make sure it doesn't go off screen
-      const windowWidth = window.innerWidth;
+      const windowHeight = window.innerHeight;
       const windowScrollY = window.scrollY || window.pageYOffset;
-      if (pickerInstance.offsetLeft + pickerInstance.offsetWidth > windowWidth) {
-        pickerInstance.style.left = (windowWidth - pickerInstance.offsetWidth - 10) + 'px';
+      
+      // Calculate available space above and below
+      const spaceAbove = buttonRect.top;
+      const spaceBelow = windowHeight - buttonRect.bottom;
+      
+      // Default: position above button
+      let topPosition = buttonRect.top - pickerRect.height - 10;
+      let leftPosition = buttonRect.right - pickerRect.width;
+      
+      // If not enough space above, position below
+      if (spaceAbove < pickerRect.height + 20) {
+        topPosition = buttonRect.bottom + 10;
       }
       
-      // Ensure picker is not positioned off the top of the screen
-      if (pickerInstance.offsetTop < 0) {
-        pickerInstance.style.top = (buttonRect.bottom + 10) + 'px';
+      // Ensure it doesn't go off screen horizontally
+      if (leftPosition < 0) {
+        leftPosition = 0;
       }
+      if (leftPosition + pickerRect.width > window.innerWidth) {
+        leftPosition = window.innerWidth - pickerRect.width - 10;
+      }
+      
+      // Ensure it doesn't go off screen vertically
+      if (topPosition < 0) {
+        topPosition = 0;
+      }
+      if (topPosition + pickerRect.height > windowHeight) {
+        topPosition = windowHeight - pickerRect.height - 10;
+      }
+      
+      // Apply positions
+      pickerInstance.style.top = `${topPosition}px`;
+      pickerInstance.style.left = `${leftPosition}px`;
       
       // Show picker
       emojiPicker.style.display = 'block';
@@ -284,7 +300,7 @@ document.addEventListener('DOMContentLoaded', async () => {
           continue; // try next file
         }
 
-        const { data: { publicUrl } } = supabase.storage.from('memories').getPublicUrl(fileName);
+        const {  { publicUrl } } = supabase.storage.from('memories').getPublicUrl(fileName);
 
         newMediaFiles.push({ url: publicUrl, name: file.name, type: file.type });
         addMediaPreviewToEdit(publicUrl, file.name, file.type, false);
