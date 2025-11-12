@@ -293,7 +293,8 @@ document.addEventListener('DOMContentLoaded', async () => {
           continue; // try next file
         }
 
-        const {  { publicUrl } } = supabase.storage.from('memories').getPublicUrl(fileName);
+        // ✅ CORRECTED LINE - Fixed destructuring syntax
+        const { data: { publicUrl } } = supabase.storage.from('memories').getPublicUrl(fileName);
 
         newMediaFiles.push({ url: publicUrl, name: file.name, type: file.type });
         addMediaPreviewToEdit(publicUrl, file.name, file.type, false);
@@ -408,6 +409,65 @@ document.addEventListener('DOMContentLoaded', async () => {
       editModal.style.display = 'flex';
     };
 
+    // Save edited post — ✅ PRESERVES MEDIA
+    saveEditButton.addEventListener('click', async () => {
+      if (!currentEditPostId) return;
+      const user = await checkAuth();
+      if (!user) return;
+
+      let body = editBody.value.trim();
+
+      // Combine non-deleted existing + new media
+      const allMedia = [
+        ...currentEditMedia.filter(m => !m.isDeleted),
+        ...newMediaFiles
+      ];
+
+      // Reconstruct body with media markdown
+      allMedia.forEach(m => {
+        body += `\n\n![${m.name || 'Media'}](${m.url})`;
+      });
+
+      const { error } = await supabase
+        .from('memories')
+        .update({ body })
+        .eq('id', currentEditPostId)
+        .eq('user_id', user.id);
+
+      if (error) {
+        alert('Failed to update: ' + error.message);
+        return;
+      }
+
+      editModal.style.display = 'none';
+      loadUserPosts();
+    });
+
+    // Delete post
+    deleteEditButton.addEventListener('click', async () => {
+      if (!currentEditPostId) return;
+      if (!confirm('Delete this memory permanently?')) return;
+
+      const user = await checkAuth();
+      if (!user) return;
+
+      const { error } = await supabase
+        .from('memories')
+        .delete()
+        .eq('id', currentEditPostId)
+        .eq('user_id', user.id);
+
+      if (error) {
+        alert('Failed to delete: ' + error.message);
+        return;
+      }
+
+      editModal.style.display = 'none';
+      loadUserPosts();
+    });
+  } else {
+    console.warn('Edit modal elements not found - edit functionality disabled');
+  }
     // Save edited post — ✅ PRESERVES MEDIA
     saveEditButton.addEventListener('click', async () => {
       if (!currentEditPostId) return;
@@ -608,3 +668,4 @@ document.addEventListener('DOMContentLoaded', async () => {
     }
   });
 });
+
