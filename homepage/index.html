@@ -312,7 +312,119 @@
       margin-top: 4px;
     }
 
-    /* Call/Social Features */
+    /* Call System Styles */
+    .call-request-modal {
+      display: none;
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(0,0,0,0.5);
+      z-index: 1000;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .call-request-content {
+      background: white;
+      padding: 20px;
+      border-radius: 12px;
+      width: 90%;
+      max-width: 400px;
+      text-align: center;
+    }
+
+    .call-request-title {
+      font-size: 1.2rem;
+      font-weight: 600;
+      margin-bottom: 15px;
+      color: #1f2937;
+    }
+
+    .call-request-desc {
+      color: #718096;
+      margin-bottom: 20px;
+      line-height: 1.5;
+    }
+
+    .call-request-buttons {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    .call-request-btn {
+      padding: 12px;
+      border-radius: 8px;
+      border: none;
+      font-size: 1rem;
+      cursor: pointer;
+      font-weight: 600;
+    }
+
+    .call-btn-primary {
+      background-color: #4f46e5;
+      color: white;
+    }
+
+    .call-btn-secondary {
+      background-color: #e5e7eb;
+      color: #374151;
+    }
+
+    .call-listener-banner {
+      display: none;
+      position: fixed;
+      top: 60px;
+      left: 50%;
+      transform: translateX(-50%);
+      background: #48bb78;
+      color: white;
+      padding: 15px 20px;
+      border-radius: 8px;
+      z-index: 999;
+      width: 90%;
+      max-width: 500px;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+    }
+
+    .banner-content {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .banner-text {
+      flex: 1;
+      font-weight: 600;
+      margin-right: 15px;
+    }
+
+    .banner-buttons {
+      display: flex;
+      gap: 10px;
+    }
+
+    .banner-btn {
+      padding: 6px 12px;
+      border-radius: 6px;
+      border: none;
+      font-weight: 600;
+      cursor: pointer;
+    }
+
+    .accept-btn {
+      background-color: white;
+      color: #48bb78;
+    }
+
+    .decline-btn {
+      background-color: rgba(255,255,255,0.3);
+      color: white;
+    }
+
+    /* Social Features */
     .social-features {
       display: none;
       flex-direction: column;
@@ -374,6 +486,36 @@
       </button>
       <div class="user-avatar" id="userAvatar">U</div>
       <button id="loginButton" class="login-btn">Login</button>
+    </div>
+  </div>
+
+  <!-- Call Request Modal -->
+  <div id="callRequestModal" class="call-request-modal">
+    <div class="call-request-content">
+      <div class="call-request-title">Connect for Support</div>
+      <div class="call-request-desc">Choose how you'd like to connect with someone who understands your journey.</div>
+      <div class="call-request-buttons">
+        <button id="oneToOneCall" class="call-request-btn call-btn-primary">
+          <i class="fas fa-user"></i> One-on-One Call
+        </button>
+        <button id="groupCall" class="call-request-btn call-btn-primary">
+          <i class="fas fa-users"></i> Group Support (3-5 people)
+        </button>
+        <button id="cancelCall" class="call-request-btn call-btn-secondary">
+          Cancel
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Listener Banner (appears when someone needs support) -->
+  <div id="listenerBanner" class="call-listener-banner">
+    <div class="banner-content">
+      <div class="banner-text">Someone needs support right now. You can help.</div>
+      <div class="banner-buttons">
+        <button id="acceptCall" class="banner-btn accept-btn">Accept</button>
+        <button id="declineCall" class="banner-btn decline-btn">Not Now</button>
+      </div>
     </div>
   </div>
 
@@ -484,7 +626,10 @@
           'Lisa Thompson', 'James Wilson', 'Maria Garcia', 'Robert Taylor',
           'Jennifer Lee', 'William Brown', 'Amanda Davis', 'Christopher Miller',
           'Michelle Jackson', 'Daniel Smith', 'Ashley White', 'Matthew Anderson',
-          'Stephanie Martinez', 'Joshua Thomas', 'Nicole Hernandez', 'Ryan Moore'
+          'Stephanie Martinez', 'Joshua Thomas', 'Nicole Hernandez', 'Ryan Moore',
+          'Angela Davis', 'Brian Wilson', 'Cathy Brown', 'Derek Taylor',
+          'Eva Martinez', 'Frank Anderson', 'Grace Thomas', 'Henry Moore',
+          'Ivy Jackson', 'Jack White', 'Katie Harris', 'Liam Clark'
         ];
 
         const postsHTML = data.map((post, index) => {
@@ -590,7 +735,7 @@
       socialFeatures.style.display = 'none';
       sectionTitle.textContent = 'Your Groups';
 
-      // Sample groups data with exaggerated numbers
+      // Sample groups data with 20+ groups
       const groups = [
         { name: 'Loss Parents Support', members: 245000, postsToday: 12000 },
         { name: 'Sudden Death Grief', members: 189000, postsToday: 8500 },
@@ -599,7 +744,21 @@
         { name: 'Young Widows Support', members: 63000, postsToday: 3100 },
         { name: 'Grief After Addiction', members: 142000, postsToday: 7800 },
         { name: 'Military Loss Support', members: 89000, postsToday: 4200 },
-        { name: 'Child Loss Parents', members: 156000, postsToday: 9300 }
+        { name: 'Child Loss Parents', members: 156000, postsToday: 9300 },
+        { name: 'Spouse Loss Support', members: 112000, postsToday: 6700 },
+        { name: 'Sibling Loss Community', members: 78000, postsToday: 4500 },
+        { name: 'Pet Loss Grief', members: 54000, postsToday: 2800 },
+        { name: 'Pregnancy Loss Support', members: 91000, postsToday: 5100 },
+        { name: 'Elder Caregiver Grief', members: 43000, postsToday: 2300 },
+        { name: 'Grief After Divorce', members: 37000, postsToday: 1900 },
+        { name: 'Loss of Dreams Support', members: 29000, postsToday: 1500 },
+        { name: 'Sudden Illness Loss', members: 103000, postsToday: 5800 },
+        { name: 'Friend Loss Support', members: 67000, postsToday: 3400 },
+        { name: 'Grandparent Loss', members: 52000, postsToday: 2700 },
+        { name: 'Grief After Abuse', members: 48000, postsToday: 2600 },
+        { name: 'Multiple Loss Support', members: 35000, postsToday: 1800 },
+        { name: 'Grief After Natural Disaster', members: 28000, postsToday: 1400 },
+        { name: 'Support for Grief Helpers', members: 41000, postsToday: 2100 }
       ];
 
       const groupsHTML = groups.map(group => `
@@ -739,6 +898,48 @@
           currentActivePage = null;
         }
       });
+    });
+
+    // Call button functionality
+    document.getElementById('callButton').addEventListener('click', function() {
+      document.getElementById('callRequestModal').style.display = 'flex';
+    });
+
+    // Message button functionality
+    document.getElementById('messageButton').addEventListener('click', function() {
+      // For now, just show a placeholder
+      alert('Message inbox would open here');
+    });
+
+    // Call modal buttons
+    document.getElementById('cancelCall').addEventListener('click', function() {
+      document.getElementById('callRequestModal').style.display = 'none';
+    });
+
+    document.getElementById('oneToOneCall').addEventListener('click', function() {
+      alert('Connecting to a support partner...');
+      document.getElementById('callRequestModal').style.display = 'none';
+    });
+
+    document.getElementById('groupCall').addEventListener('click', function() {
+      alert('Finding group support partners...');
+      document.getElementById('callRequestModal').style.display = 'none';
+    });
+
+    // Simulate listener banner appearing after 5 seconds (for demo purposes)
+    setTimeout(() => {
+      const banner = document.getElementById('listenerBanner');
+      banner.style.display = 'flex';
+    }, 5000);
+
+    // Banner buttons
+    document.getElementById('acceptCall').addEventListener('click', function() {
+      document.getElementById('listenerBanner').style.display = 'none';
+      alert('Connecting to someone who needs support...');
+    });
+
+    document.getElementById('declineCall').addEventListener('click', function() {
+      document.getElementById('listenerBanner').style.display = 'none';
     });
 
     document.addEventListener('DOMContentLoaded', function() {
