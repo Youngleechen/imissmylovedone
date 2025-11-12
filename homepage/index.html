@@ -4,8 +4,8 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Grief Support Platform - Homepage</title>
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2    "></script>
-  <style> 
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <style>
     * {
       margin: 0;
       padding: 0;
@@ -240,7 +240,7 @@
       font-size: 1.4rem;
     }
   </style>
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css  " />
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
 </head>
 <body>
   <!-- Header -->
@@ -268,17 +268,17 @@
   <!-- Bottom Navigation -->
   <div class="bottom-nav">
     <a href="/test" class="nav-item active" data-page="dashboard">
-      <i class="fas fa-tachometer-alt"></i>
+      <i class="fas fa-tachboard-alt"></i>
       <span>Dashboard</span>
     </a>
     <div class="nav-item" data-page="community">
       <i class="fas fa-users"></i>
       <span>Community</span>
     </div>
-    <div class="nav-item" data-page="memories">
+    <a href="/updates" class="nav-item" data-page="updates">
       <i class="fas fa-book"></i>
-      <span>Memories</span>
-    </div>
+      <span>Updates</span>
+    </a>
     <div class="nav-item" data-page="notifications">
       <i class="fas fa-bell"></i>
       <span>Notifications</span>
@@ -292,14 +292,30 @@
   <script>
     // Initialize Supabase client globally
     window.supabaseClient = window.supabase.createClient(
-      'https://ccetnqdqfrsitooestbh.supabase.co    ',
+      'https://ccetnqdqfrsitooestbh.supabase.co',
       'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImNjZXRucWRxZnJzaXRvb2VzdGJoIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjIzMTE4MjksImV4cCI6MjA3Nzg4NzgyOX0.1NjRZZrgsPOg-2z_r2kRELWn9IVXNEQNpSxK6CktJRY'
     );
 
-    // Add event listener for login button
-    document.getElementById('loginButton').addEventListener('click', function () {
-      window.location.href = '/login/';
-    });
+    // Function to check login status and update button
+    async function updateLoginButton() {
+      const loginButton = document.getElementById('loginButton');
+      const user = await window.supabaseClient.auth.getUser();
+      
+      if (user.data.user) {
+        // User is logged in
+        loginButton.textContent = 'Logout';
+        loginButton.onclick = async function() {
+          await window.supabaseClient.auth.signOut();
+          window.location.href = '/'; // Redirect to home after logout
+        };
+      } else {
+        // User is not logged in
+        loginButton.textContent = 'Login';
+        loginButton.onclick = function() {
+          window.location.href = '/login/';
+        };
+      }
+    }
 
     async function loadAllPosts() {
       const container = document.getElementById('all-posts-container');
@@ -421,7 +437,10 @@
       }
     }
 
-    document.addEventListener('DOMContentLoaded', loadAllPosts);
+    document.addEventListener('DOMContentLoaded', function() {
+      loadAllPosts();
+      updateLoginButton(); // Check login status when page loads
+    });
   </script>
 </body>
 </html>
