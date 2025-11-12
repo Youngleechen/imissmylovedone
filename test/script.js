@@ -86,7 +86,9 @@ document.addEventListener('DOMContentLoaded', async () => {
           const newCursorPos = start + emoji.length;
           memoryBody.setSelectionRange(newCursorPos, newCursorPos);
           memoryBody.focus();
-          // Picker stays open after selection
+          // Close picker after selection
+          emojiPicker.classList.remove('show');
+          isPickerVisible = false;
         });
       }
 
@@ -129,7 +131,6 @@ document.addEventListener('DOMContentLoaded', async () => {
       if (
         !emojiButton.contains(e.target) &&
         !emojiPicker.contains(e.target) &&
-        !pickerInstance.contains(e.target) && // Added to prevent closing when clicking picker
         !memoryBody.contains(e.target)
       ) {
         emojiPicker.classList.remove('show');
