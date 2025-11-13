@@ -4,26 +4,8 @@ document.addEventListener('DOMContentLoaded', async () => {
   const supabase = window.supabaseClient;
   const updatesContainer = document.getElementById('updatesContainer');
 
-  async function checkAuth() {
-    try {
-      const { data: { user } } = await supabase.auth.getUser(); // ✅ Fixed syntax
-      if (!user) {
-        window.location.href = '../signin.html'; // Adjust path as needed
-        return null;
-      }
-      return user;
-    } catch (error) {
-      console.error('Auth check failed:', error);
-      window.location.href = '../signin.html';
-      return null;
-    }
-  }
-
-  // Load updates
+  // Load updates - no auth required
   async function loadUpdates() {
-    const user = await checkAuth();
-    if (!user) return;
-
     const { data, error } = await supabase
       .from('development_updates') // ✅ Your table
       .select(`
@@ -149,12 +131,8 @@ document.addEventListener('DOMContentLoaded', async () => {
     }
   };
 
-  // Initialize
-  checkAuth().then(user => {
-    if (user) {
-      loadUpdates();
-    }
-  });
+  // Initialize - no auth check required
+  loadUpdates();
 
   // --- GALLERY FUNCTIONS ---
   // Reused from main app, but scoped to this page
