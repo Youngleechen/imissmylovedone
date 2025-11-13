@@ -395,10 +395,32 @@ function injectHeader() {
     });
   }
 
-  // Simulate listener banner appearing after 5 seconds
-  setTimeout(() => {
-    if (listenerBanner) listenerBanner.style.display = 'flex';
-  }, 5000);
+  // --- Banner Display Logic (Only for logged-in users) ---
+  async function checkAuthAndShowBanner() {
+    if (window.supabaseClient) {
+      const { data: { user }, error } = await window.supabaseClient.auth.getUser();
+      if (user && listenerBanner) {
+        // User is logged in, show the banner after 5 seconds
+        setTimeout(() => {
+          listenerBanner.style.display = 'flex';
+        }, 5000);
+      }
+      // If user is not logged in, the banner remains hidden (display: none by default)
+    } else {
+      console.error("Supabase client not found in header.js. Cannot check auth state.");
+    }
+  }
+
+  // Initialize banner logic when DOM is loaded and Supabase client is potentially available
+  // Since header.js runs after DOM is loaded, we can call this directly
+  // However, Supabase client might be initialized later by the main HTML script
+  // So we'll use a small delay or check if the client exists first
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', checkAuthAndShowBanner);
+  } else {
+    // DOM is already loaded
+    setTimeout(checkAuthAndShowBanner, 100); // Small delay to ensure Supabase client is initialized by main script
+  }
 }
 
 // Run the header injection when the DOM is loaded
