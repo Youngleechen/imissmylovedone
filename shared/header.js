@@ -1,6 +1,7 @@
 // shared/header.js
 
 function injectHeader() {
+  // Create header HTML
   const headerHTML = `
     <div class="header">
       <div class="logo">
@@ -22,7 +23,7 @@ function injectHeader() {
   // Insert header at the top of the body
   document.body.insertAdjacentHTML('afterbegin', headerHTML);
 
-  // Add your header CSS if needed
+  // Add CSS styles
   const style = document.createElement('style');
   style.textContent = `
     .header {
@@ -72,18 +73,35 @@ function injectHeader() {
       font-size: 0.9rem;
       margin-left: 12px;
     }
+    .action-btn {
+      background: none;
+      border: none;
+      padding: 8px;
+      cursor: pointer;
+    }
   `;
   document.head.appendChild(style);
 
-  // Optional: Add basic login button functionality
+  // Load Font Awesome for icons
+  const faLink = document.createElement('link');
+  faLink.rel = 'stylesheet';
+  faLink.href = 'https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css';
+  document.head.appendChild(faLink);
+
+  // Add login button functionality
   document.getElementById('loginButton')?.addEventListener('click', function() {
     window.location.href = '/login/';
   });
 
-  // Add Font Awesome for icons
-  const faScript = document.createElement('script');
-  faScript.src = 'https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css';
-  document.head.appendChild(faScript);
+  // Add message button functionality (optional placeholder)
+  document.getElementById('messageButton')?.addEventListener('click', function() {
+    alert('Message inbox would open here');
+  });
+
+  // Add call button functionality (optional placeholder)
+  document.getElementById('callButton')?.addEventListener('click', function() {
+    alert('Call system would open here');
+  });
 }
 
 // Run when DOM is loaded
