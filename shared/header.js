@@ -42,48 +42,65 @@ function injectHeader() {
     <div id="callSimulationModal" class="call-simulation-modal">
       <div class="call-simulation-content">
         <div class="call-header">
-          <div class="call-avatar">M</div>
+          <div class="call-avatar" id="localUserAvatar">Y</div>
           <div class="call-info">
-            <div class="call-name">Mary</div>
-            <div class="call-status">Calling now…</div>
+            <div class="call-name">You</div>
+            <div class="call-status" id="callStatus">Connecting...</div>
           </div>
         </div>
-        <div class="call-simulation-text">
-          <div class="call-message call-received">
-            <span class="message-text">…I didn’t know how to breathe after he was gone.</span>
-            <span class="message-time">00:03</span>
+        
+        <!-- Waiting Screen -->
+        <div id="waitingScreen" class="waiting-screen">
+          <div class="waiting-icon">
+            <i class="fas fa-sync fa-spin"></i>
           </div>
-          <div class="call-message call-sent">
-            <span class="message-text">I know.</span>
-            <span class="message-time">00:05</span>
+          <div class="waiting-text">Looking for someone who understands your loss...</div>
+          <div class="waiting-progress">
+            <div class="progress-bar">
+              <div class="progress-fill" id="progressFill"></div>
+            </div>
           </div>
-          <div class="call-message call-received">
-            <span class="message-text">People say ‘time heals.’ But it doesn’t. It just… changes the shape of the pain.</span>
-            <span class="message-time">00:12</span>
-          </div>
-          <div class="call-message call-sent">
-            <span class="message-text">Yeah. I still talk to him. Every morning. Before I get out of bed.</span>
-            <span class="message-time">00:17</span>
-          </div>
-          <div class="call-message call-received">
-            <span class="message-text">…I used to think that meant I was losing my mind.</span>
-            <span class="message-time">00:22</span>
-          </div>
-          <div class="call-message call-sent">
-            <span class="message-text">You’re not. You’re just still in love with him.</span>
-            <span class="message-time">00:26</span>
-          </div>
-          <div class="call-message call-received">
-            <span class="message-text">…I cried for the first time last week. Not because I was sad. Because I remembered how he laughed.</span>
-            <span class="message-time">00:33</span>
-          </div>
-          <div class="call-message call-sent">
-            <span class="message-text">That’s not weakness. That’s courage.</span>
-            <span class="message-time">00:37</span>
+          <div class="waiting-tips">
+            <p>Remember: You're not alone. Someone who's walked this path is waiting to connect with you.</p>
           </div>
         </div>
+
+        <!-- Call Participants Screen (for Group) -->
+        <div id="participantsScreen" class="participants-screen" style="display: none;">
+          <div class="call-participants">
+            <div class="participant" id="participant-0">
+              <div class="participant-avatar">Y</div>
+              <div class="participant-name">You</div>
+              <div class="participant-status">Connected</div>
+            </div>
+            <!-- Other participants will be added here dynamically -->
+          </div>
+        </div>
+
+        <!-- Active Call Screen -->
+        <div id="activeCallScreen" class="active-call-screen" style="display: none;">
+          <div class="call-transcript">
+            <div class="call-message call-received">
+              <span class="message-text">Hi... I know this is hard. I lost my son to suicide 3 days ago.</span>
+              <span class="message-time">00:00</span>
+            </div>
+            <div class="call-message call-sent">
+              <span class="message-text">I know how that feels. I lost my daughter to cancer. I'm here.</span>
+              <span class="message-time">00:05</span>
+            </div>
+            <div class="call-message call-received">
+              <span class="message-text">I didn't think I'd ever talk to anyone about this. Thank you.</span>
+              <span class="message-time">00:12</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="call-timer" id="callTimer">00:00</div>
+        
         <div class="call-actions">
-          <button id="endCall" class="call-btn-end">End Call</button>
+          <button id="endCall" class="call-btn-end">
+            <i class="fas fa-phone-slash"></i> End Call
+          </button>
         </div>
       </div>
     </div>
@@ -107,17 +124,17 @@ function injectHeader() {
       <h2>Your Messages</h2>
       <div class="message-item message-received">
         <div class="message-sender">David (Canada)</div>
-        <div class="message-content">I saw your post about your daughter. I lost mine to cancer last year. I didn’t think I’d ever feel anything but numb. But today, I smiled at a song she loved. It didn’t hurt as much. Just… different. I’m here if you want to talk.</div>
+        <div class="message-content">I saw your post about your daughter. I lost mine to cancer last year. I didn't think I'd ever feel anything but numb. But today, I smiled at a song she loved. It didn't hurt as much. Just… different. I'm here if you want to talk.</div>
         <div class="message-time">1 hour ago</div>
       </div>
       <div class="message-item message-sent">
         <div class="message-sender">You</div>
-        <div class="message-content">Thank you, David. That meant more than I can say. I’ve been holding my breath for months. Just reading that… I felt like I could exhale.</div>
+        <div class="message-content">Thank you, David. That meant more than I can say. I've been holding my breath for months. Just reading that… I felt like I could exhale.</div>
         <div class="message-time">45 minutes ago</div>
       </div>
       <div class="message-item message-received">
         <div class="message-sender">Lena (Australia)</div>
-        <div class="message-content">I lost my husband to suicide. I didn’t tell anyone for 8 months. I thought I was broken. But now I know — I was just grieving. You’re not alone.</div>
+        <div class="message-content">I lost my husband to suicide. I didn't tell anyone for 8 months. I thought I was broken. But now I know — I was just grieving. You're not alone.</div>
         <div class="message-time">2 hours ago</div>
       </div>
     </div>
@@ -386,7 +403,7 @@ function injectHeader() {
       color: #e6e6e6;
       border-radius: 16px;
       width: 90%;
-      max-width: 420px;
+      max-width: 500px;
       max-height: 80vh;
       overflow-y: auto;
       padding: 24px;
@@ -406,7 +423,7 @@ function injectHeader() {
       width: 50px;
       height: 50px;
       border-radius: 50%;
-      background: linear-gradient(135deg, #f093fb, #f5576c);
+      background: linear-gradient(135deg, #4f46e5, #7c3aed);
       display: flex;
       align-items: center;
       justify-content: center;
@@ -432,14 +449,116 @@ function injectHeader() {
       margin-top: 4px;
     }
 
-    .call-simulation-text {
+    /* --- WAITING SCREEN --- */
+    .waiting-screen {
       flex: 1;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+      text-align: center;
+    }
+
+    .waiting-icon {
+      font-size: 3rem;
+      color: #48bb78;
       margin-bottom: 20px;
-      padding: 12px;
-      border-radius: 12px;
+    }
+
+    .waiting-text {
+      font-size: 1.1rem;
+      margin-bottom: 30px;
+      color: #e6e6e6;
+    }
+
+    .waiting-progress {
+      width: 100%;
+      max-width: 300px;
+      margin-bottom: 30px;
+    }
+
+    .progress-bar {
+      width: 100%;
+      height: 8px;
+      background: rgba(255,255,255,0.1);
+      border-radius: 4px;
+      overflow: hidden;
+    }
+
+    .progress-fill {
+      height: 100%;
+      background: linear-gradient(90deg, #48bb78, #38a169);
+      width: 0%;
+      transition: width 0.3s ease;
+    }
+
+    .waiting-tips {
+      font-size: 0.9rem;
+      color: #a0aec0;
+      max-width: 350px;
+      line-height: 1.5;
+    }
+
+    /* --- PARTICIPANTS SCREEN --- */
+    .participants-screen {
+      flex: 1;
+      padding: 20px 0;
+    }
+
+    .call-participants {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+      gap: 20px;
+      margin-bottom: 20px;
+    }
+
+    .participant {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 15px;
       background: rgba(255,255,255,0.05);
-      font-size: 0.95rem;
-      line-height: 1.6;
+      border-radius: 12px;
+      border: 1px solid rgba(255,255,255,0.1);
+    }
+
+    .participant-avatar {
+      width: 60px;
+      height: 60px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, #f093fb, #f5576c);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: white;
+      font-weight: 700;
+      font-size: 1.2rem;
+      margin-bottom: 10px;
+    }
+
+    .participant-name {
+      font-weight: 600;
+      margin-bottom: 5px;
+    }
+
+    .participant-status {
+      font-size: 0.8rem;
+      color: #48bb78;
+    }
+
+    /* --- ACTIVE CALL SCREEN --- */
+    .active-call-screen {
+      flex: 1;
+      overflow-y: auto;
+      margin-bottom: 20px;
+      padding: 10px;
+    }
+
+    .call-transcript {
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
     }
 
     .call-message {
@@ -480,6 +599,14 @@ function injectHeader() {
       opacity: 0.7;
     }
 
+    .call-timer {
+      text-align: center;
+      font-size: 1.5rem;
+      font-weight: 600;
+      color: #48bb78;
+      margin-bottom: 15px;
+    }
+
     .call-actions {
       display: flex;
       justify-content: center;
@@ -495,6 +622,9 @@ function injectHeader() {
       font-size: 1rem;
       cursor: pointer;
       transition: background 0.2s;
+      display: flex;
+      align-items: center;
+      gap: 8px;
     }
 
     .call-btn-end:hover {
@@ -506,7 +636,7 @@ function injectHeader() {
   // 4. Load Font Awesome for icons
   const faLink = document.createElement('link');
   faLink.rel = 'stylesheet';
-  faLink.href = 'https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css  ';
+  faLink.href = 'https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css';
   document.head.appendChild(faLink);
 
   // 5. Add event listeners for header elements
@@ -533,66 +663,161 @@ function injectHeader() {
     });
   }
 
-  if (oneToOneCall) {
-    oneToOneCall.addEventListener('click', function() {
-      alert('Looking for someone who’s experienced a similar loss…');
-      if (callRequestModal) callRequestModal.style.display = 'none';
-    });
-  }
-
-  if (groupCall) {
-    groupCall.addEventListener('click', function() {
-      alert('Finding 3–5 people who’ve walked this path…');
-      if (callRequestModal) callRequestModal.style.display = 'none';
-    });
-  }
-
   // --- CALL SIMULATION MODAL ---
   const callSimulationModal = document.getElementById('callSimulationModal');
+  const callStatus = document.getElementById('callStatus');
+  const waitingScreen = document.getElementById('waitingScreen');
+  const participantsScreen = document.getElementById('participantsScreen');
+  const activeCallScreen = document.getElementById('activeCallScreen');
+  const progressFill = document.getElementById('progressFill');
   const endCall = document.getElementById('endCall');
+  const callTimer = document.getElementById('callTimer');
+
+  let callType = null;
+  let callInterval = null;
+  let callDuration = 0;
+
+  function startCallTimer() {
+    callDuration = 0;
+    if (callInterval) clearInterval(callInterval);
+    
+    callInterval = setInterval(() => {
+      callDuration++;
+      const minutes = Math.floor(callDuration / 60).toString().padStart(2, '0');
+      const seconds = (callDuration % 60).toString().padStart(2, '0');
+      callTimer.textContent = `${minutes}:${seconds}`;
+    }, 1000);
+  }
+
+  function stopCallTimer() {
+    if (callInterval) {
+      clearInterval(callInterval);
+      callInterval = null;
+    }
+  }
+
+  function formatParticipantName(name) {
+    return name.split(' ').map(word => word[0]).join('').toUpperCase();
+  }
+
+  function addParticipant(name, status = 'Connected') {
+    const participantsContainer = document.querySelector('.call-participants');
+    const participantId = `participant-${participantsContainer.children.length}`;
+    
+    const participantElement = document.createElement('div');
+    participantElement.className = 'participant';
+    participantElement.id = participantId;
+    
+    participantElement.innerHTML = `
+      <div class="participant-avatar">${formatParticipantName(name)}</div>
+      <div class="participant-name">${name}</div>
+      <div class="participant-status">${status}</div>
+    `;
+    
+    participantsContainer.appendChild(participantElement);
+  }
 
   // Trigger the simulation when someone chooses "One-on-One Call"
   if (oneToOneCall) {
     oneToOneCall.addEventListener('click', function() {
       if (callRequestModal) callRequestModal.style.display = 'none';
       if (callSimulationModal) {
+        callType = 'one-to-one';
         callSimulationModal.style.display = 'flex';
-        // Simulate message flow over time
-        simulateCallMessages();
+        startCallSimulation();
       }
     });
+  }
+
+  // Trigger the simulation when someone chooses "Group Call"
+  if (groupCall) {
+    groupCall.addEventListener('click', function() {
+      if (callRequestModal) callRequestModal.style.display = 'none';
+      if (callSimulationModal) {
+        callType = 'group';
+        callSimulationModal.style.display = 'flex';
+        startCallSimulation();
+      }
+    });
+  }
+
+  function startCallSimulation() {
+    // Reset UI
+    waitingScreen.style.display = 'flex';
+    participantsScreen.style.display = 'none';
+    activeCallScreen.style.display = 'none';
+    callTimer.style.display = 'none';
+    callStatus.textContent = 'Connecting...';
+    progressFill.style.width = '0%';
+    
+    // Start progress bar
+    let progress = 0;
+    const progressInterval = setInterval(() => {
+      progress += 2;
+      progressFill.style.width = `${progress}%`;
+      
+      if (progress >= 100) {
+        clearInterval(progressInterval);
+        
+        // Show participants screen for group calls
+        if (callType === 'group') {
+          waitingScreen.style.display = 'none';
+          participantsScreen.style.display = 'block';
+          callStatus.textContent = 'Connected';
+          callTimer.style.display = 'block';
+          startCallTimer();
+          
+          // Add group participants
+          setTimeout(() => {
+            addParticipant('Mary');
+            callStatus.textContent = 'Connecting... Mary joined';
+          }, 1000);
+          
+          setTimeout(() => {
+            addParticipant('David');
+            callStatus.textContent = 'Connecting... David joined';
+          }, 2000);
+          
+          setTimeout(() => {
+            addParticipant('Lena');
+            callStatus.textContent = 'All participants connected';
+          }, 3000);
+          
+          // Show active call after all participants join
+          setTimeout(() => {
+            participantsScreen.style.display = 'none';
+            activeCallScreen.style.display = 'block';
+            callStatus.textContent = 'In call';
+          }, 5000);
+          
+        } else {
+          // One-to-one call
+          waitingScreen.style.display = 'none';
+          activeCallScreen.style.display = 'block';
+          callStatus.textContent = 'Connected';
+          callTimer.style.display = 'block';
+          startCallTimer();
+        }
+      }
+    }, 50);
   }
 
   if (endCall) {
     endCall.addEventListener('click', function() {
-      if (callSimulationModal) callSimulationModal.style.display = 'none';
-      alert('You’ve just had a real moment. You’re not alone. Keep going.');
-    });
-  }
-
-  // Simulate the call messages appearing one by one
-  function simulateCallMessages() {
-    const messages = document.querySelectorAll('.call-message');
-    let index = 0;
-
-    const showNextMessage = () => {
-      if (index < messages.length) {
-        messages[index].style.opacity = '1';
-        messages[index].style.transform = 'translateX(0)';
-        index++;
-        setTimeout(showNextMessage, 2500); // 2.5 seconds between messages
+      if (callSimulationModal) {
+        callSimulationModal.style.display = 'none';
+        stopCallTimer();
+        callType = null;
+        
+        // Clear participants for next call
+        const participantsContainer = document.querySelector('.call-participants');
+        while (participantsContainer.children.length > 1) {
+          participantsContainer.removeChild(participantsContainer.lastChild);
+        }
+        
+        alert('Call ended. You\'re not alone. Keep going.');
       }
-    };
-
-    // Hide all messages initially
-    messages.forEach(msg => {
-      msg.style.opacity = '0';
-      msg.style.transform = 'translateX(-20px)';
-      msg.style.transition = 'opacity 0.4s ease, transform 0.4s ease';
     });
-
-    // Start the sequence after a short delay
-    setTimeout(showNextMessage, 1000);
   }
 
   // --- Message Inbox Logic ---
