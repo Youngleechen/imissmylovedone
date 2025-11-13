@@ -6,6 +6,7 @@
   <title>Grief Support Platform - Homepage</title>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <style>
+    /* --- GLOBAL STYLES (can be moved to a shared CSS file later if needed) --- */
     * {
       margin: 0;
       padding: 0;
@@ -18,71 +19,20 @@
       padding: 2px;
       max-width: 800px;
       margin: 0 auto;
+      padding-bottom: 70px; /* Add space for fixed footer */
     }
 
-    /* Header styles */
-    .header {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      padding: 16px;
-      background: white;
-      box-shadow: 0 2px 8px rgba(0,0,0,0.05);
-      position: sticky;
-      top: 0;
-      z-index: 100;
+    /* --- MAIN CONTENT STYLES (specific to this page's core content) --- */
+    .posts-section {
+      margin-top: 20px;
+      padding: 20px;
+      background-color: white;
+      border-radius: 8px;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.1);
     }
 
-    .logo {
-      font-size: 1.2rem;
-      font-weight: 700;
-      color: #5a67d8;
-      display: flex;
-      align-items: center;
-      gap: 8px;
-    }
-
-    .user-menu {
-      display: flex;
-      align-items: center;
-      gap: 12px;
-    }
-
-    .user-avatar {
-      width: 44px;
-      height: 44px;
-      border-radius: 50%;
-      background: linear-gradient(45deg, #5a67d8, #9f7aea);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      color: white;
-      font-weight: 600;
-      font-size: 1.1rem;
-      cursor: pointer;
-    }
-    
-    .login-btn {
-      background-color: #4f46e5;
-      color: white;
-      border: none;
-      padding: 8px 16px;
-      border-radius: 6px;
-      cursor: pointer;
-      font-size: 0.9rem;
-      margin-left: 12px;
-    }
-
-    .posts-section { 
-      margin-top: 20px; 
-      padding: 20px; 
-      background-color: white; 
-      border-radius: 8px; 
-      box-shadow: 0 1px 3px rgba(0,0,0,0.1); 
-    }
-
-    .posts-section h2 { 
-      margin-bottom: 15px; 
+    .posts-section h2 {
+      margin-bottom: 15px;
       color: #1f2937;
     }
 
@@ -209,110 +159,7 @@
       background-color: #f3f4f6;
     }
 
-    /* Bottom Navigation Styles */
-    .bottom-nav {
-      position: fixed;
-      bottom: 0;
-      left: 0;
-      width: 100%;
-      background: white;
-      display: flex;
-      justify-content: space-around;
-      padding: 12px 0;
-      box-shadow: 0 -2px 10px rgba(0,0,0,0.05);
-      z-index: 99;
-    }
-
-    .nav-item {
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      gap: 4px;
-      font-size: 0.8rem;
-      color: #718096;
-    }
-
-    .nav-item.active {
-      color: #5a67d8;
-    }
-
-    .nav-item i {
-      font-size: 1.4rem;
-    }
-
-    /* Group List Styles */
-    .group-list {
-      display: none;
-      flex-direction: column;
-      gap: 12px;
-      margin-top: 15px;
-    }
-
-    .group-item {
-      display: flex;
-      align-items: center;
-      gap: 12px;
-      padding: 12px;
-      background: #f8fafc;
-      border-radius: 8px;
-      border-left: 4px solid #5a67d8;
-    }
-
-    .group-avatar {
-      width: 48px;
-      height: 48px;
-      border-radius: 50%;
-      background: linear-gradient(45deg, #5a67d8, #9f7aea);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      color: white;
-      font-weight: 600;
-      font-size: 1.1rem;
-    }
-
-    .group-info {
-      flex: 1;
-    }
-
-    .group-name {
-      font-weight: 600;
-      color: #1f2937;
-      margin-bottom: 4px;
-    }
-
-    .group-meta {
-      font-size: 0.85rem;
-      color: #718096;
-    }
-
-    /* Notification List Styles */
-    .notification-list {
-      display: none;
-      flex-direction: column;
-      gap: 12px;
-      margin-top: 15px;
-    }
-
-    .notification-item {
-      padding: 12px;
-      background: #f8fafc;
-      border-radius: 8px;
-      border-left: 4px solid #48bb78;
-    }
-
-    .notification-text {
-      color: #374151;
-      line-height: 1.5;
-    }
-
-    .notification-time {
-      font-size: 0.8rem;
-      color: #718096;
-      margin-top: 4px;
-    }
-
-    /* Call Request Modal */
+    /* --- MODAL STYLES (specific to call modal, banner, message inbox - these could also be moved to header.js if they are always related to the header) --- */
     .call-request-modal {
       display: none;
       position: fixed;
@@ -373,7 +220,7 @@
       color: #374151;
     }
 
-    /* Listener Banner — Personalized */
+    /* --- BANNER STYLES --- */
     .call-listener-banner {
       display: none;
       position: fixed;
@@ -446,7 +293,7 @@
       color: white;
     }
 
-    /* Message Inbox Preview */
+    /* --- MESSAGE INBOX STYLES --- */
     .message-inbox {
       display: none;
       flex-direction: column;
@@ -494,106 +341,11 @@
       background: #e0e7ff;
       border-right: 3px solid #5a67d8;
     }
-
-    /* Social Features */
-    .social-features {
-      display: none;
-      flex-direction: column;
-      gap: 12px;
-      margin-top: 15px;
-    }
-
-    .social-item {
-      display: flex;
-      align-items: center;
-      gap: 12px;
-      padding: 12px;
-      background: #f8fafc;
-      border-radius: 8px;
-      border-left: 4px solid #ed8936;
-    }
-
-    .social-icon {
-      width: 48px;
-      height: 48px;
-      border-radius: 50%;
-      background: linear-gradient(45deg, #ed8936, #f6ad55);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      color: white;
-      font-size: 1.1rem;
-    }
-
-    .social-info {
-      flex: 1;
-    }
-
-    .social-name {
-      font-weight: 600;
-      color: #1f2937;
-      margin-bottom: 4px;
-    }
-
-    .social-meta {
-      font-size: 0.85rem;
-      color: #718096;
-    }
-
-    /* Help Resources */
-    .help-resources {
-      display: none;
-      flex-direction: column;
-      gap: 12px;
-      margin-top: 15px;
-    }
-
-    .help-item {
-      padding: 15px;
-      background: #f8fafc;
-      border-radius: 8px;
-      border-left: 4px solid #48bb78;
-    }
-
-    .help-title {
-      font-weight: 600;
-      color: #1f2937;
-      margin-bottom: 8px;
-    }
-
-    .help-content {
-      color: #374151;
-      line-height: 1.5;
-      font-size: 0.95rem;
-    }
-
-    .help-link {
-      color: #4f46e5;
-      text-decoration: none;
-      display: block;
-      margin-top: 8px;
-      font-weight: 600;
-    }
   </style>
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
+  <!-- Font Awesome is loaded by header.js -->
 </head>
 <body>
-  <!-- Header -->
-  <div class="header">
-    <div class="logo">
-      <i class="fas fa-heart-circle"></i> Healing
-    </div>
-    <div class="user-menu">
-      <button class="action-btn" id="messageButton" style="background: none; border: none; padding: 8px; cursor: pointer;">
-        <i class="fas fa-envelope"></i>
-      </button>
-      <button class="action-btn" id="callButton" style="background: none; border: none; padding: 8px; cursor: pointer;">
-        <i class="fas fa-phone"></i>
-      </button>
-      <div class="user-avatar" id="userAvatar">U</div>
-      <button id="loginButton" class="login-btn">Login</button>
-    </div>
-  </div>
+  <!-- Header will be injected here by header.js -->
 
   <!-- Call Request Modal -->
   <div id="callRequestModal" class="call-request-modal">
@@ -614,7 +366,7 @@
     </div>
   </div>
 
-  <!-- Listener Banner — Personalized -->
+  <!-- Listener Banner -->
   <div id="listenerBanner" class="call-listener-banner">
     <div class="banner-content">
       <div class="banner-person">Mary, United States</div>
@@ -648,93 +400,58 @@
     </div>
   </div>
 
+  <!-- Main Content Area - Footer content sections will be injected here by footer.js -->
   <div class="posts-section">
-    <h2 id="section-title"></h2>
+    <h2 id="section-title">Community Memories</h2>
     <div id="all-posts-container">Loading...</div>
-    <div id="group-list" class="group-list">
-      <!-- Groups will be populated here -->
-    </div>
-    <div id="notification-list" class="notification-list">
-      <!-- Notifications will be populated here -->
-    </div>
-    <div id="social-features" class="social-features">
-      <!-- Social features will be populated here -->
-    </div>
-    <div id="help-resources" class="help-resources">
-      <!-- Help resources will be populated here -->
-    </div>
+    <!-- Footer content sections (group-list, notification-list, etc.) will be added here by footer.js -->
   </div>
 
-  <!-- Bottom Navigation -->
-  <div class="bottom-nav">
-    <a href="/test" class="nav-item" data-page="dashboard">
-      <i class="fas fa-tachometer-alt"></i>
-      <span>Dashboard</span>
-    </a>
-    <div class="nav-item" data-page="community">
-      <i class="fas fa-users"></i>
-      <span>Community</span>
-    </div>
-    <a href="/progress" class="nav-item" data-page="progress">
-      <i class="fas fa-book"></i>
-      <span>Progress</span>
-    </a>
-    <div class="nav-item" data-page="notifications">
-      <i class="fas fa-bell"></i>
-      <span>Notifications</span>
-    </div>
-    <div class="nav-item" data-page="resources">
-      <i class="fas fa-leaf"></i>
-      <span>Help</span>
-    </div>
-  </div>
+  <!-- Footer will be injected here by footer.js -->
 
+  <!-- Inject Header and Footer -->
+  <script src="/shared/header.js"></script>
+  <script src="/shared/footer.js"></script>
+
+  <!-- Main Application Logic (specific to this page's core functionality) -->
   <script>
-    // Initialize Supabase client globally
-    const supabase = window.supabase.createClient(
+    // Initialize Supabase
+    window.supabaseClient = window.supabase.createClient(
       'https://ccetnqdqfrsitooestbh.supabase.co',
       'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImNjZXRucWRxZnJzaXRvb2VzdGJoIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjIzMTE4MjksImV4cCI6MjA3Nzg4NzgyOX0.1NjRZZrgsPOg-2z_r2kRELWn9IVXNEQNpSxK6CktJRY'
     );
 
-    // Only handle login/logout button behavior — no auth check needed for posts
+    // --- Main Application Functions (specific to this page) ---
+
     async function updateLoginButton() {
       const loginButton = document.getElementById('loginButton');
-      const { data: { user } } = await supabase.auth.getUser();
+      const user = await window.supabaseClient.auth.getUser();
 
-      if (user) {
+      if (user.data.user) {
         loginButton.textContent = 'Logout';
-        loginButton.onclick = async () => {
-          await supabase.auth.signOut();
+        loginButton.onclick = async function() {
+          await window.supabaseClient.auth.signOut();
           window.location.href = '/';
         };
       } else {
         loginButton.textContent = 'Login';
-        loginButton.onclick = () => {
+        loginButton.onclick = function() {
           window.location.href = '/login/';
         };
       }
     }
 
-    // Load memories for **everyone**, no auth required
     async function loadAllPosts() {
       const container = document.getElementById('all-posts-container');
-      const groupList = document.getElementById('group-list');
-      const notificationList = document.getElementById('notification-list');
-      const socialFeatures = document.getElementById('social-features');
-      const helpResources = document.getElementById('help-resources');
+      // Note: The other containers (group-list, etc.) are now managed by footer.js
       const sectionTitle = document.getElementById('section-title');
-      
-      container.style.display = 'block';
-      groupList.style.display = 'none';
-      notificationList.style.display = 'none';
-      socialFeatures.style.display = 'none';
-      helpResources.style.display = 'none';
-      sectionTitle.textContent = '';
-      container.innerHTML = '';
+
+      // We only need to reset the posts container and title here if needed by default
+      if (container) container.innerHTML = 'Loading...';
+      if (sectionTitle) sectionTitle.textContent = 'Community Memories'; // Default title
 
       try {
-        // Public read access assumed on 'memories' table
-        const { data, error } = await supabase
+        const { data, error } = await window.supabaseClient
           .from('memories')
           .select('id, body, created_at, user_id')
           .order('created_at', { ascending: false });
@@ -742,7 +459,7 @@
         if (error) throw error;
 
         if (data.length === 0) {
-          container.innerHTML = 'No memories yet.';
+          if (container) container.innerHTML = 'No memories yet.';
           return;
         }
 
@@ -788,8 +505,7 @@
           const user = users[index % users.length];
           const authorName = user.name;
           const initials = user.avatar;
-          
-          // Extract media (Markdown-style: ![alt](url))
+
           const mediaMatches = [...post.body.matchAll(/!\[([^\]]*)\]\s*\(\s*([^)]+)\s*\)/g)];
           let contentHtml = post.body.replace(/!\[([^\]]*)\]\s*\(\s*([^)]+)\s*\)/g, '');
           contentHtml = contentHtml.replace(/\n/g, '<br>');
@@ -800,9 +516,10 @@
           for (const match of mediaMatches) {
             const alt = match[1] || 'Media';
             const url = match[2].trim();
-            const isVideo = /\.(mp4|webm|mov)$/i.test(url);
+            const isVideo = url.includes('.mp4') || url.includes('.webm') || url.includes('.mov');
+
             if (isVideo) {
-              mediaHtml += `<div class="media-container"><video controls class="media-item-video"><source src="${url}" type="video/mp4">Your browser does not support the video tag.</video></div>`;
+              mediaHtml += `<div class="media-container"><video controls class="media-item-video"><source src="${url}" type="video/mp4"></video></div>`;
             } else {
               mediaHtml += `<div class="media-container"><img src="${url}" alt="${alt}" class="media-item"></div>`;
             }
@@ -826,16 +543,21 @@
                   </div>`;
         }).join('');
 
-        container.innerHTML = postsHTML;
+        if (container) container.innerHTML = postsHTML;
 
-        // Show "Show more" only if text is truncated
         document.querySelectorAll('.post-item').forEach(postItem => {
           const textContainer = postItem.querySelector('.text-container');
           const showMoreBtn = postItem.querySelector('.show-more-btn');
 
-          // Temporarily expand to measure
+          const originalLineClamp = textContainer.style.webkitLineClamp;
+          textContainer.style.webkitLineClamp = 'unset';
+          textContainer.style.webkitBoxOrient = 'unset';
           textContainer.classList.add('expanded');
+
           const expandedHeight = textContainer.scrollHeight;
+
+          textContainer.style.webkitLineClamp = originalLineClamp;
+          textContainer.style.webkitBoxOrient = 'vertical';
           textContainer.classList.remove('expanded');
 
           const clampedHeight = textContainer.scrollHeight;
@@ -852,276 +574,61 @@
 
       } catch (err) {
         console.error('Error loading posts:', err);
-        container.innerHTML = 'Failed to load memories.';
+        if (container) container.innerHTML = 'Failed to load memories.';
       }
     }
 
-    // Remaining functions unchanged (showGroups, showNotifications, etc.)
-    function showGroups() {
-      const container = document.getElementById('all-posts-container');
-      const groupList = document.getElementById('group-list');
-      const notificationList = document.getElementById('notification-list');
-      const socialFeatures = document.getElementById('social-features');
-      const helpResources = document.getElementById('help-resources');
-      const sectionTitle = document.getElementById('section-title');
-      
-      container.style.display = 'none';
-      groupList.style.display = 'flex';
-      notificationList.style.display = 'none';
-      socialFeatures.style.display = 'none';
-      helpResources.style.display = 'none';
-      sectionTitle.textContent = 'Your Groups';
-
-      const groups = [
-        { name: 'Parents Who Lost a Child to Suicide', members: 245000, postsToday: 12000 },
-        { name: 'Spouses Who Lost Partner to Suicide', members: 189000, postsToday: 8500 },
-        { name: 'Siblings Who Lost Brother or Sister to Suicide', members: 312000, postsToday: 15000 },
-        { name: 'Caregivers Who Lost Loved One to Illness', members: 97000, postsToday: 5200 },
-        { name: 'Parents Who Lost Child to Overdose', members: 63000, postsToday: 3100 },
-        { name: 'Those Who Lost a Friend to Suicide', members: 142000, postsToday: 7800 },
-        { name: 'Military Families After Loss', members: 89000, postsToday: 4200 },
-        { name: 'Parents Who Lost Child to Accident', members: 156000, postsToday: 9300 },
-        { name: 'Spouses Who Lost Partner to Cancer', members: 112000, postsToday: 6700 },
-        { name: 'Adults Who Lost Parent to Suicide', members: 78000, postsToday: 4500 },
-        { name: 'Those Who Lost a Pet After Long Illness', members: 54000, postsToday: 2800 },
-        { name: 'Parents Who Lost Child to Pregnancy Loss', members: 91000, postsToday: 5100 },
-        { name: 'Elder Caregivers Who Lost Their Loved One', members: 43000, postsToday: 2300 },
-        { name: 'Those Who Lost a Partner to Sudden Death', members: 37000, postsToday: 1900 },
-        { name: 'Survivors of Multiple Losses', members: 29000, postsToday: 1500 },
-        { name: 'Those Who Lost a Child to Sudden Infant Death', members: 103000, postsToday: 5800 },
-        { name: 'Friends Who Lost Someone to Suicide', members: 67000, postsToday: 3400 },
-        { name: 'Grandparents Who Lost Grandchild to Suicide', members: 52000, postsToday: 2700 },
-        { name: 'Those Who Lost a Loved One to Suicide After Trauma', members: 48000, postsToday: 2600 },
-        { name: 'Those Who Lost a Child to Suicide After Mental Health Struggle', members: 35000, postsToday: 1800 },
-        { name: 'Survivors of Suicide Loss in the LGBTQ+ Community', members: 28000, postsToday: 1400 },
-        { name: 'Grief Support for First Responders', members: 41000, postsToday: 2100 }
-      ];
-
-      const groupsHTML = groups.map(group => `
-        <div class="group-item">
-          <div class="group-avatar">${group.name.charAt(0)}</div>
-          <div class="group-info">
-            <div class="group-name">${group.name}</div>
-            <div class="group-meta">${group.members.toLocaleString()} members • ${group.postsToday.toLocaleString()} new posts today</div>
-          </div>
-          <i class="fas fa-chevron-right" style="color: #a0aec0;"></i>
-        </div>
-      `).join('');
-
-      groupList.innerHTML = groupsHTML;
-    }
-
-    function showNotifications() {
-      const container = document.getElementById('all-posts-container');
-      const groupList = document.getElementById('group-list');
-      const notificationList = document.getElementById('notification-list');
-      const socialFeatures = document.getElementById('social-features');
-      const helpResources = document.getElementById('help-resources');
-      const sectionTitle = document.getElementById('section-title');
-      
-      container.style.display = 'none';
-      groupList.style.display = 'none';
-      notificationList.style.display = 'flex';
-      socialFeatures.style.display = 'none';
-      helpResources.style.display = 'none';
-      sectionTitle.textContent = 'Notifications';
-
-      const notifications = [
-        { text: 'Mary, United States — Lost her son to suicide — 3 days ago', time: 'Just now' },
-        { text: 'Sarah liked your memory of your dad', time: '2 hours ago' },
-        { text: 'New post in "Parents Who Lost a Child to Suicide" (245K members)', time: '4 hours ago' },
-        { text: 'John joined your group "Spouses Who Lost Partner to Suicide"', time: '1 day ago' },
-        { text: 'Reminder: Your memorial post is one year old today', time: '1 day ago' },
-        { text: 'Emma commented on your story', time: '2 days ago' },
-        { text: 'New resource added to "Those Who Lost a Child to Overdose"', time: '3 days ago' },
-        { text: 'Live call starting in 10 minutes: "First Year After Suicide Loss"', time: 'Just now' },
-        { text: 'You have 12 unread messages from your support circle', time: '5 minutes ago' }
-      ];
-
-      const notificationsHTML = notifications.map(notification => `
-        <div class="notification-item">
-          <div class="notification-text">${notification.text}</div>
-          <div class="notification-time">${notification.time}</div>
-        </div>
-      `).join('');
-
-      notificationList.innerHTML = notificationsHTML;
-    }
-
-    function showSocialFeatures() {
-      const container = document.getElementById('all-posts-container');
-      const groupList = document.getElementById('group-list');
-      const notificationList = document.getElementById('notification-list');
-      const socialFeatures = document.getElementById('social-features');
-      const helpResources = document.getElementById('help-resources');
-      const sectionTitle = document.getElementById('section-title');
-      
-      container.style.display = 'none';
-      groupList.style.display = 'none';
-      notificationList.style.display = 'none';
-      socialFeatures.style.display = 'flex';
-      helpResources.style.display = 'none';
-      sectionTitle.textContent = 'Connect & Share';
-
-      const features = [
-        { name: 'Share Your Story', desc: 'Create a memory post to share with your community' },
-        { name: 'Join Group Call', desc: 'Connect with others in real-time grief support sessions' },
-        { name: 'Send Voice Message', desc: 'Share your thoughts without typing' },
-        { name: 'Create Memorial Page', desc: 'Build a lasting tribute for your loved one' },
-        { name: 'Find Local Support', desc: 'Connect with nearby grief support groups' },
-        { name: 'Share Photo Album', desc: 'Create a shared photo collection with others' },
-        { name: 'Schedule Call', desc: 'Plan a private grief support session' },
-        { name: 'Send Care Package', desc: 'Coordinate support with your community' }
-      ];
-
-      const featuresHTML = features.map(feature => `
-        <div class="social-item">
-          <div class="social-icon">
-            <i class="fas fa-${feature.name.toLowerCase().includes('call') ? 'phone' : feature.name.toLowerCase().includes('share') ? 'share' : feature.name.toLowerCase().includes('photo') ? 'images' : 'heart'}"></i>
-          </div>
-          <div class="social-info">
-            <div class="social-name">${feature.name}</div>
-            <div class="social-meta">${feature.desc}</div>
-          </div>
-          <i class="fas fa-chevron-right" style="color: #a0aec0;"></i>
-        </div>
-      `).join('');
-
-      socialFeatures.innerHTML = featuresHTML;
-    }
-
-    function showHelp() {
-      const container = document.getElementById('all-posts-container');
-      const groupList = document.getElementById('group-list');
-      const notificationList = document.getElementById('notification-list');
-      const socialFeatures = document.getElementById('social-features');
-      const helpResources = document.getElementById('help-resources');
-      const sectionTitle = document.getElementById('section-title');
-      
-      container.style.display = 'none';
-      groupList.style.display = 'none';
-      notificationList.style.display = 'none';
-      socialFeatures.style.display = 'none';
-      helpResources.style.display = 'flex';
-      sectionTitle.textContent = 'Help & Resources';
-
-      const resources = [
-        {
-          title: 'Crisis Support',
-          content: 'If you\'re in crisis, please reach out for immediate help. You are not alone.',
-          link: 'https://suicidepreventionlifeline.org/',
-          linkText: 'National Suicide Prevention Lifeline: 988'
-        },
-        {
-          title: 'Grief Support Groups',
-          content: 'Connect with others who understand your loss. Find local and online support groups based on your specific type of grief.',
-          link: '#',
-          linkText: 'Find a Support Group'
-        },
-        {
-          title: 'Coping Strategies',
-          content: 'Explore healthy ways to manage grief, including journaling, meditation, and physical activity.',
-          link: '#',
-          linkText: 'View Coping Resources'
-        },
-        {
-          title: 'Professional Help',
-          content: 'Find licensed therapists, counselors, and grief specialists in your area.',
-          link: '#',
-          linkText: 'Find Professional Help'
-        },
-        {
-          title: 'Emergency Resources',
-          content: 'In case of emergency, contact local emergency services or go to the nearest emergency room.',
-          link: 'tel:911',
-          linkText: 'Emergency: 911'
-        }
-      ];
-
-      const resourcesHTML = resources.map(resource => `
-        <div class="help-item">
-          <div class="help-title">${resource.title}</div>
-          <div class="help-content">${resource.content}</div>
-          <a href="${resource.link}" class="help-link">${resource.linkText}</a>
-        </div>
-      `).join('');
-
-      helpResources.innerHTML = resourcesHTML;
-    }
-
-    let currentActivePage = null;
-
-    document.querySelectorAll('.nav-item[data-page]').forEach(item => {
-      item.addEventListener('click', function() {
-        const page = this.getAttribute('data-page');
-        if (currentActivePage === page) {
-          document.querySelectorAll('.nav-item').forEach(navItem => navItem.classList.remove('active'));
-          loadAllPosts();
-          currentActivePage = null;
-          return;
-        }
-        document.querySelectorAll('.nav-item').forEach(navItem => navItem.classList.remove('active'));
-        this.classList.add('active');
-        if (page === 'community') {
-          showGroups();
-          currentActivePage = 'community';
-        } else if (page === 'notifications') {
-          showNotifications();
-          currentActivePage = 'notifications';
-        } else if (page === 'resources') {
-          showHelp();
-          currentActivePage = 'resources';
-        } else {
-          loadAllPosts();
-          currentActivePage = null;
-        }
-      });
-    });
-
-    document.getElementById('callButton').addEventListener('click', () => {
+    // --- Call Modal Logic (specific to header/call functionality) ---
+    document.getElementById('callButton').addEventListener('click', function() {
       document.getElementById('callRequestModal').style.display = 'flex';
     });
 
-    document.getElementById('messageButton').addEventListener('click', () => {
+    document.getElementById('messageButton').addEventListener('click', function() {
       const inbox = document.getElementById('messageInbox');
       const container = document.getElementById('all-posts-container');
-      [...document.querySelectorAll('#group-list, #notification-list, #social-features, #help-resources')]
-        .forEach(el => el.style.display = 'none');
-      container.style.display = 'none';
-      inbox.style.display = 'flex';
-      document.getElementById('section-title').textContent = 'Your Messages';
+      // Hide the main posts container when showing the message inbox
+      if (container) container.style.display = 'none';
+      if (inbox) inbox.style.display = 'flex';
+      // Update the section title if needed
+      const sectionTitle = document.getElementById('section-title');
+      if (sectionTitle) sectionTitle.textContent = 'Your Messages';
     });
 
-    document.getElementById('cancelCall').addEventListener('click', () => {
+    document.getElementById('cancelCall').addEventListener('click', function() {
       document.getElementById('callRequestModal').style.display = 'none';
     });
 
-    document.getElementById('oneToOneCall').addEventListener('click', () => {
+    document.getElementById('oneToOneCall').addEventListener('click', function() {
       alert('Looking for someone who’s experienced a similar loss…');
       document.getElementById('callRequestModal').style.display = 'none';
     });
 
-    document.getElementById('groupCall').addEventListener('click', () => {
+    document.getElementById('groupCall').addEventListener('click', function() {
       alert('Finding 3–5 people who’ve walked this path…');
       document.getElementById('callRequestModal').style.display = 'none';
     });
 
     setTimeout(() => {
-      document.getElementById('listenerBanner').style.display = 'flex';
+      const banner = document.getElementById('listenerBanner');
+      if (banner) banner.style.display = 'flex';
     }, 5000);
 
-    document.getElementById('acceptCall').addEventListener('click', () => {
-      document.getElementById('listenerBanner').style.display = 'none';
+    document.getElementById('acceptCall').addEventListener('click', function() {
+      const banner = document.getElementById('listenerBanner');
+      if (banner) banner.style.display = 'none';
       alert('Connecting you to Mary…\n\nShe’s lost her son to suicide. 3 days ago.\n\nYou’re not alone.');
     });
 
-    document.getElementById('declineCall').addEventListener('click', () => {
-      document.getElementById('listenerBanner').style.display = 'none';
+    document.getElementById('declineCall').addEventListener('click', function() {
+      const banner = document.getElementById('listenerBanner');
+      if (banner) banner.style.display = 'none';
     });
 
-    document.addEventListener('DOMContentLoaded', () => {
-      loadAllPosts(); // Now loads for everyone
-      updateLoginButton();
+    // --- Initialize main page functionality ---
+    document.addEventListener('DOMContentLoaded', function() {
+      loadAllPosts(); // Load the posts feed
+      updateLoginButton(); // Check login status
+      // Note: Footer navigation and its content logic is now handled by footer.js
     });
   </script>
 </body>
