@@ -65,7 +65,7 @@ function injectHeader() {
           </div>
         </div>
 
-        <!-- Call Participants Screen (for Group) -->
+        <!-- Participants Screen -->
         <div id="participantsScreen" class="participants-screen" style="display: none;">
           <div class="call-participants">
             <div class="participant" id="participant-0">
@@ -77,20 +77,32 @@ function injectHeader() {
           </div>
         </div>
 
-        <!-- Active Call Screen -->
+        <!-- Active Call Screen (Visual Only - No Text) -->
         <div id="activeCallScreen" class="active-call-screen" style="display: none;">
-          <div class="call-transcript">
-            <div class="call-message call-received">
-              <span class="message-text">Hi... I know this is hard. I lost my son to suicide 3 days ago.</span>
-              <span class="message-time">00:00</span>
+          <div class="visual-call-indicator">
+            <div class="audio-wave">
+              <div class="wave-dot"></div>
+              <div class="wave-dot"></div>
+              <div class="wave-dot"></div>
+              <div class="wave-dot"></div>
+              <div class="wave-dot"></div>
             </div>
-            <div class="call-message call-sent">
-              <span class="message-text">I know how that feels. I lost my daughter to cancer. I'm here.</span>
-              <span class="message-time">00:05</span>
-            </div>
-            <div class="call-message call-received">
-              <span class="message-text">I didn't think I'd ever talk to anyone about this. Thank you.</span>
-              <span class="message-time">00:12</span>
+            <div class="call-visuals">
+              <div class="call-visual-item">
+                <div class="visual-avatar">M</div>
+                <div class="visual-name">Mary</div>
+                <div class="visual-status">Speaking...</div>
+              </div>
+              <div class="call-visual-item">
+                <div class="visual-avatar">D</div>
+                <div class="visual-name">David</div>
+                <div class="visual-status">Listening...</div>
+              </div>
+              <div class="call-visual-item">
+                <div class="visual-avatar">L</div>
+                <div class="visual-name">Lena</div>
+                <div class="visual-status">Listening...</div>
+              </div>
             </div>
           </div>
         </div>
@@ -122,17 +134,23 @@ function injectHeader() {
     <!-- Message Inbox Preview -->
     <div id="messageInbox" class="message-inbox">
       <h2>Your Messages</h2>
-      <div class="message-item message-received">
+      
+      <!-- David's Message -->
+      <div class="message-item message-received" data-conversation-id="david">
         <div class="message-sender">David (Canada)</div>
         <div class="message-content">I saw your post about your daughter. I lost mine to cancer last year. I didn't think I'd ever feel anything but numb. But today, I smiled at a song she loved. It didn't hurt as much. Just… different. I'm here if you want to talk.</div>
         <div class="message-time">1 hour ago</div>
       </div>
-      <div class="message-item message-sent">
+      
+      <!-- Your Reply to David -->
+      <div class="message-item message-sent" data-conversation-id="david">
         <div class="message-sender">You</div>
         <div class="message-content">Thank you, David. That meant more than I can say. I've been holding my breath for months. Just reading that… I felt like I could exhale.</div>
         <div class="message-time">45 minutes ago</div>
       </div>
-      <div class="message-item message-received">
+      
+      <!-- Lena's Message -->
+      <div class="message-item message-received" data-conversation-id="lena">
         <div class="message-sender">Lena (Australia)</div>
         <div class="message-content">I lost my husband to suicide. I didn't tell anyone for 8 months. I thought I was broken. But now I know — I was just grieving. You're not alone.</div>
         <div class="message-time">2 hours ago</div>
@@ -352,6 +370,12 @@ function injectHeader() {
       max-width: 85%;
       margin-bottom: 8px;
       box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+      cursor: pointer;
+      transition: transform 0.2s ease;
+    }
+
+    .message-item:hover {
+      transform: translateY(-2px);
     }
 
     .message-sender {
@@ -363,6 +387,7 @@ function injectHeader() {
     .message-content {
       color: #374151;
       line-height: 1.5;
+      margin-bottom: 8px;
     }
 
     .message-time {
@@ -547,7 +572,7 @@ function injectHeader() {
       color: #48bb78;
     }
 
-    /* --- ACTIVE CALL SCREEN --- */
+    /* --- ACTIVE CALL SCREEN (VISUAL ONLY) --- */
     .active-call-screen {
       flex: 1;
       overflow-y: auto;
@@ -555,48 +580,88 @@ function injectHeader() {
       padding: 10px;
     }
 
-    .call-transcript {
+    .visual-call-indicator {
       display: flex;
       flex-direction: column;
-      gap: 16px;
+      align-items: center;
+      gap: 20px;
     }
 
-    .call-message {
-      margin-bottom: 16px;
+    .audio-wave {
+      display: flex;
+      gap: 4px;
+      margin-bottom: 15px;
+    }
+
+    .wave-dot {
+      width: 4px;
+      height: 12px;
+      background: #48bb78;
+      border-radius: 2px;
+      animation: wavePulse 1.5s infinite ease-in-out;
+    }
+
+    .wave-dot:nth-child(2) {
+      animation-delay: 0.2s;
+    }
+
+    .wave-dot:nth-child(3) {
+      animation-delay: 0.4s;
+    }
+
+    .wave-dot:nth-child(4) {
+      animation-delay: 0.6s;
+    }
+
+    .wave-dot:nth-child(5) {
+      animation-delay: 0.8s;
+    }
+
+    @keyframes wavePulse {
+      0% { height: 8px; }
+      50% { height: 16px; }
+      100% { height: 8px; }
+    }
+
+    .call-visuals {
       display: flex;
       flex-direction: column;
-      align-items: flex-start;
+      gap: 15px;
+      width: 100%;
     }
 
-    .call-received {
-      align-items: flex-start;
-      margin-left: 10px;
+    .call-visual-item {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 12px;
+      background: rgba(255,255,255,0.05);
+      border-radius: 10px;
+      border-left: 3px solid #48bb78;
     }
 
-    .call-sent {
-      align-items: flex-end;
-      margin-right: 10px;
-    }
-
-    .message-text {
-      background: rgba(255,255,255,0.1);
-      padding: 10px 14px;
-      border-radius: 16px;
-      max-width: 75%;
-      word-wrap: break-word;
+    .visual-avatar {
+      width: 40px;
+      height: 40px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, #f093fb, #f5576c);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: white;
+      font-weight: 700;
       font-size: 1rem;
     }
 
-    .call-sent .message-text {
-      background: #48bb78;
-      color: white;
+    .visual-name {
+      font-weight: 600;
+      color: #fff;
     }
 
-    .message-time {
-      font-size: 0.75rem;
-      color: #888;
-      margin-top: 4px;
-      opacity: 0.7;
+    .visual-status {
+      font-size: 0.85rem;
+      color: #48bb78;
+      margin-left: auto;
     }
 
     .call-timer {
@@ -763,7 +828,7 @@ function injectHeader() {
         if (callType === 'group') {
           waitingScreen.style.display = 'none';
           participantsScreen.style.display = 'block';
-          callStatus.textContent = 'Connected';
+          callStatus.textContent = 'Connecting...';
           callTimer.style.display = 'block';
           startCallTimer();
           
@@ -788,6 +853,9 @@ function injectHeader() {
             participantsScreen.style.display = 'none';
             activeCallScreen.style.display = 'block';
             callStatus.textContent = 'In call';
+            
+            // Animate audio waves
+            animateAudioWaves();
           }, 5000);
           
         } else {
@@ -797,9 +865,21 @@ function injectHeader() {
           callStatus.textContent = 'Connected';
           callTimer.style.display = 'block';
           startCallTimer();
+          
+          // Animate audio waves
+          animateAudioWaves();
         }
       }
     }, 50);
+  }
+
+  function animateAudioWaves() {
+    // This is handled by CSS animation in the .wave-dot class
+    // We just need to ensure it's visible
+    const waveDots = document.querySelectorAll('.wave-dot');
+    waveDots.forEach(dot => {
+      dot.style.animationPlayState = 'running';
+    });
   }
 
   if (endCall) {
@@ -835,6 +915,19 @@ function injectHeader() {
     });
   }
 
+  // Add click handlers for message items to show conversation details
+  document.addEventListener('click', function(e) {
+    const messageItem = e.target.closest('.message-item');
+    if (messageItem) {
+      const conversationId = messageItem.dataset.conversationId;
+      if (conversationId) {
+        // In a real app, this would open a detailed conversation view
+        // For now, we'll just show an alert
+        alert(\`Opening conversation with \${conversationId.toUpperCase()}...\n\nThis is where you'd see the full chat history.\`);
+      }
+    }
+  });
+
   // --- Listener Banner Logic ---
   const acceptCall = document.getElementById('acceptCall');
   const declineCall = document.getElementById('declineCall');
@@ -856,7 +949,7 @@ function injectHeader() {
   // --- Banner Display Logic (Only for logged-in users) ---
   async function checkAuthAndShowBanner() {
     if (window.supabaseClient) {
-      const { data: { user }, error } = await window.supabaseClient.auth.getUser();
+      const {  { user }, error } = await window.supabaseClient.auth.getUser();
       if (user && listenerBanner) {
         // User is logged in, show the banner after 5 seconds
         setTimeout(() => {
