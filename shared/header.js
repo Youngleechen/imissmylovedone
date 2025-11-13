@@ -38,6 +38,56 @@ function injectHeader() {
       </div>
     </div>
 
+    <!-- Realistic Call Simulation Modal -->
+    <div id="callSimulationModal" class="call-simulation-modal">
+      <div class="call-simulation-content">
+        <div class="call-header">
+          <div class="call-avatar">M</div>
+          <div class="call-info">
+            <div class="call-name">Mary</div>
+            <div class="call-status">Calling now…</div>
+          </div>
+        </div>
+        <div class="call-simulation-text">
+          <div class="call-message call-received">
+            <span class="message-text">…I didn’t know how to breathe after he was gone.</span>
+            <span class="message-time">00:03</span>
+          </div>
+          <div class="call-message call-sent">
+            <span class="message-text">I know.</span>
+            <span class="message-time">00:05</span>
+          </div>
+          <div class="call-message call-received">
+            <span class="message-text">People say ‘time heals.’ But it doesn’t. It just… changes the shape of the pain.</span>
+            <span class="message-time">00:12</span>
+          </div>
+          <div class="call-message call-sent">
+            <span class="message-text">Yeah. I still talk to him. Every morning. Before I get out of bed.</span>
+            <span class="message-time">00:17</span>
+          </div>
+          <div class="call-message call-received">
+            <span class="message-text">…I used to think that meant I was losing my mind.</span>
+            <span class="message-time">00:22</span>
+          </div>
+          <div class="call-message call-sent">
+            <span class="message-text">You’re not. You’re just still in love with him.</span>
+            <span class="message-time">00:26</span>
+          </div>
+          <div class="call-message call-received">
+            <span class="message-text">…I cried for the first time last week. Not because I was sad. Because I remembered how he laughed.</span>
+            <span class="message-time">00:33</span>
+          </div>
+          <div class="call-message call-sent">
+            <span class="message-text">That’s not weakness. That’s courage.</span>
+            <span class="message-time">00:37</span>
+          </div>
+        </div>
+        <div class="call-actions">
+          <button id="endCall" class="call-btn-end">End Call</button>
+        </div>
+      </div>
+    </div>
+
     <!-- Listener Banner -->
     <div id="listenerBanner" class="call-listener-banner">
       <div class="banner-content">
@@ -315,13 +365,148 @@ function injectHeader() {
       background: #e0e7ff;
       border-right: 3px solid #5a67d8;
     }
+
+    /* --- CALL SIMULATION MODAL --- */
+    .call-simulation-modal {
+      display: none;
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(0,0,0,0.7);
+      z-index: 1001;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+    }
+
+    .call-simulation-content {
+      background: #1a1a2e;
+      color: #e6e6e6;
+      border-radius: 16px;
+      width: 90%;
+      max-width: 420px;
+      max-height: 80vh;
+      overflow-y: auto;
+      padding: 24px;
+      box-shadow: 0 12px 40px rgba(0,0,0,0.3);
+      display: flex;
+      flex-direction: column;
+    }
+
+    .call-header {
+      display: flex;
+      align-items: center;
+      margin-bottom: 20px;
+      gap: 12px;
+    }
+
+    .call-avatar {
+      width: 50px;
+      height: 50px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, #f093fb, #f5576c);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: white;
+      font-weight: 700;
+      font-size: 1.4rem;
+      border: 2px solid #48bb78;
+    }
+
+    .call-info {
+      flex: 1;
+    }
+
+    .call-name {
+      font-size: 1.2rem;
+      font-weight: 700;
+      color: #fff;
+    }
+
+    .call-status {
+      font-size: 0.85rem;
+      color: #48bb78;
+      margin-top: 4px;
+    }
+
+    .call-simulation-text {
+      flex: 1;
+      margin-bottom: 20px;
+      padding: 12px;
+      border-radius: 12px;
+      background: rgba(255,255,255,0.05);
+      font-size: 0.95rem;
+      line-height: 1.6;
+    }
+
+    .call-message {
+      margin-bottom: 16px;
+      display: flex;
+      flex-direction: column;
+      align-items: flex-start;
+    }
+
+    .call-received {
+      align-items: flex-start;
+      margin-left: 10px;
+    }
+
+    .call-sent {
+      align-items: flex-end;
+      margin-right: 10px;
+    }
+
+    .message-text {
+      background: rgba(255,255,255,0.1);
+      padding: 10px 14px;
+      border-radius: 16px;
+      max-width: 75%;
+      word-wrap: break-word;
+      font-size: 1rem;
+    }
+
+    .call-sent .message-text {
+      background: #48bb78;
+      color: white;
+    }
+
+    .message-time {
+      font-size: 0.75rem;
+      color: #888;
+      margin-top: 4px;
+      opacity: 0.7;
+    }
+
+    .call-actions {
+      display: flex;
+      justify-content: center;
+    }
+
+    .call-btn-end {
+      background: #e53e3e;
+      color: white;
+      border: none;
+      padding: 12px 24px;
+      border-radius: 10px;
+      font-weight: 600;
+      font-size: 1rem;
+      cursor: pointer;
+      transition: background 0.2s;
+    }
+
+    .call-btn-end:hover {
+      background: #c53030;
+    }
   `;
   document.head.appendChild(headerStyle);
 
   // 4. Load Font Awesome for icons
   const faLink = document.createElement('link');
   faLink.rel = 'stylesheet';
-  faLink.href = 'https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css';
+  faLink.href = 'https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css  ';
   document.head.appendChild(faLink);
 
   // 5. Add event listeners for header elements
@@ -360,6 +545,54 @@ function injectHeader() {
       alert('Finding 3–5 people who’ve walked this path…');
       if (callRequestModal) callRequestModal.style.display = 'none';
     });
+  }
+
+  // --- CALL SIMULATION MODAL ---
+  const callSimulationModal = document.getElementById('callSimulationModal');
+  const endCall = document.getElementById('endCall');
+
+  // Trigger the simulation when someone chooses "One-on-One Call"
+  if (oneToOneCall) {
+    oneToOneCall.addEventListener('click', function() {
+      if (callRequestModal) callRequestModal.style.display = 'none';
+      if (callSimulationModal) {
+        callSimulationModal.style.display = 'flex';
+        // Simulate message flow over time
+        simulateCallMessages();
+      }
+    });
+  }
+
+  if (endCall) {
+    endCall.addEventListener('click', function() {
+      if (callSimulationModal) callSimulationModal.style.display = 'none';
+      alert('You’ve just had a real moment. You’re not alone. Keep going.');
+    });
+  }
+
+  // Simulate the call messages appearing one by one
+  function simulateCallMessages() {
+    const messages = document.querySelectorAll('.call-message');
+    let index = 0;
+
+    const showNextMessage = () => {
+      if (index < messages.length) {
+        messages[index].style.opacity = '1';
+        messages[index].style.transform = 'translateX(0)';
+        index++;
+        setTimeout(showNextMessage, 2500); // 2.5 seconds between messages
+      }
+    };
+
+    // Hide all messages initially
+    messages.forEach(msg => {
+      msg.style.opacity = '0';
+      msg.style.transform = 'translateX(-20px)';
+      msg.style.transition = 'opacity 0.4s ease, transform 0.4s ease';
+    });
+
+    // Start the sequence after a short delay
+    setTimeout(showNextMessage, 1000);
   }
 
   // --- Message Inbox Logic ---
