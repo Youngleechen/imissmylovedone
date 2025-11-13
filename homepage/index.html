@@ -34,6 +34,7 @@
     .posts-section h2 {
       margin-bottom: 15px;
       color: #1f2937;
+      display: none; /* Hide the title */
     }
 
     .post-item {
@@ -402,8 +403,8 @@
 
   <!-- Main Content Area - Footer content sections will be injected here by footer.js -->
   <div class="posts-section">
-    <h2 id="section-title">Community Memories</h2>
-    <div id="all-posts-container">Loading...</div>
+    <h2 id="section-title" style="display: none;">Community Memories</h2> <!-- Hidden title -->
+    <div id="all-posts-container"></div> <!-- No initial "Loading..." text -->
     <!-- Footer content sections (group-list, notification-list, etc.) will be added here by footer.js -->
   </div>
 
@@ -421,10 +422,10 @@
       'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImNjZXRucWRxZnJzaXRvb2VzdGJoIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjIzMTE4MjksImV4cCI6MjA3Nzg4NzgyOX0.1NjRZZrgsPOg-2z_r2kRELWn9IVXNEQNpSxK6CktJRY'
     );
 
-    // --- Main Application Functions (specific to this page) ---
-
+    // --- Core Functions ---
     async function updateLoginButton() {
       const loginButton = document.getElementById('loginButton');
+      if (!loginButton) return; // Safety check
       const user = await window.supabaseClient.auth.getUser();
 
       if (user.data.user) {
@@ -446,9 +447,9 @@
       // Note: The other containers (group-list, etc.) are now managed by footer.js
       const sectionTitle = document.getElementById('section-title');
 
-      // We only need to reset the posts container and title here if needed by default
-      if (container) container.innerHTML = 'Loading...';
-      if (sectionTitle) sectionTitle.textContent = 'Community Memories'; // Default title
+      // No initial loading text - just load posts directly
+      // if (container) container.innerHTML = 'Loading...'; // Removed
+      // if (sectionTitle) sectionTitle.textContent = 'Community Memories'; // Removed
 
       try {
         const { data, error } = await window.supabaseClient
@@ -459,7 +460,7 @@
         if (error) throw error;
 
         if (data.length === 0) {
-          if (container) container.innerHTML = 'No memories yet.';
+          if (container) container.innerHTML = '<div style="text-align: center; padding: 20px; color: #718096;">No memories shared yet.</div>';
           return;
         }
 
@@ -574,61 +575,85 @@
 
       } catch (err) {
         console.error('Error loading posts:', err);
-        if (container) container.innerHTML = 'Failed to load memories.';
+        if (container) container.innerHTML = '<div style="text-align: center; padding: 20px; color: #e53e3e;">Failed to load memories.</div>';
       }
     }
 
-    // --- Call Modal Logic (specific to header/call functionality) ---
-    document.getElementById('callButton').addEventListener('click', function() {
-      document.getElementById('callRequestModal').style.display = 'flex';
-    });
-
-    document.getElementById('messageButton').addEventListener('click', function() {
-      const inbox = document.getElementById('messageInbox');
-      const container = document.getElementById('all-posts-container');
-      // Hide the main posts container when showing the message inbox
-      if (container) container.style.display = 'none';
-      if (inbox) inbox.style.display = 'flex';
-      // Update the section title if needed
+    // --- Call & Message Button Logic (Moved to a function) ---
+    function setupHeaderInteractions() {
+      // Ensure elements exist before attaching listeners
+      const callButton = document.getElementById('callButton');
+      const messageButton = document.getElementById('messageButton');
+      const callRequestModal = document.getElementById('callRequestModal');
+      const messageInbox = document.getElementById('messageInbox');
+      const allPostsContainer = document.getElementById('all-posts-container');
       const sectionTitle = document.getElementById('section-title');
-      if (sectionTitle) sectionTitle.textContent = 'Your Messages';
-    });
 
-    document.getElementById('cancelCall').addEventListener('click', function() {
-      document.getElementById('callRequestModal').style.display = 'none';
-    });
+      if (callButton && callRequestModal) {
+        callButton.addEventListener('click', function() {
+          callRequestModal.style.display = 'flex';
+        });
+      }
 
-    document.getElementById('oneToOneCall').addEventListener('click', function() {
-      alert('Looking for someone who’s experienced a similar loss…');
-      document.getElementById('callRequestModal').style.display = 'none';
-    });
+      if (messageButton && messageInbox && allPostsContainer && sectionTitle) {
+        messageButton.addEventListener('click', function() {
+          allPostsContainer.style.display = 'none';
+          messageInbox.style.display = 'flex';
+          sectionTitle.textContent = 'Your Messages';
+        });
+      }
 
-    document.getElementById('groupCall').addEventListener('click', function() {
-      alert('Finding 3–5 people who’ve walked this path…');
-      document.getElementById('callRequestModal').style.display = 'none';
-    });
+      // Add listeners for modal buttons
+      const cancelCall = document.getElementById('cancelCall');
+      const oneToOneCall = document.getElementById('oneToOneCall');
+      const groupCall = document.getElementById('groupCall');
 
-    setTimeout(() => {
-      const banner = document.getElementById('listenerBanner');
-      if (banner) banner.style.display = 'flex';
-    }, 5000);
+      if (cancelCall) {
+        cancelCall.addEventListener('click', function() {
+          if (callRequestModal) callRequestModal.style.display = 'none';
+        });
+      }
 
-    document.getElementById('acceptCall').addEventListener('click', function() {
-      const banner = document.getElementById('listenerBanner');
-      if (banner) banner.style.display = 'none';
-      alert('Connecting you to Mary…\n\nShe’s lost her son to suicide. 3 days ago.\n\nYou’re not alone.');
-    });
+      if (oneToOneCall) {
+        oneToOneCall.addEventListener('click', function() {
+          alert('Looking for someone who’s experienced a similar loss…');
+          if (callRequestModal) callRequestModal.style.display = 'none';
+        });
+      }
 
-    document.getElementById('declineCall').addEventListener('click', function() {
-      const banner = document.getElementById('listenerBanner');
-      if (banner) banner.style.display = 'none';
-    });
+      if (groupCall) {
+        groupCall.addEventListener('click', function() {
+          alert('Finding 3–5 people who’ve walked this path…');
+          if (callRequestModal) callRequestModal.style.display = 'none';
+        });
+      }
 
-    // --- Initialize main page functionality ---
+      // Listener banner
+      const acceptCall = document.getElementById('acceptCall');
+      const declineCall = document.getElementById('declineCall');
+      const listenerBanner = document.getElementById('listenerBanner');
+
+      if (acceptCall && listenerBanner) {
+        acceptCall.addEventListener('click', function() {
+          listenerBanner.style.display = 'none';
+          alert('Connecting you to Mary…\n\nShe’s lost her son to suicide. 3 days ago.\n\nYou’re not alone.');
+        });
+      }
+
+      if (declineCall && listenerBanner) {
+        declineCall.addEventListener('click', function() {
+          listenerBanner.style.display = 'none';
+        });
+      }
+    }
+
+    // --- Main Initialization ---
     document.addEventListener('DOMContentLoaded', function() {
       loadAllPosts(); // Load the posts feed
       updateLoginButton(); // Check login status
-      // Note: Footer navigation and its content logic is now handled by footer.js
+
+      // Wait a moment for header/footer to inject, then set up interactions
+      setTimeout(setupHeaderInteractions, 100);
     });
   </script>
 </body>
