@@ -731,9 +731,9 @@
       notificationList.style.display = 'none';
       socialFeatures.style.display = 'none';
       helpResources.style.display = 'none';
-      sectionTitle.textContent = 'none';
+      sectionTitle.textContent = '';
 
-      container.innerHTML = 'Loading...';
+      container.innerHTML = '';
 
       try {
         const { data, error } = await window.supabaseClient
