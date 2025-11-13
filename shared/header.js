@@ -1,7 +1,7 @@
 // shared/header.js
 
 function injectHeader() {
-  // Create header HTML
+  // 1. Create the header HTML element
   const headerHTML = `
     <div class="header">
       <div class="logo">
@@ -20,12 +20,12 @@ function injectHeader() {
     </div>
   `;
 
-  // Insert header at the top of the body
+  // 2. Insert the header at the beginning of the body
   document.body.insertAdjacentHTML('afterbegin', headerHTML);
 
-  // Add CSS styles
-  const style = document.createElement('style');
-  style.textContent = `
+  // 3. Add specific CSS styles for the header
+  const headerStyle = document.createElement('style');
+  headerStyle.textContent = `
     .header {
       display: flex;
       justify-content: space-between;
@@ -80,31 +80,31 @@ function injectHeader() {
       cursor: pointer;
     }
   `;
-  document.head.appendChild(style);
+  document.head.appendChild(headerStyle);
 
-  // Load Font Awesome for icons
+  // 4. Load Font Awesome for icons
   const faLink = document.createElement('link');
   faLink.rel = 'stylesheet';
   faLink.href = 'https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css';
   document.head.appendChild(faLink);
 
-  // Add login button functionality
+  // 5. Add event listeners for header elements
   document.getElementById('loginButton')?.addEventListener('click', function() {
     window.location.href = '/login/';
   });
 
-  // Add message button functionality (optional placeholder)
+  // Placeholder for message button functionality (could be implemented here or in main HTML)
   document.getElementById('messageButton')?.addEventListener('click', function() {
     alert('Message inbox would open here');
   });
 
-  // Add call button functionality (optional placeholder)
+  // Placeholder for call button functionality (could be implemented here or in main HTML)
   document.getElementById('callButton')?.addEventListener('click', function() {
     alert('Call system would open here');
   });
 }
 
-// Run when DOM is loaded
+// Run the header injection when the DOM is loaded
 if (typeof window !== 'undefined') {
   document.addEventListener('DOMContentLoaded', injectHeader);
 }
