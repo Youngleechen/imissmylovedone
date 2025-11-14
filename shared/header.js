@@ -624,25 +624,27 @@ function injectHeader() {
     }
 
     .call-visuals {
-      display: flex;
-      flex-direction: column;
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
       gap: 15px;
       width: 100%;
     }
 
     .call-visual-item {
       display: flex;
+      flex-direction: column;
       align-items: center;
-      gap: 12px;
+      gap: 8px;
       padding: 12px;
       background: rgba(255,255,255,0.05);
       border-radius: 10px;
-      border-left: 3px solid #48bb78;
+      border-left: none;
+      text-align: center;
     }
 
     .visual-avatar {
-      width: 40px;
-      height: 40px;
+      width: 50px;
+      height: 50px;
       border-radius: 50%;
       background: linear-gradient(135deg, #f093fb, #f5576c);
       display: flex;
@@ -656,44 +658,12 @@ function injectHeader() {
     .visual-name {
       font-weight: 600;
       color: #fff;
+      font-size: 0.9rem;
     }
 
     .visual-status {
-      font-size: 0.85rem;
+      font-size: 0.8rem;
       color: #48bb78;
-      margin-left: auto;
-    }
-
-    .call-timer {
-      text-align: center;
-      font-size: 1.5rem;
-      font-weight: 600;
-      color: #48bb78;
-      margin-bottom: 15px;
-    }
-
-    .call-actions {
-      display: flex;
-      justify-content: center;
-    }
-
-    .call-btn-end {
-      background: #e53e3e;
-      color: white;
-      border: none;
-      padding: 12px 24px;
-      border-radius: 10px;
-      font-weight: 600;
-      font-size: 1rem;
-      cursor: pointer;
-      transition: background 0.2s;
-      display: flex;
-      align-items: center;
-      gap: 8px;
-    }
-
-    .call-btn-end:hover {
-      background: #c53030;
     }
   `;
   document.head.appendChild(headerStyle);
@@ -866,6 +836,16 @@ function injectHeader() {
           callTimer.style.display = 'block';
           startCallTimer();
           
+          // Show only one other person in the active call screen for one-to-one
+          const callVisuals = document.querySelector('.call-visuals');
+          callVisuals.innerHTML = `
+            <div class="call-visual-item">
+              <div class="visual-avatar">M</div>
+              <div class="visual-name">Mary</div>
+              <div class="visual-status">Connected</div>
+            </div>
+          `;
+          
           // Animate audio waves
           animateAudioWaves();
         }
@@ -916,18 +896,17 @@ function injectHeader() {
   }
 
   // Add click handlers for message items to show conversation details
- // Add click handlers for message items to show conversation details
-document.addEventListener('click', function(e) {
-  const messageItem = e.target.closest('.message-item');
-  if (messageItem) {
-    const conversationId = messageItem.dataset.conversationId;
-    if (conversationId) {
-      // In a real app, this would open a detailed conversation view
-      // For now, we'll just show an alert
-      alert(`Opening conversation with ${conversationId.toUpperCase()}...\n\nThis is where you'd see the full chat history.`);
+  document.addEventListener('click', function(e) {
+    const messageItem = e.target.closest('.message-item');
+    if (messageItem) {
+      const conversationId = messageItem.dataset.conversationId;
+      if (conversationId) {
+        // In a real app, this would open a detailed conversation view
+        // For now, we'll just show an alert
+        alert(`Opening conversation with ${conversationId.toUpperCase()}...\n\nThis is where you'd see the full chat history.`);
+      }
     }
-  }
-});
+  });
 
   // --- Listener Banner Logic ---
   const acceptCall = document.getElementById('acceptCall');
