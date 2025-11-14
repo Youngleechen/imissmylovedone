@@ -916,17 +916,18 @@ function injectHeader() {
   }
 
   // Add click handlers for message items to show conversation details
-  document.addEventListener('click', function(e) {
-    const messageItem = e.target.closest('.message-item');
-    if (messageItem) {
-      const conversationId = messageItem.dataset.conversationId;
-      if (conversationId) {
-        // In a real app, this would open a detailed conversation view
-        // For now, we'll just show an alert
-        alert(\`Opening conversation with \${conversationId.toUpperCase()}...\n\nThis is where you'd see the full chat history.\`);
-      }
+ // Add click handlers for message items to show conversation details
+document.addEventListener('click', function(e) {
+  const messageItem = e.target.closest('.message-item');
+  if (messageItem) {
+    const conversationId = messageItem.dataset.conversationId;
+    if (conversationId) {
+      // In a real app, this would open a detailed conversation view
+      // For now, we'll just show an alert
+      alert(`Opening conversation with ${conversationId.toUpperCase()}...\n\nThis is where you'd see the full chat history.`);
     }
-  });
+  }
+});
 
   // --- Listener Banner Logic ---
   const acceptCall = document.getElementById('acceptCall');
