@@ -65,15 +65,10 @@ function injectHeader() {
           </div>
         </div>
 
-        <!-- Participants Screen -->
+        <!-- Participants Screen - Always Maintains Grid Layout -->
         <div id="participantsScreen" class="participants-screen" style="display: none;">
-          <div class="call-participants">
-            <div class="participant" id="participant-0">
-              <div class="participant-avatar">Y</div>
-              <div class="participant-name">You</div>
-              <div class="participant-status">Connected</div>
-            </div>
-            <!-- Other participants will be added here dynamically -->
+          <div class="call-participants-grid" id="participantsGrid">
+            <!-- Grid will be dynamically populated based on call type -->
           </div>
         </div>
 
@@ -87,22 +82,8 @@ function injectHeader() {
               <div class="wave-dot"></div>
               <div class="wave-dot"></div>
             </div>
-            <div class="call-visuals">
-              <div class="call-visual-item">
-                <div class="visual-avatar">M</div>
-                <div class="visual-name">Mary</div>
-                <div class="visual-status">Speaking...</div>
-              </div>
-              <div class="call-visual-item">
-                <div class="visual-avatar">D</div>
-                <div class="visual-name">David</div>
-                <div class="visual-status">Listening...</div>
-              </div>
-              <div class="call-visual-item">
-                <div class="visual-avatar">L</div>
-                <div class="visual-name">Lena</div>
-                <div class="visual-status">Listening...</div>
-              </div>
+            <div class="call-visuals-grid" id="visualCallGrid">
+              <!-- Visual participants will be added here dynamically -->
             </div>
           </div>
         </div>
@@ -525,20 +506,20 @@ function injectHeader() {
       line-height: 1.5;
     }
 
-    /* --- PARTICIPANTS SCREEN --- */
+    /* --- PARTICIPANTS SCREEN - GRID LAYOUT --- */
     .participants-screen {
       flex: 1;
       padding: 20px 0;
     }
 
-    .call-participants {
+    .call-participants-grid {
       display: grid;
       grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
       gap: 20px;
       margin-bottom: 20px;
     }
 
-    .participant {
+    .participant-grid-item {
       display: flex;
       flex-direction: column;
       align-items: center;
@@ -546,9 +527,10 @@ function injectHeader() {
       background: rgba(255,255,255,0.05);
       border-radius: 12px;
       border: 1px solid rgba(255,255,255,0.1);
+      text-align: center;
     }
 
-    .participant-avatar {
+    .participant-grid-avatar {
       width: 60px;
       height: 60px;
       border-radius: 50%;
@@ -562,17 +544,18 @@ function injectHeader() {
       margin-bottom: 10px;
     }
 
-    .participant-name {
+    .participant-grid-name {
       font-weight: 600;
       margin-bottom: 5px;
+      font-size: 0.9rem;
     }
 
-    .participant-status {
+    .participant-grid-status {
       font-size: 0.8rem;
       color: #48bb78;
     }
 
-    /* --- ACTIVE CALL SCREEN (VISUAL ONLY) --- */
+    /* --- ACTIVE CALL SCREEN (VISUAL ONLY) - GRID LAYOUT --- */
     .active-call-screen {
       flex: 1;
       overflow-y: auto;
@@ -623,14 +606,14 @@ function injectHeader() {
       100% { height: 8px; }
     }
 
-    .call-visuals {
+    .call-visuals-grid {
       display: grid;
       grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
       gap: 15px;
       width: 100%;
     }
 
-    .call-visual-item {
+    .call-visual-item-grid {
       display: flex;
       flex-direction: column;
       align-items: center;
@@ -638,13 +621,13 @@ function injectHeader() {
       padding: 12px;
       background: rgba(255,255,255,0.05);
       border-radius: 10px;
-      border-left: none;
+      border-left: 3px solid #48bb78;
       text-align: center;
     }
 
-    .visual-avatar {
-      width: 50px;
-      height: 50px;
+    .visual-grid-avatar {
+      width: 40px;
+      height: 40px;
       border-radius: 50%;
       background: linear-gradient(135deg, #f093fb, #f5576c);
       display: flex;
@@ -655,15 +638,47 @@ function injectHeader() {
       font-size: 1rem;
     }
 
-    .visual-name {
+    .visual-grid-name {
       font-weight: 600;
       color: #fff;
       font-size: 0.9rem;
     }
 
-    .visual-status {
+    .visual-grid-status {
       font-size: 0.8rem;
       color: #48bb78;
+    }
+
+    .call-timer {
+      text-align: center;
+      font-size: 1.5rem;
+      font-weight: 600;
+      color: #48bb78;
+      margin-bottom: 15px;
+    }
+
+    .call-actions {
+      display: flex;
+      justify-content: center;
+    }
+
+    .call-btn-end {
+      background: #e53e3e;
+      color: white;
+      border: none;
+      padding: 12px 24px;
+      border-radius: 10px;
+      font-weight: 600;
+      font-size: 1rem;
+      cursor: pointer;
+      transition: background 0.2s;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .call-btn-end:hover {
+      background: #c53030;
     }
   `;
   document.head.appendChild(headerStyle);
@@ -671,7 +686,7 @@ function injectHeader() {
   // 4. Load Font Awesome for icons
   const faLink = document.createElement('link');
   faLink.rel = 'stylesheet';
-  faLink.href = 'https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css';
+  faLink.href = 'https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css    ';
   document.head.appendChild(faLink);
 
   // 5. Add event listeners for header elements
@@ -707,6 +722,8 @@ function injectHeader() {
   const progressFill = document.getElementById('progressFill');
   const endCall = document.getElementById('endCall');
   const callTimer = document.getElementById('callTimer');
+  const participantsGrid = document.getElementById('participantsGrid');
+  const visualCallGrid = document.getElementById('visualCallGrid');
 
   let callType = null;
   let callInterval = null;
@@ -735,21 +752,49 @@ function injectHeader() {
     return name.split(' ').map(word => word[0]).join('').toUpperCase();
   }
 
-  function addParticipant(name, status = 'Connected') {
-    const participantsContainer = document.querySelector('.call-participants');
-    const participantId = `participant-${participantsContainer.children.length}`;
+  function createParticipantElement(name, status = 'Connected', isGrid = false) {
+    const element = document.createElement('div');
+    const avatarInitials = formatParticipantName(name);
     
-    const participantElement = document.createElement('div');
-    participantElement.className = 'participant';
-    participantElement.id = participantId;
+    if (isGrid) {
+      element.className = 'participant-grid-item';
+      element.innerHTML = `
+        <div class="participant-grid-avatar">${avatarInitials}</div>
+        <div class="participant-grid-name">${name}</div>
+        <div class="participant-grid-status">${status}</div>
+      `;
+    } else {
+      element.className = 'call-visual-item-grid';
+      element.innerHTML = `
+        <div class="visual-grid-avatar">${avatarInitials}</div>
+        <div class="visual-grid-name">${name}</div>
+        <div class="visual-grid-status">${status}</div>
+      `;
+    }
     
-    participantElement.innerHTML = `
-      <div class="participant-avatar">${formatParticipantName(name)}</div>
-      <div class="participant-name">${name}</div>
-      <div class="participant-status">${status}</div>
-    `;
+    return element;
+  }
+
+  function populateGrids(participants) {
+    // Clear existing content
+    participantsGrid.innerHTML = '';
+    visualCallGrid.innerHTML = '';
     
-    participantsContainer.appendChild(participantElement);
+    // Add "You" as the first participant in both grids
+    const youParticipant = createParticipantElement('You', 'Connected', true);
+    participantsGrid.appendChild(youParticipant);
+    
+    const youVisual = createParticipantElement('You', 'Connected', false);
+    visualCallGrid.appendChild(youVisual);
+    
+    // Add other participants
+    participants.forEach(participant => {
+      const participantElement = createParticipantElement(participant.name, participant.status, true);
+      participantsGrid.appendChild(participantElement);
+      
+      const visualElement = createParticipantElement(participant.name, participant.status, false);
+      visualCallGrid.appendChild(visualElement);
+    });
   }
 
   // Trigger the simulation when someone chooses "One-on-One Call"
@@ -785,6 +830,10 @@ function injectHeader() {
     callStatus.textContent = 'Connecting...';
     progressFill.style.width = '0%';
     
+    // Clear existing participants
+    participantsGrid.innerHTML = '';
+    visualCallGrid.innerHTML = '';
+    
     // Start progress bar
     let progress = 0;
     const progressInterval = setInterval(() => {
@@ -802,64 +851,50 @@ function injectHeader() {
           callTimer.style.display = 'block';
           startCallTimer();
           
-          // Add group participants
-          setTimeout(() => {
-            addParticipant('Mary');
-            callStatus.textContent = 'Connecting... Mary joined';
-          }, 1000);
+          // Define group participants
+          const groupParticipants = [
+            { name: 'Mary', status: 'Connected' },
+            { name: 'David', status: 'Connected' },
+            { name: 'Lena', status: 'Connected' }
+          ];
           
-          setTimeout(() => {
-            addParticipant('David');
-            callStatus.textContent = 'Connecting... David joined';
-          }, 2000);
-          
-          setTimeout(() => {
-            addParticipant('Lena');
-            callStatus.textContent = 'All participants connected';
-          }, 3000);
+          // Populate the grids with group participants
+          populateGrids(groupParticipants);
+          callStatus.textContent = 'All participants connected';
           
           // Show active call after all participants join
           setTimeout(() => {
             participantsScreen.style.display = 'none';
             activeCallScreen.style.display = 'block';
             callStatus.textContent = 'In call';
-            
-            // Animate audio waves
-            animateAudioWaves();
-          }, 5000);
+          }, 2000);
           
         } else {
-          // One-to-one call
+          // One-to-one call - just you and one other person
           waitingScreen.style.display = 'none';
-          activeCallScreen.style.display = 'block';
-          callStatus.textContent = 'Connected';
+          participantsScreen.style.display = 'block';
+          callStatus.textContent = 'Connecting...';
           callTimer.style.display = 'block';
           startCallTimer();
           
-          // Show only one other person in the active call screen for one-to-one
-          const callVisuals = document.querySelector('.call-visuals');
-          callVisuals.innerHTML = `
-            <div class="call-visual-item">
-              <div class="visual-avatar">M</div>
-              <div class="visual-name">Mary</div>
-              <div class="visual-status">Connected</div>
-            </div>
-          `;
+          // Define one-to-one participants
+          const oneToOneParticipants = [
+            { name: 'Sarah', status: 'Connected' }
+          ];
           
-          // Animate audio waves
-          animateAudioWaves();
+          // Populate the grids with one-to-one participants
+          populateGrids(oneToOneParticipants);
+          callStatus.textContent = 'Connected with Sarah';
+          
+          // Show active call after connection
+          setTimeout(() => {
+            participantsScreen.style.display = 'none';
+            activeCallScreen.style.display = 'block';
+            callStatus.textContent = 'In call';
+          }, 2000);
         }
       }
     }, 50);
-  }
-
-  function animateAudioWaves() {
-    // This is handled by CSS animation in the .wave-dot class
-    // We just need to ensure it's visible
-    const waveDots = document.querySelectorAll('.wave-dot');
-    waveDots.forEach(dot => {
-      dot.style.animationPlayState = 'running';
-    });
   }
 
   if (endCall) {
@@ -868,14 +903,6 @@ function injectHeader() {
         callSimulationModal.style.display = 'none';
         stopCallTimer();
         callType = null;
-        
-        // Clear participants for next call
-        const participantsContainer = document.querySelector('.call-participants');
-        while (participantsContainer.children.length > 1) {
-          participantsContainer.removeChild(participantsContainer.lastChild);
-        }
-        
-        alert('Call ended. You\'re not alone. Keep going.');
       }
     });
   }
@@ -896,17 +923,18 @@ function injectHeader() {
   }
 
   // Add click handlers for message items to show conversation details
-  document.addEventListener('click', function(e) {
-    const messageItem = e.target.closest('.message-item');
-    if (messageItem) {
-      const conversationId = messageItem.dataset.conversationId;
-      if (conversationId) {
-        // In a real app, this would open a detailed conversation view
-        // For now, we'll just show an alert
-        alert(`Opening conversation with ${conversationId.toUpperCase()}...\n\nThis is where you'd see the full chat history.`);
-      }
+ // Add click handlers for message items to show conversation details
+document.addEventListener('click', function(e) {
+  const messageItem = e.target.closest('.message-item');
+  if (messageItem) {
+    const conversationId = messageItem.dataset.conversationId;
+    if (conversationId) {
+      // In a real app, this would open a detailed conversation view
+      // For now, we'll just show an alert
+      alert(`Opening conversation with ${conversationId.toUpperCase()}...\n\nThis is where you'd see the full chat history.`);
     }
-  });
+  }
+});
 
   // --- Listener Banner Logic ---
   const acceptCall = document.getElementById('acceptCall');
