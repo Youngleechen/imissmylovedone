@@ -949,7 +949,7 @@ function injectHeader() {
   // --- Banner Display Logic (Only for logged-in users) ---
   async function checkAuthAndShowBanner() {
     if (window.supabaseClient) {
-      const {  { user }, error } = await window.supabaseClient.auth.getUser();
+      const { data: { user }, error } = await window.supabaseClient.auth.getUser();
       if (user && listenerBanner) {
         // User is logged in, show the banner after 5 seconds
         setTimeout(() => {
