@@ -27,7 +27,7 @@ function injectHeader() {
             <i class="fas fa-user"></i> One-on-One Call
           </button>
           <button id="groupCall" class="call-request-btn call-btn-primary">
-            <i class="fas fa-users"></i> Group Support (3–5 people)
+            <i class="fas fa-users"></i> Group Support (4–6 people)
           </button>
           <button id="cancelCall" class="call-request-btn call-btn-secondary">
             Cancel
@@ -725,7 +725,7 @@ function injectHeader() {
   // 4. Load Font Awesome for icons
   const faLink = document.createElement('link');
   faLink.rel = 'stylesheet';
-  faLink.href = 'https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css  ';
+  faLink.href = 'https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css    ';
   document.head.appendChild(faLink);
 
   // 5. Add event listeners for header elements
@@ -860,6 +860,7 @@ function injectHeader() {
   // Trigger the simulation when someone chooses "One-on-One Call"
   if (oneToOneCall) {
     oneToOneCall.addEventListener('click', function() {
+      callType = 'one-to-one';
       hideAllOverlays(); // Hide other overlays before starting call
       if (callRequestModal) callRequestModal.style.display = 'none';
       if (callSimulationModal) {
@@ -872,6 +873,7 @@ function injectHeader() {
   // Trigger the simulation when someone chooses "Group Call"
   if (groupCall) {
     groupCall.addEventListener('click', function() {
+      callType = 'group';
       hideAllOverlays(); // Hide other overlays before starting call
       if (callRequestModal) callRequestModal.style.display = 'none';
       if (callSimulationModal) {
@@ -911,11 +913,13 @@ function injectHeader() {
           callTimer.style.display = 'block';
           startCallTimer();
           
-          // Define group participants
+          // Define group participants (4-6 people as requested)
           const groupParticipants = [
             { name: 'Mary', status: 'Connected' },
             { name: 'David', status: 'Connected' },
-            { name: 'Lena', status: 'Connected' }
+            { name: 'Lena', status: 'Connected' },
+            { name: 'James', status: 'Connected' },
+            { name: 'Sarah', status: 'Connected' }
           ];
           
           // Populate the grids with group participants
@@ -1030,7 +1034,7 @@ function injectHeader() {
     }
   }
 
-  // Initialize banner logic when DOM is loaded and Supabase client is potentially available
+  // Initialize banner logic when DOM is loaded
   // Since header.js runs after DOM is loaded, we can call this directly
   // However, Supabase client might be initialized later by the main HTML script
   // So we'll use a small delay or check if the client exists first
