@@ -112,29 +112,48 @@ function injectHeader() {
       </div>
     </div>
 
-    <!-- Message Inbox Preview -->
-    <div id="messageInbox" class="message-inbox">
-      <h2>Your Messages</h2>
+    <!-- Conversation List (Not Inbox) -->
+    <div id="conversationList" class="conversation-list">
+      <h2>Recent Conversations</h2>
       
-      <!-- David's Message -->
-      <div class="message-item message-received" data-conversation-id="david">
-        <div class="message-sender">David (Canada)</div>
-        <div class="message-content">I saw your post about your daughter. I lost mine to cancer last year. I didn't think I'd ever feel anything but numb. But today, I smiled at a song she loved. It didn't hurt as much. Just… different. I'm here if you want to talk.</div>
-        <div class="message-time">1 hour ago</div>
+      <!-- David's Conversation -->
+      <div class="conversation-item" data-conversation-id="david">
+        <div class="conversation-avatar">D</div>
+        <div class="conversation-info">
+          <div class="conversation-name">David (Canada)</div>
+          <div class="conversation-preview">I saw your post about your daughter. I lost mine to cancer last year...</div>
+          <div class="conversation-time">1 hour ago</div>
+        </div>
       </div>
       
-      <!-- Your Reply to David -->
-      <div class="message-item message-sent" data-conversation-id="david">
-        <div class="message-sender">You</div>
-        <div class="message-content">Thank you, David. That meant more than I can say. I've been holding my breath for months. Just reading that… I felt like I could exhale.</div>
-        <div class="message-time">45 minutes ago</div>
+      <!-- Lena's Conversation -->
+      <div class="conversation-item" data-conversation-id="lena">
+        <div class="conversation-avatar">L</div>
+        <div class="conversation-info">
+          <div class="conversation-name">Lena (Australia)</div>
+          <div class="conversation-preview">I lost my husband to suicide. I didn't tell anyone for 8 months...</div>
+          <div class="conversation-time">2 hours ago</div>
+        </div>
       </div>
       
-      <!-- Lena's Message -->
-      <div class="message-item message-received" data-conversation-id="lena">
-        <div class="message-sender">Lena (Australia)</div>
-        <div class="message-content">I lost my husband to suicide. I didn't tell anyone for 8 months. I thought I was broken. But now I know — I was just grieving. You're not alone.</div>
-        <div class="message-time">2 hours ago</div>
+      <!-- Maria's Conversation -->
+      <div class="conversation-item" data-conversation-id="maria">
+        <div class="conversation-avatar">M</div>
+        <div class="conversation-info">
+          <div class="conversation-name">Maria (Spain)</div>
+          <div class="conversation-preview">Hi, I saw your post about losing your father. I'm so sorry...</div>
+          <div class="conversation-time">3 hours ago</div>
+        </div>
+      </div>
+      
+      <!-- James's Conversation -->
+      <div class="conversation-item" data-conversation-id="james">
+        <div class="conversation-avatar">J</div>
+        <div class="conversation-info">
+          <div class="conversation-name">James (UK)</div>
+          <div class="conversation-preview">Thank you for listening yesterday. It helped more than you know...</div>
+          <div class="conversation-time">5 hours ago</div>
+        </div>
       </div>
     </div>
   `;
@@ -333,8 +352,8 @@ function injectHeader() {
       color: white;
     }
 
-    /* --- MESSAGE INBOX STYLES --- */
-    .message-inbox {
+    /* --- CONVERSATION LIST STYLES --- */
+    .conversation-list {
       display: none;
       flex-direction: column;
       gap: 12px;
@@ -344,49 +363,71 @@ function injectHeader() {
       border-radius: 8px;
     }
 
-    .message-item {
+    .conversation-list h2 {
+      margin: 0 0 15px 0;
+      padding: 0 0 10px 0;
+      border-bottom: 1px solid #e2e8f0;
+      color: #1f2937;
+      font-size: 1.2rem;
+    }
+
+    .conversation-item {
+      display: flex;
+      gap: 12px;
       padding: 12px;
       background: white;
       border-radius: 10px;
-      max-width: 85%;
-      margin-bottom: 8px;
-      box-shadow: 0 1px 3px rgba(0,0,0,0.05);
       cursor: pointer;
-      transition: transform 0.2s ease;
+      transition: transform 0.2s ease, box-shadow 0.2s ease;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.05);
     }
 
-    .message-item:hover {
+    .conversation-item:hover {
       transform: translateY(-2px);
+      box-shadow: 0 4px 6px rgba(0,0,0,0.05);
     }
 
-    .message-sender {
+    .conversation-avatar {
+      width: 44px;
+      height: 44px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, #4f46e5, #7c3aed);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: white;
+      font-weight: 700;
+      font-size: 1.1rem;
+      flex-shrink: 0;
+    }
+
+    .conversation-info {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+    }
+
+    .conversation-name {
       font-weight: 600;
       color: #1f2937;
       margin-bottom: 4px;
     }
 
-    .message-content {
-      color: #374151;
-      line-height: 1.5;
-      margin-bottom: 8px;
+    .conversation-preview {
+      color: #6b7280;
+      font-size: 0.9rem;
+      line-height: 1.4;
+      margin-bottom: 4px;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
     }
 
-    .message-time {
+    .conversation-time {
       font-size: 0.8rem;
-      color: #718096;
-      margin-top: 6px;
+      color: #9ca3af;
       text-align: right;
-    }
-
-    .message-received {
-      align-self: flex-start;
-      border-left: 3px solid #5a67d8;
-    }
-
-    .message-sent {
-      align-self: flex-end;
-      background: #e0e7ff;
-      border-right: 3px solid #5a67d8;
     }
 
     /* --- CALL SIMULATION MODAL --- */
@@ -686,7 +727,7 @@ function injectHeader() {
   // 4. Load Font Awesome for icons
   const faLink = document.createElement('link');
   faLink.rel = 'stylesheet';
-  faLink.href = 'https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css    ';
+  faLink.href = 'https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css';
   document.head.appendChild(faLink);
 
   // 5. Add event listeners for header elements
@@ -907,34 +948,33 @@ function injectHeader() {
     });
   }
 
-  // --- Message Inbox Logic ---
+  // --- Conversation List Logic ---
   const messageButton = document.getElementById('messageButton');
-  const messageInbox = document.getElementById('messageInbox');
+  const conversationList = document.getElementById('conversationList');
   const allPostsContainer = document.getElementById('all-posts-container'); // Assumes this exists in the main page
   const sectionTitle = document.getElementById('section-title'); // Assumes this exists in the main page
 
-  if (messageButton && messageInbox && allPostsContainer && sectionTitle) {
+  if (messageButton && conversationList && allPostsContainer && sectionTitle) {
     messageButton.addEventListener('click', function() {
-      // Hide the main posts container when showing the message inbox
+      // Hide the main posts container when showing the conversation list
       allPostsContainer.style.display = 'none';
-      messageInbox.style.display = 'flex';
-      sectionTitle.textContent = 'Your Messages';
+      conversationList.style.display = 'flex';
+      sectionTitle.textContent = 'Your Conversations';
     });
   }
 
-  // Add click handlers for message items to show conversation details
- // Add click handlers for message items to show conversation details
-document.addEventListener('click', function(e) {
-  const messageItem = e.target.closest('.message-item');
-  if (messageItem) {
-    const conversationId = messageItem.dataset.conversationId;
-    if (conversationId) {
-      // In a real app, this would open a detailed conversation view
-      // For now, we'll just show an alert
-      alert(`Opening conversation with ${conversationId.toUpperCase()}...\n\nThis is where you'd see the full chat history.`);
+  // Add click handlers for conversation items to show conversation details
+  document.addEventListener('click', function(e) {
+    const conversationItem = e.target.closest('.conversation-item');
+    if (conversationItem) {
+      const conversationId = conversationItem.dataset.conversationId;
+      if (conversationId) {
+        // In a real app, this would open a detailed conversation view
+        // For now, we'll just show an alert
+        alert(`Opening conversation with ${conversationId.toUpperCase()}...\n\nThis is where you'd see the full chat history.`);
+      }
     }
-  }
-});
+  });
 
   // --- Listener Banner Logic ---
   const acceptCall = document.getElementById('acceptCall');
