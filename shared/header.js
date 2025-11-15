@@ -1,5 +1,3 @@
-// shared/header.js
-
 function injectHeader() {
   // 1. Create the header HTML element
   const headerHTML = `
@@ -727,13 +725,33 @@ function injectHeader() {
   // 4. Load Font Awesome for icons
   const faLink = document.createElement('link');
   faLink.rel = 'stylesheet';
-  faLink.href = 'https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css';
+  faLink.href = 'https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css  ';
   document.head.appendChild(faLink);
 
   // 5. Add event listeners for header elements
   document.getElementById('loginButton')?.addEventListener('click', function() {
     window.location.href = '/login/';
   });
+
+  // --- OVERLAY MANAGEMENT ---
+  function hideAllOverlays() {
+    const callRequestModal = document.getElementById('callRequestModal');
+    const callSimulationModal = document.getElementById('callSimulationModal');
+    const conversationList = document.getElementById('conversationList');
+    const listenerBanner = document.getElementById('listenerBanner');
+    const allPostsContainer = document.getElementById('all-posts-container');
+    const sectionTitle = document.getElementById('section-title');
+
+    if (callRequestModal) callRequestModal.style.display = 'none';
+    if (callSimulationModal) callSimulationModal.style.display = 'none';
+    if (conversationList) {
+      conversationList.style.display = 'none';
+      // Also restore the main content when closing conversation list
+      if (allPostsContainer) allPostsContainer.style.display = 'block';
+      if (sectionTitle) sectionTitle.textContent = 'Community Feed';
+    }
+    if (listenerBanner) listenerBanner.style.display = 'none';
+  }
 
   // --- Call Modal Logic ---
   const callButton = document.getElementById('callButton');
@@ -744,6 +762,7 @@ function injectHeader() {
 
   if (callButton) {
     callButton.addEventListener('click', function() {
+      hideAllOverlays(); // Hide other overlays first
       if (callRequestModal) callRequestModal.style.display = 'flex';
     });
   }
@@ -841,9 +860,9 @@ function injectHeader() {
   // Trigger the simulation when someone chooses "One-on-One Call"
   if (oneToOneCall) {
     oneToOneCall.addEventListener('click', function() {
+      hideAllOverlays(); // Hide other overlays before starting call
       if (callRequestModal) callRequestModal.style.display = 'none';
       if (callSimulationModal) {
-        callType = 'one-to-one';
         callSimulationModal.style.display = 'flex';
         startCallSimulation();
       }
@@ -853,9 +872,9 @@ function injectHeader() {
   // Trigger the simulation when someone chooses "Group Call"
   if (groupCall) {
     groupCall.addEventListener('click', function() {
+      hideAllOverlays(); // Hide other overlays before starting call
       if (callRequestModal) callRequestModal.style.display = 'none';
       if (callSimulationModal) {
-        callType = 'group';
         callSimulationModal.style.display = 'flex';
         startCallSimulation();
       }
@@ -956,6 +975,7 @@ function injectHeader() {
 
   if (messageButton && conversationList && allPostsContainer && sectionTitle) {
     messageButton.addEventListener('click', function() {
+      hideAllOverlays(); // Hide other overlays first
       // Hide the main posts container when showing the conversation list
       allPostsContainer.style.display = 'none';
       conversationList.style.display = 'flex';
