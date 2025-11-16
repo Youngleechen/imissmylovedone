@@ -159,6 +159,69 @@
       object-position: center;
       background-color: #f3f4f6;
     }
+
+    /* --- Interaction Elements --- */
+    .post-actions {
+      display: flex;
+      gap: 15px;
+      padding-top: 10px;
+      border-top: 1px solid #e5e7eb;
+      margin-top: 10px;
+    }
+
+    .action-btn {
+      display: flex;
+      align-items: center;
+      gap: 5px;
+      background: none;
+      border: none;
+      color: #4b5563;
+      cursor: pointer;
+      font-size: 0.9rem;
+      padding: 5px;
+    }
+
+    .action-btn.liked {
+      color: #e53e3e;
+    }
+
+    .action-btn.shared {
+      color: #3b82f6;
+    }
+
+    .action-btn:hover {
+      color: #1f2937;
+    }
+
+    .action-count {
+      font-size: 0.85rem;
+      color: #6b7280;
+    }
+
+    .comments-section {
+      margin-top: 15px;
+      padding-top: 15px;
+      border-top: 1px solid #e5e7eb;
+    }
+
+    .comment {
+      padding: 8px 0;
+      border-bottom: 1px solid #f3f4f6;
+    }
+
+    .comment:last-child {
+      border-bottom: none;
+    }
+
+    .comment-author {
+      font-weight: 600;
+      color: #1f2937;
+      margin-right: 5px;
+    }
+
+    .comment-text {
+      color: #4b5563;
+    }
   </style>
   <!-- Font Awesome is loaded by header.js -->
 </head>
@@ -266,10 +329,35 @@
           { name: 'Jordan', location: 'Boston, MA', loss: 'brother to suicide', avatar: 'J' },
         ];
 
+        // Generic comments data
+        const comments = [
+          [
+            { author: 'Supporter1', text: 'Sending love and strength during this difficult time.' },
+            { author: 'HealingHeart', text: 'Your words resonate deeply. Thank you for sharing.' }
+          ],
+          [
+            { author: 'GriefCompanion', text: 'Beautiful tribute. They would be proud of your strength.' },
+            { author: 'PeacefulSoul', text: 'Holding you in my thoughts.' }
+          ],
+          [
+            { author: 'CompassionBridge', text: 'Your courage to share helps others feel less alone.' },
+            { author: 'LightBearer', text: 'Thank you for your vulnerability. It’s healing for us all.' }
+          ]
+        ];
+
         const postsHTML = data.map((post, index) => {
           const user = users[index % users.length];
           const authorName = user.name;
           const initials = user.avatar;
+          const postDate = formatDate(post.created_at);
+
+          // Generate random interactions
+          const hearts = Math.floor(Math.random() * 20) + 5; // 5-25 hearts
+          const shares = Math.floor(Math.random() * 8) + 1; // 1-8 shares
+          const commentCount = Math.floor(Math.random() * 5) + 1; // 1-5 comments
+          const hasComments = Math.random() > 0.3; // 70% chance of having comments
+          const userLiked = Math.random() > 0.7; // 30% chance user liked this post
+          const userShared = Math.random() > 0.8; // 20% chance user shared this post
 
           const mediaMatches = [...post.body.matchAll(/!\[([^\]]*)\]\s*\(\s*([^)]+)\s*\)/g)];
           let contentHtml = post.body.replace(/!\[([^\]]*)\]\s*\(\s*([^)]+)\s*\)/g, '');
@@ -290,6 +378,22 @@
             }
           }
 
+          // Generate comments HTML if applicable
+          let commentsHtml = '';
+          if (hasComments) {
+            const commentSet = comments[index % comments.length];
+            commentsHtml = `
+              <div class="comments-section">
+                ${commentSet.slice(0, commentCount).map(comment => `
+                  <div class="comment">
+                    <span class="comment-author">${comment.author}:</span>
+                    <span class="comment-text">${comment.text}</span>
+                  </div>
+                `).join('')}
+              </div>
+            `;
+          }
+
           return `<div class="post-item">
                     <div class="post-header">
                       <div class="profile-image">${initials}</div>
@@ -305,6 +409,21 @@
                       <button class="show-more-btn">Show more</button>
                       ${mediaHtml}
                     </div>
+                    <div class="post-actions">
+                      <button class="action-btn ${userLiked ? 'liked' : ''}" onclick="toggleLike(this, ${post.id})">
+                        <span>❤️</span>
+                        <span class="action-count">${hearts}</span>
+                      </button>
+                      <button class="action-btn ${userShared ? 'shared' : ''}" onclick="shareMemory(this, ${post.id})">
+                        <span>📤</span>
+                        <span class="action-count">${shares}</span>
+                      </button>
+                      <button class="action-btn" onclick="toggleComments(this)">
+                        <span>💬</span>
+                        <span class="action-count">${commentCount}</span>
+                      </button>
+                    </div>
+                    ${commentsHtml}
                   </div>`;
         }).join('');
 
@@ -340,6 +459,42 @@
       } catch (err) {
         console.error('Error loading posts:', err);
         if (container) container.innerHTML = '<div style="text-align: center; padding: 20px; color: #e53e3e;">Failed to load memories.</div>';
+      }
+    }
+
+    // --- Interaction Functions ---
+    function toggleLike(button, postId) {
+      const countSpan = button.querySelector('.action-count');
+      let count = parseInt(countSpan.textContent);
+      
+      if (button.classList.contains('liked')) {
+        button.classList.remove('liked');
+        countSpan.textContent = count - 1;
+      } else {
+        button.classList.add('liked');
+        countSpan.textContent = count + 1;
+      }
+    }
+
+    function shareMemory(button, postId) {
+      const countSpan = button.querySelector('.action-count');
+      let count = parseInt(countSpan.textContent);
+      
+      if (button.classList.contains('shared')) {
+        button.classList.remove('shared');
+        countSpan.textContent = count - 1;
+      } else {
+        button.classList.add('shared');
+        countSpan.textContent = count + 1;
+      }
+    }
+
+    function toggleComments(button) {
+      const postItem = button.closest('.post-item');
+      const commentsSection = postItem.querySelector('.comments-section');
+      
+      if (commentsSection) {
+        commentsSection.style.display = commentsSection.style.display === 'none' ? 'block' : 'none';
       }
     }
 
