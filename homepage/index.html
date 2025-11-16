@@ -201,6 +201,8 @@
     .action-buttons {
       display: flex;
       gap: 4px;
+      width: 100%;
+      justify-content: space-between;
     }
 
     .action-btn {
@@ -215,6 +217,8 @@
       transition: all 0.2s ease;
       border: none;
       background: none;
+      flex: 1;
+      justify-content: center;
     }
 
     .action-btn.care {
@@ -530,8 +534,8 @@
 
     // --- Interaction Functions ---
     function toggleCare(button, postId) {
-      const countSpan = button.querySelector('.action-btn.care .action-count');
-      const careCountElement = button.closest('.post-item').querySelector('.care-count');
+      const postItem = button.closest('.post-item');
+      const careCountElement = postItem.querySelector('.care-count');
       let count = parseInt(careCountElement.textContent);
       
       if (button.classList.contains('cared')) {
