@@ -4,7 +4,7 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Grief Support Platform - Homepage</title>
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2  "></script>
   <style>
     /* --- GLOBAL STYLES --- */
     * {
@@ -195,9 +195,10 @@
 
     .action-buttons {
       display: flex;
-      justify-content: space-between;
+      justify-content: space-around;
       width: 100%;
       gap: 8px;
+      margin-left: 40px; /* Add space for the care count */
     }
 
     .action-btn {
@@ -219,6 +220,7 @@
 
     .action-btn.care {
       color: #6b7280;
+      flex: 0 0 auto; /* Make care button only take the space it needs */
     }
 
     .action-btn.care.cared {
@@ -242,6 +244,7 @@
       margin-top: 15px;
       padding-top: 15px;
       border-top: 1px solid #e5e7eb;
+      display: none; /* Hide comments section */
     }
 
     .comment {
@@ -283,7 +286,7 @@
   <script>
     // Initialize Supabase
     window.supabaseClient = window.supabase.createClient(
-      'https://ccetnqdqfrsitooestbh.supabase.co',
+      'https://ccetnqdqfrsitooestbh.supabase.co  ',
       'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImNjZXRucWRxZnJzaXRvb2VzdGJoIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjIzMTE4MjksImV4cCI6MjA3Nzg4NzgyOX0.1NjRZZrgsPOg-2z_r2kRELWn9IVXNEQNpSxK6CktJRY'
     );
 
@@ -382,7 +385,7 @@
           ],
           [
             { author: 'CompassionBridge', text: 'Your courage to share helps others feel less alone.' },
-            { author: 'LightBearer', text: 'Thank you for your vulnerability. It’s healing for us all.' }
+            { author: 'LightBearer', text: 'Thank you for your vulnerability. It's healing for us all.' }
           ]
         ];
 
@@ -418,7 +421,7 @@
             }
           }
 
-          // Generate comments HTML if applicable
+          // Generate comments HTML if applicable (but keep it hidden)
           let commentsHtml = '';
           if (hasComments) {
             const commentSet = comments[index % comments.length];
