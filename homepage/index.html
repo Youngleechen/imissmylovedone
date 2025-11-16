@@ -253,15 +253,25 @@
     async function updateLoginButton() {
       const loginButton = document.getElementById('loginButton');
       if (!loginButton) return; // Safety check
-      const user = await window.supabaseClient.auth.getUser();
-
-      if (user.data.user) {
-        loginButton.textContent = 'Logout';
-        loginButton.onclick = async function() {
-          await window.supabaseClient.auth.signOut();
-          window.location.href = '/';
-        };
-      } else {
+      
+      try {
+        const user = await window.supabaseClient.auth.getUser();
+        
+        if (user.data.user) {
+          loginButton.textContent = 'Logout';
+          loginButton.onclick = async function() {
+            await window.supabaseClient.auth.signOut();
+            window.location.href = '/';
+          };
+        } else {
+          loginButton.textContent = 'Login';
+          loginButton.onclick = function() {
+            window.location.href = '/login/';
+          };
+        }
+      } catch (error) {
+        console.error('Error checking auth state:', error);
+        // Fallback if Supabase fails
         loginButton.textContent = 'Login';
         loginButton.onclick = function() {
           window.location.href = '/login/';
@@ -273,10 +283,6 @@
       const container = document.getElementById('all-posts-container');
       // Note: The other containers (group-list, etc.) are now managed by footer.js
       const sectionTitle = document.getElementById('section-title');
-
-      // No initial loading text - just load posts directly
-      // if (container) container.innerHTML = 'Loading...'; // Removed
-      // if (sectionTitle) sectionTitle.textContent = 'Community Memories'; // Removed
 
       try {
         const { data, error } = await window.supabaseClient
@@ -349,7 +355,9 @@
           const user = users[index % users.length];
           const authorName = user.name;
           const initials = user.avatar;
-          const postDate = formatDate(post.created_at);
+          
+          // Fixed: Removed duplicate declaration of postDate
+          const formattedPostDate = formatDate(post.created_at);
 
           // Generate random interactions
           const hearts = Math.floor(Math.random() * 20) + 5; // 5-25 hearts
@@ -362,8 +370,6 @@
           const mediaMatches = [...post.body.matchAll(/!\[([^\]]*)\]\s*\(\s*([^)]+)\s*\)/g)];
           let contentHtml = post.body.replace(/!\[([^\]]*)\]\s*\(\s*([^)]+)\s*\)/g, '');
           contentHtml = contentHtml.replace(/\n/g, '<br>');
-
-          const postDate = formatDate(post.created_at);
 
           let mediaHtml = '';
           for (const match of mediaMatches) {
@@ -399,7 +405,7 @@
                       <div class="profile-image">${initials}</div>
                       <div class="profile-info">
                         <div class="username">${authorName}</div>
-                        <div class="post-date">${postDate}</div>
+                        <div class="post-date">${formattedPostDate}</div>
                       </div>
                     </div>
                     <div class="post-content">
