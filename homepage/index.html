@@ -6,7 +6,7 @@
   <title>Grief Support Platform - Homepage</title>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <style>
-    /* --- GLOBAL STYLES (can be moved to a shared CSS file later if needed) --- */
+    /* --- GLOBAL STYLES --- */
     * {
       margin: 0;
       padding: 0;
@@ -19,10 +19,10 @@
       padding: 2px;
       max-width: 800px;
       margin: 0 auto;
-      padding-bottom: 70px; /* Add space for fixed footer */
+      padding-bottom: 70px;
     }
 
-    /* --- MAIN CONTENT STYLES (specific to this page's core content) --- */
+    /* --- POST CONTAINER --- */
     .posts-section {
       margin-top: 20px;
       padding: 20px;
@@ -32,9 +32,7 @@
     }
 
     .posts-section h2 {
-      margin-bottom: 15px;
-      color: #1f2937;
-      display: none; /* Hide the title */
+      display: none;
     }
 
     .post-item {
@@ -160,20 +158,23 @@
       background-color: #f3f4f6;
     }
 
-    /* --- Modern Interaction Elements --- */
-    .post-actions {
+    /* --- INTERACTION SECTION --- */
+    .interaction-row {
       display: flex;
       justify-content: space-between;
+      align-items: center;
       padding-top: 12px;
       border-top: 1px solid #e5e7eb;
       margin-top: 10px;
     }
 
-    .care-section {
+    .care-count {
       display: flex;
       align-items: center;
-      gap: 8px;
-      margin-bottom: 8px;
+      gap: 6px;
+      font-size: 0.85rem;
+      font-weight: 500;
+      color: #1f2937;
     }
 
     .care-icon {
@@ -192,24 +193,18 @@
       fill: white;
     }
 
-    .care-count {
-      font-size: 0.85rem;
-      font-weight: 500;
-      color: #1f2937;
-    }
-
     .action-buttons {
       display: flex;
-      gap: 4px;
-      width: 100%;
       justify-content: space-between;
+      width: 100%;
+      gap: 8px;
     }
 
     .action-btn {
       display: flex;
       align-items: center;
       gap: 6px;
-      padding: 8px 16px;
+      padding: 8px 12px;
       border-radius: 8px;
       font-weight: 500;
       font-size: 0.9rem;
@@ -219,6 +214,7 @@
       background: none;
       flex: 1;
       justify-content: center;
+      color: #6b7280;
     }
 
     .action-btn.care {
@@ -226,13 +222,7 @@
     }
 
     .action-btn.care.cared {
-      background-color: #fee2e2;
       color: #dc2626;
-    }
-
-    .action-btn.comment,
-    .action-btn.share {
-      color: #6b7280;
     }
 
     .action-btn:hover {
@@ -277,11 +267,10 @@
 <body>
   <!-- Header will be injected here by header.js -->
 
-  <!-- Main Content Area - Footer content sections will be injected here by footer.js -->
+  <!-- Main Content Area -->
   <div class="posts-section">
-    <h2 id="section-title" style="display: none;">Community Memories</h2> <!-- Hidden title -->
-    <div id="all-posts-container"></div> <!-- No initial "Loading..." text -->
-    <!-- Footer content sections (group-list, notification-list, etc.) will be added here by footer.js -->
+    <h2 id="section-title" style="display: none;">Community Memories</h2>
+    <div id="all-posts-container"></div>
   </div>
 
   <!-- Footer will be injected here by footer.js -->
@@ -290,7 +279,7 @@
   <script src="/shared/header.js"></script>
   <script src="/shared/footer.js"></script>
 
-  <!-- Main Application Logic (specific to this page's core functionality) -->
+  <!-- Main Application Logic -->
   <script>
     // Initialize Supabase
     window.supabaseClient = window.supabase.createClient(
@@ -301,7 +290,7 @@
     // --- Core Functions ---
     async function updateLoginButton() {
       const loginButton = document.getElementById('loginButton');
-      if (!loginButton) return; // Safety check
+      if (!loginButton) return;
       
       try {
         const user = await window.supabaseClient.auth.getUser();
@@ -320,7 +309,6 @@
         }
       } catch (error) {
         console.error('Error checking auth state:', error);
-        // Fallback if Supabase fails
         loginButton.textContent = 'Login';
         loginButton.onclick = function() {
           window.location.href = '/login/';
@@ -330,8 +318,6 @@
 
     async function loadAllPosts() {
       const container = document.getElementById('all-posts-container');
-      // Note: The other containers (group-list, etc.) are now managed by footer.js
-      const sectionTitle = document.getElementById('section-title');
 
       try {
         const { data, error } = await window.supabaseClient
@@ -463,15 +449,15 @@
                       <button class="show-more-btn">Show more</button>
                       ${mediaHtml}
                     </div>
-                    <div class="care-section">
-                      <div class="care-icon">
-                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor">
-                          <path d="M11.645 20.91l-.007-.003-.022-.012a15.247 15.247 0 01-.383-.218 25.18 25.18 0 01-4.244-3.17C4.688 15.36 2.25 12.174 2.25 8.25 2.25 5.322 4.714 3 7.688 3A5.5 5.5 0 0112 5.052 5.5 5.5 0 0116.313 3c2.973 0 5.437 2.322 5.437 5.25 0 3.925-2.438 7.111-4.739 9.256a25.175 25.175 0 01-4.244 3.17 15.247 15.247 0 01-.383.219l-.022.012-.007.004-.003.001a.752.752 0 01-.704 0l-.003-.001z" />
-                        </svg>
+                    <div class="interaction-row">
+                      <div class="care-count">
+                        <div class="care-icon">
+                          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor">
+                            <path d="M11.645 20.91l-.007-.003-.022-.012a15.247 15.247 0 01-.383-.218 25.18 25.18 0 01-4.244-3.17C4.688 15.36 2.25 12.174 2.25 8.25 2.25 5.322 4.714 3 7.688 3A5.5 5.5 0 0112 5.052 5.5 5.5 0 0116.313 3c2.973 0 5.437 2.322 5.437 5.25 0 3.925-2.438 7.111-4.739 9.256a25.175 25.175 0 01-4.244 3.17 15.247 15.247 0 01-.383.219l-.022.012-.007.004-.003.001a.752.752 0 01-.704 0l-.003-.001z" />
+                          </svg>
+                        </div>
+                        <span>${cares}</span>
                       </div>
-                      <span class="care-count">${cares}</span>
-                    </div>
-                    <div class="post-actions">
                       <div class="action-buttons">
                         <button class="action-btn care ${userCared ? 'cared' : ''}" onclick="toggleCare(this, ${post.id})">
                           <svg xmlns="http://www.w3.org/2000/svg" fill="${userCared ? 'currentColor' : 'none'}" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
@@ -535,7 +521,7 @@
     // --- Interaction Functions ---
     function toggleCare(button, postId) {
       const postItem = button.closest('.post-item');
-      const careCountElement = postItem.querySelector('.care-count');
+      const careCountElement = postItem.querySelector('.care-count span:nth-child(2)');
       let count = parseInt(careCountElement.textContent);
       
       if (button.classList.contains('cared')) {
@@ -571,9 +557,8 @@
 
     // --- Main Initialization ---
     document.addEventListener('DOMContentLoaded', function() {
-      loadAllPosts(); // Load the posts feed
-      updateLoginButton(); // Check login status
-      // Note: Header interactions (message, call, banner) are now handled by header.js
+      loadAllPosts();
+      updateLoginButton();
     });
   </script>
 </body>
