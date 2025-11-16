@@ -282,8 +282,12 @@ function injectFooter() {
     const socialFeatures = document.getElementById('social-features');
     const helpResources = document.getElementById('help-resources');
     const sectionTitle = document.getElementById('section-title');
+    // --- ADD THIS LINE ---
+    const conversationList = document.getElementById('conversationList'); // Get the conversation list element
 
     if (container) container.style.display = 'block';
+    // --- ADD THIS LINE ---
+    if (conversationList) conversationList.style.display = 'none'; // Hide the conversation list
     if (groupList) groupList.style.display = 'none';
     if (notificationList) notificationList.style.display = 'none';
     if (socialFeatures) socialFeatures.style.display = 'none';
@@ -298,8 +302,12 @@ function injectFooter() {
     const socialFeatures = document.getElementById('social-features');
     const helpResources = document.getElementById('help-resources');
     const sectionTitle = document.getElementById('section-title');
+    // --- ADD THIS LINE ---
+    const conversationList = document.getElementById('conversationList'); // Get the conversation list element
 
     if (container) container.style.display = 'none';
+    // --- ADD THIS LINE ---
+    if (conversationList) conversationList.style.display = 'none'; // Hide the conversation list
     if (groupList) groupList.style.display = 'flex';
     if (notificationList) notificationList.style.display = 'none';
     if (socialFeatures) socialFeatures.style.display = 'none';
@@ -353,10 +361,14 @@ function injectFooter() {
     const socialFeatures = document.getElementById('social-features');
     const helpResources = document.getElementById('help-resources');
     const sectionTitle = document.getElementById('section-title');
+    // --- ADD THIS LINE ---
+    const conversationList = document.getElementById('conversationList'); // Get the conversation list element
 
     if (container) container.style.display = 'none';
+    // --- ADD THIS LINE ---
+    if (conversationList) conversationList.style.display = 'none'; // Hide the conversation list
     if (groupList) groupList.style.display = 'none';
-    if (notificationList) notificationList.style.display = 'flex';
+    if (notificationList) notificationList.style.display = 'flex'; // Note: This was 'flex', not 'block' in your CSS
     if (socialFeatures) socialFeatures.style.display = 'none';
     if (helpResources) helpResources.style.display = 'none';
     if (sectionTitle) sectionTitle.textContent = 'Notifications';
@@ -391,8 +403,12 @@ function injectFooter() {
     const socialFeatures = document.getElementById('social-features');
     const helpResources = document.getElementById('help-resources');
     const sectionTitle = document.getElementById('section-title');
+    // --- ADD THIS LINE ---
+    const conversationList = document.getElementById('conversationList'); // Get the conversation list element
 
     if (container) container.style.display = 'none';
+    // --- ADD THIS LINE ---
+    if (conversationList) conversationList.style.display = 'none'; // Hide the conversation list
     if (groupList) groupList.style.display = 'none';
     if (notificationList) notificationList.style.display = 'none';
     if (socialFeatures) socialFeatures.style.display = 'none';
@@ -404,7 +420,7 @@ function injectFooter() {
       {
         title: 'Crisis Support',
         content: 'If you\'re in crisis, please reach out for immediate help. You are not alone.',
-        link: 'https://suicidepreventionlifeline.org/',
+        link: 'https://988lifeline.org/',
         linkText: 'National Suicide Prevention Lifeline: 988'
       },
       {
