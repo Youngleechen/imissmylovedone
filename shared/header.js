@@ -725,7 +725,7 @@ function injectHeader() {
   // 4. Load Font Awesome for icons
   const faLink = document.createElement('link');
   faLink.rel = 'stylesheet';
-  faLink.href = 'https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css    ';
+  faLink.href = 'https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css';
   document.head.appendChild(faLink);
 
   // 5. Add event listeners for header elements
@@ -744,14 +744,42 @@ function injectHeader() {
 
     if (callRequestModal) callRequestModal.style.display = 'none';
     if (callSimulationModal) callSimulationModal.style.display = 'none';
-    if (conversationList) {
-      conversationList.style.display = 'none';
-      // Also restore the main content when closing conversation list
-      if (allPostsContainer) allPostsContainer.style.display = 'block';
-      if (sectionTitle) sectionTitle.textContent = 'Community Feed';
-    }
+    if (conversationList) conversationList.style.display = 'none';
     if (listenerBanner) listenerBanner.style.display = 'none';
+    // Optionally show main content if it was hidden by conversation list
+    if (allPostsContainer) allPostsContainer.style.display = 'block';
+    if (sectionTitle) sectionTitle.textContent = 'Community Memories';
   }
+
+  // --- NEW FUNCTION: Hide Footer Content Sections ---
+  function hideFooterContentSections() {
+    const groupList = document.getElementById('group-list');
+    const notificationList = document.getElementById('notification-list');
+    const socialFeatures = document.getElementById('social-features');
+    const helpResources = document.getElementById('help-resources');
+
+    if (groupList) groupList.style.display = 'none';
+    if (notificationList) notificationList.style.display = 'none';
+    if (socialFeatures) socialFeatures.style.display = 'none';
+    if (helpResources) helpResources.style.display = 'none';
+
+    // Also reset the section title back to the default if it was changed by footer
+    const sectionTitle = document.getElementById('section-title');
+    if (sectionTitle) {
+       // Only reset if it was showing a footer-specific title
+       // You might want to check the current text or maintain state differently
+       // For now, a simple reset when opening messages:
+       sectionTitle.textContent = 'Community Memories'; // Or 'Community Feed' depending on your default
+    }
+
+    // Also ensure the main posts container is hidden when opening messages
+    const allPostsContainer = document.getElementById('all-posts-container');
+    if (allPostsContainer) allPostsContainer.style.display = 'none'; // Hide main feed when messages open
+
+    // And ensure the conversation list's own title is set correctly if needed elsewhere
+    // (This is handled in the messageButton listener below)
+  }
+
 
   // --- Call Modal Logic ---
   const callButton = document.getElementById('callButton');
@@ -762,7 +790,8 @@ function injectHeader() {
 
   if (callButton) {
     callButton.addEventListener('click', function() {
-      hideAllOverlays(); // Hide other overlays first
+      hideFooterContentSections(); // Hide footer content sections first
+      hideAllOverlays(); // Hide other header overlays
       if (callRequestModal) callRequestModal.style.display = 'flex';
     });
   }
@@ -861,6 +890,7 @@ function injectHeader() {
   if (oneToOneCall) {
     oneToOneCall.addEventListener('click', function() {
       callType = 'one-to-one';
+      hideFooterContentSections(); // Hide footer content sections first
       hideAllOverlays(); // Hide other overlays before starting call
       if (callRequestModal) callRequestModal.style.display = 'none';
       if (callSimulationModal) {
@@ -874,6 +904,7 @@ function injectHeader() {
   if (groupCall) {
     groupCall.addEventListener('click', function() {
       callType = 'group';
+      hideFooterContentSections(); // Hide footer content sections first
       hideAllOverlays(); // Hide other overlays before starting call
       if (callRequestModal) callRequestModal.style.display = 'none';
       if (callSimulationModal) {
@@ -971,7 +1002,7 @@ function injectHeader() {
     });
   }
 
-  // --- Conversation List Logic ---
+  // --- Conversation List Logic (Updated) ---
   const messageButton = document.getElementById('messageButton');
   const conversationList = document.getElementById('conversationList');
   const allPostsContainer = document.getElementById('all-posts-container'); // Assumes this exists in the main page
@@ -979,9 +1010,14 @@ function injectHeader() {
 
   if (messageButton && conversationList && allPostsContainer && sectionTitle) {
     messageButton.addEventListener('click', function() {
-      hideAllOverlays(); // Hide other overlays first
+      // NEW: Hide footer content sections first
+      hideFooterContentSections();
+      // NEW: Also hide other header overlays (like call modals)
+      hideAllOverlays(); // This function should already exist in header.js
+
+      // Now show the conversation list
       // Hide the main posts container when showing the conversation list
-      allPostsContainer.style.display = 'none';
+      allPostsContainer.style.display = 'none'; // Ensure main feed is hidden
       conversationList.style.display = 'flex';
       sectionTitle.textContent = 'Your Conversations';
     });
