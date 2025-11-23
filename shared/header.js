@@ -2,11 +2,11 @@ function injectHeader() {
   // Prevent duplicate injection
   if (document.querySelector('.header')) return;
 
-  // 1. Create the header HTML with clickable logo
+  // 1. Create the header HTML with a clickable logo
   const headerHTML = `
     <div class="header">
       <div class="logo">
-        <a href="/" style="text-decoration: none; color: inherit; display: flex; align-items: center; gap: 8px;">
+        <a href="/" class="logo-link">
           <i class="fas fa-heart-circle"></i> Healing
         </a>
       </div>
@@ -17,8 +17,8 @@ function injectHeader() {
         <button class="action-btn" id="callButton" style="background: none; border: none; padding: 8px; cursor: pointer;">
           <i class="fas fa-phone"></i>
         </button>
-        <div class="user-avatar" id="userAvatar">U</div>
-        <button id="loginButton" class="login-btn">Login</button>
+        <div class="user-avatar" id="userAvatar" style="display: none;">U</div>
+        <button id="loginButton" class="login-btn" style="display: none;">Login</button>
       </div>
     </div>
 
@@ -182,12 +182,15 @@ function injectHeader() {
       align-items: center;
       gap: 8px;
     }
-    .logo a {
+    .logo-link {
+      color: #5a67d8;
       text-decoration: none;
-      color: inherit;
       display: flex;
       align-items: center;
       gap: 8px;
+    }
+    .logo-link:hover {
+      opacity: 0.85;
     }
     .user-menu {
       display: flex;
@@ -832,7 +835,7 @@ function injectHeader() {
     });
   }
 
-  // 9. Message Button Logic (always works)
+  // 9. Message Button Logic
   const messageButton = document.getElementById('messageButton');
   const conversationList = document.getElementById('conversationList');
 
@@ -863,71 +866,81 @@ function injectHeader() {
     }
   });
 
-  // 11. Listener Banner Buttons
+  // 11. Listener Banner Logic
   const acceptCall = document.getElementById('acceptCall');
   const declineCall = document.getElementById('declineCall');
+  const listenerBanner = document.getElementById('listenerBanner');
 
   if (acceptCall) {
     acceptCall.addEventListener('click', () => {
-      const banner = document.getElementById('listenerBanner');
-      if (banner) banner.style.display = 'none';
+      if (listenerBanner) listenerBanner.style.display = 'none';
       alert('Connecting you to Mary…\n\nShe’s lost her son to suicide. 3 days ago.\n\nYou’re not alone.');
     });
   }
   if (declineCall) {
     declineCall.addEventListener('click', () => {
-      const banner = document.getElementById('listenerBanner');
-      if (banner) banner.style.display = 'none';
+      if (listenerBanner) listenerBanner.style.display = 'none';
     });
   }
 
-  // 12. 🔑 NEW: Robust Auth UI Updater
-  async function updateAuthUI() {
+  // ✅ 12. AUTHENTICATION-AWARE HEADER UPDATE ✅
+  async function updateHeaderBasedOnAuth() {
     const loginButton = document.getElementById('loginButton');
     const userAvatar = document.getElementById('userAvatar');
 
-    // Wait for Supabase if not ready
-    if (!window.supabaseClient) {
-      setTimeout(updateAuthUI, 300);
-      return;
-    }
+    // Default: hide both until we know
+    if (loginButton) loginButton.style.display = 'none';
+    if (userAvatar) userAvatar.style.display = 'none';
 
-    try {
-      const {  { user } } = await window.supabaseClient.auth.getUser();
-
-      if (user) {
-        // Logged in
-        if (loginButton) loginButton.style.display = 'none';
-        if (userAvatar) {
-          // Use first letter of email or name
-          const initial = 
-            user.user_metadata?.full_name?.charAt(0) ||
-            user.user_metadata?.name?.charAt(0) ||
-            user.email?.charAt(0) ||
-            'U';
-          userAvatar.textContent = initial.toUpperCase();
+    if (window.supabaseClient) {
+      try {
+        const { data: { user } } = await window.supabaseClient.auth.getUser();
+        if (user) {
+          // Logged in
+          if (userAvatar) {
+            const initial = (user.user_metadata?.full_name?.[0] || user.email?.[0] || 'U').toUpperCase();
+            userAvatar.textContent = initial;
+            userAvatar.style.display = 'flex';
+          }
+          if (loginButton) loginButton.style.display = 'none';
+        } else {
+          // Not logged in
+          if (loginButton) {
+            loginButton.style.display = 'block';
+            loginButton.addEventListener('click', () => {
+              window.location.href = '/login/';
+            });
+          }
+          if (userAvatar) userAvatar.style.display = 'none';
         }
-      } else {
-        // Not logged in
+      } catch (error) {
+        console.warn('Auth check failed:', error);
         if (loginButton) loginButton.style.display = 'block';
-        if (userAvatar) userAvatar.textContent = 'U';
+        if (userAvatar) userAvatar.style.display = 'none';
       }
-    } catch (err) {
-      console.warn('Auth check error:', err);
+    } else {
+      // Supabase not loaded — assume not logged in
       if (loginButton) loginButton.style.display = 'block';
     }
   }
 
-  // Trigger auth check with retry
-  setTimeout(updateAuthUI, 200);
+  // Run auth check
+  updateHeaderBasedOnAuth();
 
-  // 13. Login Redirect
-  const loginBtn = document.getElementById('loginButton');
-  if (loginBtn) {
-    loginBtn.addEventListener('click', () => {
-      window.location.href = '/login/';
-    });
+  // ✅ 13. Show Listener Banner for Authenticated Users (after delay)
+  async function checkAuthAndShowBanner() {
+    if (window.supabaseClient) {
+      const { data: { user } } = await window.supabaseClient.auth.getUser();
+      if (user && listenerBanner) {
+        setTimeout(() => {
+          listenerBanner.style.display = 'flex';
+        }, 5000);
+      }
+    }
   }
+
+  // Run banner check
+  checkAuthAndShowBanner();
 }
 
 // Initialize when DOM is ready
