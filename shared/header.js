@@ -1,13 +1,8 @@
-// /shared/header.js
 (function () {
   'use strict';
 
-  // Prevent double injection
-  if (document.querySelector('.healing-header-root')) {
-    return;
-  }
+  if (document.querySelector('.healing-header-root')) return;
 
-  // === 1. HEADER AND MODAL HTML (YOUR EXACT CONTENT) ===
   const headerHTML = `
     <div class="healing-header-root">
       <!-- Main Header -->
@@ -110,7 +105,10 @@
 
       <!-- Conversation List -->
       <div id="conversationList" class="conversation-list">
-        <h2>Recent Conversations</h2>
+        <h2>
+          Recent Conversations
+          <button class="close-btn" id="closeConversationList">×</button>
+        </h2>
         <div class="conversation-item" data-conversation-id="david">
           <div class="conversation-avatar">D</div>
           <div class="conversation-info">
@@ -147,10 +145,8 @@
     </div>
   `;
 
-  // Inject into body
   document.body.insertAdjacentHTML('afterbegin', headerHTML);
 
-  // === 2. INJECT STYLES (ONLY ONCE) ===
   if (!document.getElementById('healing-shared-styles')) {
     const style = document.createElement('style');
     style.id = 'healing-shared-styles';
@@ -340,22 +336,36 @@
         top: 60px;
         left: 0;
         width: 100%;
-        max-width: 600px;
-        margin: 0 auto;
-        padding: 15px;
-        background: #f8fafc;
-        border-radius: 8px;
+        height: calc(100vh - 60px);
+        background: white;
         z-index: 1998;
-        flex-direction: column;
-        gap: 12px;
         box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+        overflow-y: auto;
+        padding: 15px;
+        border-top: 1px solid #e2e8f0;
       }
       .conversation-list h2 {
+        font-size: 1.2rem;
+        font-weight: 600;
+        color: #1f2937;
         margin: 0 0 15px 0;
         padding: 0 0 10px 0;
         border-bottom: 1px solid #e2e8f0;
-        color: #1f2937;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+      }
+      .conversation-list .close-btn {
+        background: none;
+        border: none;
         font-size: 1.2rem;
+        color: #718096;
+        cursor: pointer;
+        padding: 4px 8px;
+        border-radius: 4px;
+      }
+      .conversation-list .close-btn:hover {
+        background: #f7fafc;
       }
       .conversation-item {
         display: flex;
@@ -365,9 +375,12 @@
         border-radius: 10px;
         cursor: pointer;
         transition: transform 0.2s ease;
+        border: 1px solid #e2e8f0;
+        margin-bottom: 8px;
       }
       .conversation-item:hover {
         transform: translateY(-2px);
+        border-color: #cbd5e0;
       }
       .conversation-avatar {
         width: 44px;
@@ -408,7 +421,7 @@
         text-align: right;
       }
 
-      /* --- CALL SIMULATION (partial — add more if needed) --- */
+      /* --- CALL SIMULATION --- */
       .call-simulation-modal {
         display: none;
         position: fixed;
@@ -466,7 +479,7 @@
         margin: 0 auto;
       }
 
-      /* Heart icon color */
+      /* Heart icon */
       .fas.fa-heart {
         color: #e53e3e !important;
       }
@@ -474,7 +487,6 @@
     document.head.appendChild(style);
   }
 
-  // === 3. ENSURE FONT AWESOME ===
   if (!document.querySelector('link[href*="font-awesome"]')) {
     const fa = document.createElement('link');
     fa.rel = 'stylesheet';
@@ -482,46 +494,79 @@
     document.head.appendChild(fa);
   }
 
-  // === 4. SAFE DOM UTILITIES ===
+  // UTILS
   function show(el) { if (el) el.style.display = 'block'; }
   function showFlex(el) { if (el) el.style.display = 'flex'; }
   function hide(el) { if (el) el.style.display = 'none'; }
   function text(el, str) { if (el) el.textContent = str; }
 
-  // === 5. UPDATE USER AVATAR ===
+  // UPDATE AVATAR
   const savedName = localStorage.getItem('userFirstName');
   const avatar = document.getElementById('userAvatar');
   if (avatar && savedName) {
     avatar.textContent = savedName.charAt(0).toUpperCase();
   }
 
-  // === 6. MESSAGE BUTTON ===
-  document.getElementById('messageButton')?.addEventListener('click', () => {
-    hide(document.getElementById('callRequestModal'));
-    hide(document.getElementById('callSimulationModal'));
-    hide(document.getElementById('listenerBanner'));
-    const posts = document.getElementById('all-posts-container');
-    const title = document.getElementById('section-title');
-    if (posts) posts.style.display = 'none';
-    if (title) title.textContent = 'Your Conversations';
-    showFlex(document.getElementById('conversationList'));
-  });
+  // MESSAGE BUTTON + CLOSE
+  const messageBtn = document.getElementById('messageButton');
+  const convList = document.getElementById('conversationList');
+  const closeConvBtn = document.getElementById('closeConversationList');
 
-  // === 7. CALL BUTTON ===
-  document.getElementById('callButton')?.addEventListener('click', () => {
-    hide(document.getElementById('conversationList'));
+  if (messageBtn) {
+    messageBtn.addEventListener('click', () => {
+      hide(document.getElementById('callRequestModal'));
+      hide(document.getElementById('callSimulationModal'));
+      hide(document.getElementById('listenerBanner'));
+      const posts = document.getElementById('all-posts-container');
+      const title = document.getElementById('section-title');
+      if (posts) posts.style.display = 'none';
+      if (title) title.textContent = 'Your Conversations';
+      showFlex(convList);
+    });
+  }
+
+  if (closeConvBtn) {
+    closeConvBtn.addEventListener('click', () => {
+      hide(convList);
+      const posts = document.getElementById('all-posts-container');
+      const title = document.getElementById('section-title');
+      if (posts) posts.style.display = 'block';
+      if (title) title.textContent = 'Community Memories';
+    });
+  }
+
+  // CALL BUTTON
+  const callBtn = document.getElementById('callButton');
+  if (callBtn) {
+    callBtn.addEventListener('click', () => {
+      hide(convList);
+      const posts = document.getElementById('all-posts-container');
+      if (posts) posts.style.display = 'none';
+      showFlex(document.getElementById('callRequestModal'));
+      const title = document.getElementById('section-title');
+      if (title) title.textContent = 'Community Memories';
+    });
+  }
+
+  // CANCEL CALL
+  document.getElementById('cancelCall')?.addEventListener('click', () => {
+    hide(document.getElementById('callRequestModal'));
     const posts = document.getElementById('all-posts-container');
-    if (posts) posts.style.display = 'none';
-    showFlex(document.getElementById('callRequestModal'));
     const title = document.getElementById('section-title');
+    if (posts) posts.style.display = 'block';
     if (title) title.textContent = 'Community Memories';
   });
 
-  // === 8. MODAL BUTTONS ===
-  document.getElementById('cancelCall')?.addEventListener('click', () => hide(document.getElementById('callRequestModal')));
-  document.getElementById('endCall')?.addEventListener('click', () => hide(document.getElementById('callSimulationModal')));
+  // END CALL
+  document.getElementById('endCall')?.addEventListener('click', () => {
+    hide(document.getElementById('callSimulationModal'));
+    const posts = document.getElementById('all-posts-container');
+    const title = document.getElementById('section-title');
+    if (posts) posts.style.display = 'block';
+    if (title) title.textContent = 'Community Memories';
+  });
 
-  // === 9. CONVERSATION ITEMS ===
+  // CONVERSATION ITEMS
   document.addEventListener('click', (e) => {
     const item = e.target.closest('.conversation-item');
     if (item) {
@@ -529,14 +574,14 @@
     }
   });
 
-  // === 10. LISTENER BANNER (show only if user has profile) ===
+  // LISTENER BANNER
   if (savedName) {
     setTimeout(() => {
       showFlex(document.getElementById('listenerBanner'));
     }, 5000);
   }
 
-  // === 11. CALL SIMULATION LOGIC (compact version) ===
+  // CALL SIMULATION LOGIC
   let callInterval = null;
   let callDuration = 0;
 
@@ -555,6 +600,29 @@
     if (callInterval) clearInterval(callInterval);
   }
 
+  function createParticipantElement(name, status, isGrid = false) {
+    const element = document.createElement('div');
+    const avatarInitials = name.split(' ').map(word => word[0]).join('').toUpperCase();
+    
+    if (isGrid) {
+      element.className = 'participant-grid-item';
+      element.innerHTML = `
+        <div class="participant-grid-avatar">${avatarInitials}</div>
+        <div class="participant-grid-name">${name}</div>
+        <div class="participant-grid-status">${status}</div>
+      `;
+    } else {
+      element.className = 'call-visual-item-grid';
+      element.innerHTML = `
+        <div class="visual-grid-avatar">${avatarInitials}</div>
+        <div class="visual-grid-name">${name}</div>
+        <div class="visual-grid-status">${status}</div>
+      `;
+    }
+    
+    return element;
+  }
+
   function simulateCall(type) {
     hide(document.getElementById('callRequestModal'));
     show(document.getElementById('callSimulationModal'));
@@ -564,6 +632,11 @@
     const active = document.getElementById('activeCallScreen');
     const status = document.getElementById('callStatus');
     const progress = document.getElementById('progressFill');
+    const participantsGrid = document.getElementById('participantsGrid');
+    const visualCallGrid = document.getElementById('visualCallGrid');
+    
+    if (participantsGrid) participantsGrid.innerHTML = '';
+    if (visualCallGrid) visualCallGrid.innerHTML = '';
     
     show(waiting);
     hide(participants);
@@ -577,10 +650,37 @@
       if (progress) progress.style.width = `${p}%`;
       if (p >= 100) {
         clearInterval(pi);
+        
         show(participants);
         hide(waiting);
         startTimer();
-        text(status, type === 'group' ? 'All connected' : 'Connected');
+        
+        let participantsData = [];
+        if (type === 'one') {
+          participantsData = [{ name: 'Sarah', status: 'Connected' }];
+          text(status, 'Connected with Sarah');
+        } else {
+          participantsData = [
+            { name: 'Mary', status: 'Connected' },
+            { name: 'David', status: 'Connected' },
+            { name: 'Lena', status: 'Connected' },
+            { name: 'James', status: 'Connected' }
+          ];
+          text(status, 'All participants connected');
+        }
+        
+        const youElement = createParticipantElement('You', 'Connected', true);
+        if (participantsGrid) participantsGrid.appendChild(youElement);
+        const youVisual = createParticipantElement('You', 'Connected', false);
+        if (visualCallGrid) visualCallGrid.appendChild(youVisual);
+        
+        participantsData.forEach(p => {
+          const el = createParticipantElement(p.name, p.status, true);
+          if (participantsGrid) participantsGrid.appendChild(el);
+          const visEl = createParticipantElement(p.name, p.status, false);
+          if (visualCallGrid) visualCallGrid.appendChild(visEl);
+        });
+        
         setTimeout(() => {
           hide(participants);
           show(active);
@@ -593,10 +693,8 @@
   document.getElementById('oneToOneCall')?.addEventListener('click', () => simulateCall('one'));
   document.getElementById('groupCall')?.addEventListener('click', () => simulateCall('group'));
 
-  // === 12. LOGIN BUTTON ===
+  // LOGIN BUTTON
   document.getElementById('loginButton')?.addEventListener('click', () => {
     window.location.href = '/login/';
   });
-
-  // Optional: Later enhance with real auth
 })();
