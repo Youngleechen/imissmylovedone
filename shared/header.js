@@ -2,11 +2,13 @@ function injectHeader() {
   // Prevent duplicate injection
   if (document.querySelector('.header')) return;
 
-  // 1. Create the header HTML element
+  // 1. Create the header HTML with clickable logo
   const headerHTML = `
     <div class="header">
       <div class="logo">
-        <i class="fas fa-heart-circle"></i> Healing
+        <a href="/" style="text-decoration: none; color: inherit; display: flex; align-items: center; gap: 8px;">
+          <i class="fas fa-heart-circle"></i> Healing
+        </a>
       </div>
       <div class="user-menu">
         <button class="action-btn" id="messageButton" style="background: none; border: none; padding: 8px; cursor: pointer;">
@@ -176,6 +178,13 @@ function injectHeader() {
       font-size: 1.2rem;
       font-weight: 700;
       color: #5a67d8;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .logo a {
+      text-decoration: none;
+      color: inherit;
       display: flex;
       align-items: center;
       gap: 8px;
@@ -823,7 +832,7 @@ function injectHeader() {
     });
   }
 
-  // ✅ 9. FIXED: Message Button Logic (Always Works)
+  // 9. Message Button Logic (always works)
   const messageButton = document.getElementById('messageButton');
   const conversationList = document.getElementById('conversationList');
 
@@ -854,45 +863,68 @@ function injectHeader() {
     }
   });
 
-  // 11. Listener Banner Logic
+  // 11. Listener Banner Buttons
   const acceptCall = document.getElementById('acceptCall');
   const declineCall = document.getElementById('declineCall');
-  const listenerBanner = document.getElementById('listenerBanner');
 
   if (acceptCall) {
     acceptCall.addEventListener('click', () => {
-      if (listenerBanner) listenerBanner.style.display = 'none';
+      const banner = document.getElementById('listenerBanner');
+      if (banner) banner.style.display = 'none';
       alert('Connecting you to Mary…\n\nShe’s lost her son to suicide. 3 days ago.\n\nYou’re not alone.');
     });
   }
   if (declineCall) {
     declineCall.addEventListener('click', () => {
-      if (listenerBanner) listenerBanner.style.display = 'none';
+      const banner = document.getElementById('listenerBanner');
+      if (banner) banner.style.display = 'none';
     });
   }
 
-  // 12. Show Listener Banner for Authenticated Users (after delay)
-  async function checkAuthAndShowBanner() {
-    if (window.supabaseClient) {
-      const { data: { user } } = await window.supabaseClient.auth.getUser();
-      if (user && listenerBanner) {
-        setTimeout(() => {
-          listenerBanner.style.display = 'flex';
-        }, 5000);
+  // 12. 🔑 NEW: Robust Auth UI Updater
+  async function updateAuthUI() {
+    const loginButton = document.getElementById('loginButton');
+    const userAvatar = document.getElementById('userAvatar');
+
+    // Wait for Supabase if not ready
+    if (!window.supabaseClient) {
+      setTimeout(updateAuthUI, 300);
+      return;
+    }
+
+    try {
+      const {  { user } } = await window.supabaseClient.auth.getUser();
+
+      if (user) {
+        // Logged in
+        if (loginButton) loginButton.style.display = 'none';
+        if (userAvatar) {
+          // Use first letter of email or name
+          const initial = 
+            user.user_metadata?.full_name?.charAt(0) ||
+            user.user_metadata?.name?.charAt(0) ||
+            user.email?.charAt(0) ||
+            'U';
+          userAvatar.textContent = initial.toUpperCase();
+        }
+      } else {
+        // Not logged in
+        if (loginButton) loginButton.style.display = 'block';
+        if (userAvatar) userAvatar.textContent = 'U';
       }
+    } catch (err) {
+      console.warn('Auth check error:', err);
+      if (loginButton) loginButton.style.display = 'block';
     }
   }
 
-  if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', checkAuthAndShowBanner);
-  } else {
-    setTimeout(checkAuthAndShowBanner, 100);
-  }
+  // Trigger auth check with retry
+  setTimeout(updateAuthUI, 200);
 
   // 13. Login Redirect
-  const loginButton = document.getElementById('loginButton');
-  if (loginButton) {
-    loginButton.addEventListener('click', () => {
+  const loginBtn = document.getElementById('loginButton');
+  if (loginBtn) {
+    loginBtn.addEventListener('click', () => {
       window.location.href = '/login/';
     });
   }
