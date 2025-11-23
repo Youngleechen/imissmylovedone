@@ -5,9 +5,9 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
   <title>Healing Connections</title>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
-  <link rel="stylesheet" href="test/style.css">
+  <link rel="stylesheet" href="test/style.css"> <!-- External CSS -->
   <style>
-    /* Keep all your existing CSS intact — no changes needed here */
+    /* Temporary base styles (to be moved to test/style.css later) */
     * {
       margin: 0;
       padding: 0;
@@ -26,6 +26,11 @@
     body.dark {
       background: #121212;
       color: #e2e8f0;
+    }
+
+    .main {
+      padding: 16px;
+      padding-bottom: 80px;
     }
 
     .profile-banner {
@@ -50,11 +55,6 @@
       margin-top: 8px;
       cursor: pointer;
       font-weight: 600;
-    }
-
-    .main {
-      padding: 16px;
-      /* No need for padding-bottom: 80px since footer is gone */
     }
 
     .thought-box {
@@ -153,6 +153,36 @@
       flex-shrink: 0;
     }
 
+    .bottom-nav {
+      position: fixed;
+      bottom: 0;
+      left: 0;
+      width: 100%;
+      background: white;
+      display: flex;
+      justify-content: space-around;
+      padding: 12px 0;
+      box-shadow: 0 -2px 10px rgba(0,0,0,0.05);
+      z-index: 99;
+    }
+
+    .nav-item {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 4px;
+      font-size: 0.8rem;
+      color: #718096;
+    }
+
+    .nav-item.active {
+      color: #5a67d8;
+    }
+
+    .nav-item i {
+      font-size: 1.4rem;
+    }
+
     .modal {
       display: none;
       position: fixed;
@@ -243,10 +273,11 @@
       color: white;
     }
 
-    /* Dark mode overrides */
     body.dark .modal-content,
     body.dark .thought-box,
     body.dark .post,
+    body.dark .bottom-nav,
+    body.dark .form-control,
     body.dark .profile-banner {
       background: #1a1a1a;
       color: #e2e8f0;
@@ -255,6 +286,7 @@
     body.dark .modal-header h2,
     body.dark .form-group label,
     body.dark .posts-section h2,
+    body.dark .nav-item,
     body.dark .profile-banner {
       color: #e2e8f0;
     }
@@ -270,6 +302,11 @@
   </style>
 </head>
 <body>
+
+  <!-- Inject Header -->
+  <div id="header-container"></div>
+  <script src="/shared/header.js"></script>
+
   <!-- Profile Completion Banner -->
   <div class="profile-banner" id="profileBanner">
     Your profile helps others understand you. Tap to complete it.
@@ -278,7 +315,6 @@
 
   <!-- Main Content -->
   <div class="main">
-    <!-- Thought Box -->
     <div class="thought-box">
       <textarea id="memory-body" placeholder="What’s on your heart today? "></textarea>
       <div class="thought-actions">
@@ -300,12 +336,35 @@
       <div id="mediaPreviewContainer" style="margin-top: 12px; padding: 8px; background: #f9f9f9; border-radius: 8px; display: none;"></div>
     </div>
 
-    <!-- Posts -->
     <div class="posts-section">
       <h2>Your Posts</h2>
       <div id="postsContainer">
         <!-- Posts will load here -->
       </div>
+    </div>
+  </div>
+
+  <!-- Bottom Navigation -->
+  <div class="bottom-nav">
+    <a href="/homepage" class="nav-item active" data-page="home">
+      <i class="fas fa-home"></i>
+      <span>Home</span>
+    </a>
+    <div class="nav-item" data-page="community">
+      <i class="fas fa-users"></i>
+      <span>Community</span>
+    </div>
+    <a href="/progress" class="nav-item" data-page="progress">
+      <i class="fas fa-book"></i>
+      <span>Progress</span>
+    </a>
+    <div class="nav-item" data-page="notifications">
+      <i class="fas fa-bell"></i>
+      <span>Notifications</span>
+    </div>
+    <div class="nav-item" data-page="resources">
+      <i class="fas fa-leaf"></i>
+      <span>Help</span>
     </div>
   </div>
 
@@ -341,7 +400,6 @@
       <button id="closeEditModal" style="position:absolute; top:10px; right:15px; background:none; border:none; font-size:24px; cursor:pointer;">×</button>
       <h3>Edit Update</h3>
       <textarea id="editBody" placeholder="Edit your update..." style="width:100%; min-height:150px; padding:10px; margin-bottom:10px;"></textarea>
-      
       <div id="editMediaContainer" style="margin-top:10px;"></div>
       <div style="margin-top:10px;">
         <button id="addMoreMediaButton" style="margin-right:10px;">Add More Media</button>
@@ -358,11 +416,18 @@
     </div>
   </div>
 
+  <!-- Media Input -->
   <input type="file" id="mediaInput" accept="image/*,video/*" style="display:none;" multiple />
 
+  <!-- Inject Footer -->
+  <div id="footer-container"></div>
+  <script src="/shared/footer.js"></script>
+
+  <!-- External Libraries -->
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script type="module" src="https://cdn.jsdelivr.net/npm/emoji-picker-element@^1/index.js"></script>
 
+  <!-- App Scripts -->
   <script>
     // Initialize Supabase
     window.supabaseClient = window.supabase.createClient(
@@ -370,44 +435,54 @@
       'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImNjZXRucWRxZnJzaXRvb2VzdGJoIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjIzMTE4MjksImV4cCI6MjA3Nzg4NzgyOX0.1NjRZZrgsPOg-2z_r2kRELWn9IVXNEQNpSxK6CktJRY'
     );
 
-    // DOM Elements
-    const userAvatar = document.getElementById('userAvatar');
-    const profileBanner = document.getElementById('profileBanner');
-    const profileModal = document.getElementById('profileModal');
-    const closeProfileModal = document.getElementById('closeProfileModal');
-    const cancelProfileBtn = document.getElementById('cancelProfileBtn');
-    const saveProfileBtn = document.getElementById('saveProfileBtn');
-    const firstNameInput = document.getElementById('firstName');
-    const preferredNameInput = document.getElementById('preferredName');
-    const aboutInput = document.getElementById('about');
-
     document.addEventListener('DOMContentLoaded', () => {
       const savedName = localStorage.getItem('userFirstName');
       const profileComplete = localStorage.getItem('profileComplete') === 'true';
+      const userAvatar = document.getElementById('userAvatar');
 
-      if (!profileComplete) {
-        profileBanner.style.display = 'block';
+      if (savedName && userAvatar) {
+        userAvatar.textContent = savedName.charAt(0).toUpperCase();
       }
 
-      document.getElementById('openProfileModal').addEventListener('click', () => {
-        profileModal.style.display = 'flex';
-      });
+      if (!profileComplete) {
+        document.getElementById('profileBanner').style.display = 'block';
+      }
 
-      closeProfileModal.addEventListener('click', () => profileModal.style.display = 'none');
-      cancelProfileBtn.addEventListener('click', () => profileModal.style.display = 'none');
+      // Profile modal handlers
+      const openProfileModal = document.getElementById('openProfileModal');
+      const profileModal = document.getElementById('profileModal');
+      const closeProfileModal = document.getElementById('closeProfileModal');
+      const cancelProfileBtn = document.getElementById('cancelProfileBtn');
+      const saveProfileBtn = document.getElementById('saveProfileBtn');
+      const firstNameInput = document.getElementById('firstName');
 
-      saveProfileBtn.addEventListener('click', () => {
-        const name = firstNameInput.value.trim();
-        if (!name) {
-          alert('Please enter your first name to continue.');
-          return;
-        }
+      if (openProfileModal) {
+        openProfileModal.addEventListener('click', () => profileModal.style.display = 'flex');
+      }
+      if (closeProfileModal) closeProfileModal.addEventListener('click', () => profileModal.style.display = 'none');
+      if (cancelProfileBtn) cancelProfileBtn.addEventListener('click', () => profileModal.style.display = 'none');
+      if (saveProfileBtn) {
+        saveProfileBtn.addEventListener('click', () => {
+          const name = firstNameInput.value.trim();
+          if (!name) {
+            alert('Please enter your first name to continue.');
+            return;
+          }
+          localStorage.setItem('userFirstName', name);
+          localStorage.setItem('profileComplete', 'true');
+          if (userAvatar) userAvatar.textContent = name.charAt(0).toUpperCase();
+          document.getElementById('profileBanner').style.display = 'none';
+          profileModal.style.display = 'none';
+          alert('Thank you, Dave. Your profile is ready.');
+        });
+      }
 
-        localStorage.setItem('userFirstName', name);
-        localStorage.setItem('profileComplete', 'true');
-        profileBanner.style.display = 'none';
-        profileModal.style.display = 'none';
-        alert('Thank you, Dave. Your profile is ready.');
+      // Bottom nav
+      document.querySelectorAll('.nav-item:not([href])').forEach(item => {
+        item.addEventListener('click', () => {
+          document.querySelectorAll('.nav-item').forEach(i => i.classList.remove('active'));
+          item.classList.add('active');
+        });
       });
 
       // Dark mode toggle
