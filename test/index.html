@@ -4,7 +4,7 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
   <title>Healing Connections</title>
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css      " />
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
   <link rel="stylesheet" href="test/style.css"> <!-- Link to external CSS -->
   <style>
     /* This style block is temporary to ensure functionality before external CSS is ready.
@@ -29,73 +29,6 @@
     body.dark {
       background: #121212;
       color: #e2e8f0;
-    }
-
-    /* === HEADER === */
-    .header {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      padding: 16px;
-      background: white;
-      box-shadow: 0 2px 8px rgba(0,0,0,0.05);
-      position: sticky;
-      top: 0;
-      z-index: 100;
-    }
-
-    .logo {
-      font-size: 1.2rem;
-      font-weight: 700;
-      color: #5a67d8;
-      display: flex;
-      align-items: center;
-      gap: 8px;
-    }
-
-    .user-menu {
-      display: flex;
-      align-items: center;
-      gap: 12px;
-    }
-
-    .user-avatar {
-      width: 44px;
-      height: 44px;
-      border-radius: 50%;
-      background: linear-gradient(45deg, #5a67d8, #9f7aea);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      color: white;
-      font-weight: 600;
-      font-size: 1.1rem;
-      cursor: pointer;
-    }
-
-    /* === PROFILE COMPLETION BANNER === */
-    .profile-banner {
-      background: #fff3cd;
-      border: 1px solid #ffeaa7;
-      border-radius: 12px;
-      margin: 0 16px 16px;
-      padding: 14px 16px;
-      font-size: 0.95rem;
-      color: #856404;
-      text-align: center;
-      display: none;
-    }
-
-    .profile-banner button {
-      background: #ffc107;
-      color: #856404;
-      border: none;
-      padding: 6px 12px;
-      border-radius: 6px;
-      font-size: 0.9rem;
-      margin-top: 8px;
-      cursor: pointer;
-      font-weight: 600;
     }
 
     /* === MAIN CONTENT === */
@@ -328,7 +261,6 @@
     body.dark .modal-content,
     body.dark .thought-box,
     body.dark .post,
-    body.dark .header,
     body.dark .bottom-nav,
     body.dark .form-control,
     body.dark .profile-banner {
@@ -355,21 +287,9 @@
   </style>
 </head>
 <body>
-  <!-- Header -->
-  <div class="header">
-    <a href="/homepage" class="logo">
-      <i class="fas fa-heart-circle"></i> Healing
-    </a>
-    <div class="user-menu">
-      <button class="action-btn" id="messageButton" style="background: none; border: none; padding: 8px; cursor: pointer;">
-        <i class="fas fa-envelope"></i>
-      </button>
-      <button class="action-btn" id="callButton" style="background: none; border: none; padding: 8px; cursor: pointer;">
-        <i class="fas fa-phone"></i>
-      </button>
-      <div class="user-avatar" id="userAvatar">U</div>
-    </div>
-  </div>
+  <!-- Header will be injected here -->
+  <div id="header-container"></div>
+  <script src="/shared/header.js"></script>
 
   <!-- Profile Completion Banner -->
   <div class="profile-banner" id="profileBanner">
@@ -433,6 +353,7 @@
       <span>Help</span>
     </div>
   </div>
+
   <!-- Profile Modal -->
   <div class="modal" id="profileModal">
     <div class="modal-content">
@@ -482,17 +403,22 @@
       </div>
     </div>
   </div>
+
   <!-- Media Input -->
   <input type="file" id="mediaInput" accept="image/*,video/*" style="display:none;" multiple />
 
+  <!-- Footer will be injected here -->
+  <div id="footer-container"></div>
+  <script src="/shared/footer.js"></script>
+
   <!-- Supabase & Emoji Picker -->
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2      "></script>
-  <script type="module" src="https://cdn.jsdelivr.net/npm/emoji-picker-element@      ^1/index.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script type="module" src="https://cdn.jsdelivr.net/npm/emoji-picker-element@^1/index.js"></script>
 
   <script>
     // Initialize Supabase
     window.supabaseClient = window.supabase.createClient(
-      'https://ccetnqdqfrsitooestbh.supabase.co      ',
+      'https://ccetnqdqfrsitooestbh.supabase.co',
       'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImNjZXRucWRxZnJzaXRvb2VzdGJoIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjIzMTE4MjksImV4cCI6MjA3Nzg4NzgyOX0.1NjRZZrgsPOg-2z_r2kRELWn9IVXNEQNpSxK6CktJRY'
     );
 
@@ -512,7 +438,7 @@
       const savedName = localStorage.getItem('userFirstName');
       const profileComplete = localStorage.getItem('profileComplete') === 'true';
 
-      if (savedName) {
+      if (savedName && userAvatar) {
         userAvatar.textContent = savedName.charAt(0).toUpperCase();
       }
 
@@ -521,34 +447,41 @@
       }
 
       // Open modal on banner click
-      document.getElementById('openProfileModal').addEventListener('click', () => {
-        profileModal.style.display = 'flex';
-      });
+      const openProfileModalBtn = document.getElementById('openProfileModal');
+      if (openProfileModalBtn) {
+        openProfileModalBtn.addEventListener('click', () => {
+          profileModal.style.display = 'flex';
+        });
+      }
 
       // Close modal
-      closeProfileModal.addEventListener('click', () => profileModal.style.display = 'none';
-      cancelProfileBtn.addEventListener('click', () => profileModal.style.display = 'none';
+      if (closeProfileModal) {
+        closeProfileModal.addEventListener('click', () => profileModal.style.display = 'none');
+      }
+      if (cancelProfileBtn) {
+        cancelProfileBtn.addEventListener('click', () => profileModal.style.display = 'none');
+      }
 
       // Save profile
-      saveProfileBtn.addEventListener('click', () => {
-        const name = firstNameInput.value.trim();
-        if (!name) {
-          alert('Please enter your first name to continue.');
-          return;
-        }
+      if (saveProfileBtn) {
+        saveProfileBtn.addEventListener('click', () => {
+          const name = firstNameInput.value.trim();
+          if (!name) {
+            alert('Please enter your first name to continue.');
+            return;
+          }
 
-        localStorage.setItem('userFirstName', name);
-        localStorage.setItem('profileComplete', 'true');
-        userAvatar.textContent = name.charAt(0).toUpperCase();
-        profileBanner.style.display = 'none';
-        profileModal.style.display = 'none';
-        alert('Thank you, Dave. Your profile is ready.');
-      });
+          localStorage.setItem('userFirstName', name);
+          localStorage.setItem('profileComplete', 'true');
+          if (userAvatar) userAvatar.textContent = name.charAt(0).toUpperCase();
+          profileBanner.style.display = 'none';
+          profileModal.style.display = 'none';
+          alert('Thank you, Dave. Your profile is ready.');
+        });
+      }
 
       // Bottom Nav
-      // Note: The Home nav item is now an <a> tag linking to /homepage
-      // Other nav items still use JavaScript for internal page switching
-      document.querySelectorAll('.nav-item:not([href])').forEach(item => { // Selects nav items without an 'href' attribute
+      document.querySelectorAll('.nav-item:not([href])').forEach(item => {
         item.addEventListener('click', () => {
           document.querySelectorAll('.nav-item').forEach(i => i.classList.remove('active'));
           item.classList.add('active');
