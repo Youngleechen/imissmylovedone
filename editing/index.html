@@ -4,7 +4,6 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>EditGPT</title>
-  <script src="https://unpkg.com/diff@5.1.0/dist/diff.min.js"></script>
   <style>
     :root {
       --primary: #10a37f;
@@ -543,6 +542,112 @@
       const COOLDOWN_MS = 3000;
       let originalTextAtRequest = '';
 
+      // Simple diff algorithm implementation
+      function createDiff(original, edited) {
+        // Split into characters for character-level diff
+        const origChars = original.split('');
+        const editedChars = edited.split('');
+        
+        const diff = [];
+        let i = 0, j = 0;
+        
+        while (i < origChars.length && j < editedChars.length) {
+          if (origChars[i] === editedChars[j]) {
+            diff.push({ type: 'equal', value: origChars[i] });
+            i++;
+            j++;
+          } else {
+            // Look ahead to find matching characters
+            let foundMatch = false;
+            let k = i + 1;
+            let l = j + 1;
+            
+            // Try to find next match
+            while (k < origChars.length && l < editedChars.length) {
+              if (origChars[k] === editedChars[l]) {
+                // Found a match, add removed and added parts
+                for (let m = i; m < k; m++) {
+                  diff.push({ type: 'removed', value: origChars[m] });
+                }
+                for (let n = j; n < l; n++) {
+                  diff.push({ type: 'added', value: editedChars[n] });
+                }
+                diff.push({ type: 'equal', value: origChars[k] });
+                i = k + 1;
+                j = l + 1;
+                foundMatch = true;
+                break;
+              }
+              k++;
+              if (l < editedChars.length) l++;
+            }
+            
+            if (!foundMatch) {
+              // No match found, handle remaining characters
+              if (i < origChars.length) {
+                diff.push({ type: 'removed', value: origChars[i] });
+                i++;
+              }
+              if (j < editedChars.length) {
+                diff.push({ type: 'added', value: editedChars[j] });
+                j++;
+              }
+            }
+          }
+        }
+        
+        // Add remaining characters
+        while (i < origChars.length) {
+          diff.push({ type: 'removed', value: origChars[i] });
+          i++;
+        }
+        while (j < editedChars.length) {
+          diff.push({ type: 'added', value: editedChars[j] });
+          j++;
+        }
+        
+        return diff;
+      }
+
+      // Enhanced version that groups consecutive same-type changes
+      function createDiffGrouped(original, edited) {
+        const diff = createDiff(original, edited);
+        const grouped = [];
+        
+        for (let i = 0; i < diff.length; i++) {
+          if (grouped.length === 0 || grouped[grouped.length - 1].type !== diff[i].type) {
+            grouped.push({
+              type: diff[i].type,
+              value: diff[i].value
+            });
+          } else {
+            grouped[grouped.length - 1].value += diff[i].value;
+          }
+        }
+        
+        return grouped;
+      }
+
+      // Render diff with HTML tags
+      function renderDiffHtml(diff) {
+        let html = '';
+        let changesCount = 0;
+        
+        diff.forEach(part => {
+          if (part.type === 'added') {
+            html += `<ins>${part.value}</ins>`;
+            changesCount++;
+          } else if (part.type === 'removed') {
+            html += `<del>${part.value}</del>`;
+            changesCount++;
+          } else {
+            html += part.value;
+          }
+        });
+        
+        return { html, changesCount };
+      }
+
       // View toggling
       viewButtons.forEach(button => {
         button.addEventListener('click', () => {
@@ -621,24 +726,11 @@
       };
 
       const renderTrackedChanges = (original, edited) => {
-        // Use jsdiff to compute character-level differences
-        const diff = JsDiff.diffChars(original, edited);
-        let output = '';
-        let changesCount = 0;
+        // Use our simple diff algorithm
+        const diff = createDiffGrouped(original, edited);
+        const { html, changesCount } = renderDiffHtml(diff);
         
-        diff.forEach(part => {
-          if (part.added) {
-            output += `<ins>${part.value}</ins>`;
-            changesCount++;
-          } else if (part.removed) {
-            output += `<del>${part.value}</del>`;
-            changesCount++;
-          } else {
-            output += part.value;
-          }
-        });
-        
-        diffOutput.innerHTML = output;
+        diffOutput.innerHTML = html;
         changesSummary.textContent = `${changesCount} change${changesCount !== 1 ? 's' : ''}`;
         return changesCount;
       };
