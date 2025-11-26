@@ -20,10 +20,10 @@ export default async function (req, res) {
   }
 
   try {
-    // 🚀 Switched to Qwen3 14B (free) — excellent for dialogue & punctuation
-    const model = 'qwen/qwen3-14b:free';
+    // 🔥 Using Grok 4.1 Fast (free) — as requested
+    const model = 'x-ai/grok-4.1-fast:free';
 
-    // 🧠 Smarter prompt: guides Qwen to be precise + empathetic + quote-aware
+    // 🧠 Smarter prompt: guides Grok to be precise & empathetic
     const prompt = `You are editing deeply personal writing—possibly grief, memory, or emotional pain. Follow these rules strictly:
 
 1. Fix ONLY clear spelling errors:
@@ -38,12 +38,9 @@ export default async function (req, res) {
 
 3. NEVER rewrite emotional phrasing. If someone writes "i miss him so bad", do NOT change it to "very much".
 
-4. Add punctuation for clarity AND emotion:
-   - If a phrase sounds like direct speech (e.g., "what is this"), wrap it in double quotes: “What is this?”
-   - If someone addresses another person (e.g., "mama"), consider adding a closing quote if it’s part of speech.
-   - Use commas, periods, and question marks to reflect natural pause and tone.
+4. Add minimal punctuation: commas, question marks, sentence caps.
 
-5. Return ONLY the final edited text — no explanations, no notes, no markdown.
+5. Return ONLY the final edited text—no explanations, no notes, no markdown.
 
 User instruction: "${instruction}"
 
@@ -61,7 +58,7 @@ Text to edit: "${input}"`;
         model,
         messages: [{ role: 'user', content: prompt }],
         max_tokens: 600,
-        temperature: 0.3 // Slightly higher than Grok — Qwen handles nuance well
+        temperature: 0.2 // Grok is bold — lower temp keeps it focused
       })
     });
 
