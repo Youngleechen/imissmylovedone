@@ -40,7 +40,10 @@ PART 1: Edit the text by:
 PART 2: After the edited text, add exactly:
 ---
 **Edit Reasoning:**  
-Then list each change with a brief justification (e.g., "‘jump’ → ‘jumps’: subject-verb agreement for third-person singular").
+Then list each change with a brief justification in this format:
+- "original" → "edited": reason (grammatical rule)
+- "jump" → "jumps": subject-verb agreement for third-person singular
+- "whom" → "who": correct pronoun case for subject position
       
 Return ONLY the edited text followed by the reasoning section.`;
     } else {
@@ -64,7 +67,7 @@ Text: "${input}"`;
           { role: 'system', content: systemPrompt },
           { role: 'user', content: userPrompt }
         ],
-        max_tokens: 800,
+        max_tokens: 1000,
         temperature: editLevel === 'proofread' ? 0.1 : 0.5 // Lower temp for accuracy in proofreading
       })
     });
