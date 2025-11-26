@@ -25,11 +25,11 @@ Please return only the edited text, no explanations.
       headers: {
         'Content-Type': 'application/json',
         'Authorization': `Bearer ${OPENROUTER_API_KEY}`,
-        'HTTP-Referer': 'https://your-app.vercel.app', // Optional but recommended
-        'X-Title': 'EditGPT' // Optional: helps track usage
+        'HTTP-Referer': 'https://your-app.vercel.app',
+        'X-Title': 'EditGPT'
       },
       body: JSON.stringify({
-        model: "x-ai/grok-4.1-fast:free", // Free Grok 4.1 Fast model
+        model: "x-ai/grok-4.1-fast:free",
         messages: [
           { role: "system", content: "You are a helpful text editor." },
           { role: "user", content: prompt }
