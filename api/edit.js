@@ -6,45 +6,29 @@ export default async function (req, res) {
 
   const { input, instruction, model } = req.body || {};
 
-  if (!input || !instruction || !model) {
-    return res.status(400).json({ error: 'Missing input, instruction, or model' });
-  }
+  const allowedModels = [
+    'mistralai/mistral-7b-instruct:free',
+    'x-ai/grok-4.1-fast:free',
+    'meta-llama/llama-3-8b-instruct:free',
+    'google/gemma-2-9b-it:free'
+  ];
 
- const allowedModels = [
-  'mistralai/mistral-7b-instruct:free',
-  'qwen/qwen3-14b:free',
-  'x-ai/grok-4.1-fast:free',
-  'google/gemini-pro:free',
-  'meta-llama/llama-3.2-11b-vision-instruct:free',
-  'meta-llama/llama-3.2-3b-instruct:free',
-  'deepseek/deepseek-coder-1.3b-instruct:free',
-  'neversleep/noromaid-mixtral-8x7b-instruct:free',
-  'quasar/quasar-alpha:free'  // undisclosed provider, but capable [[1]]
-];
-
-  if (!allowedModels.includes(model)) {
-    return res.status(400).json({ error: 'Model not allowed' });
+  if (!input || !instruction || !model || !allowedModels.includes(model)) {
+    return res.status(400).json({ error: 'Invalid request' });
   }
 
   const OPENROUTER_API_KEY = process.env.OPENROUTER_API_KEY;
   if (!OPENROUTER_API_KEY) {
-    console.error('❌ Missing OPENROUTER_API_KEY');
-    return res.status(500).json({ error: 'Server misconfiguration' });
+    return res.status(500).json({ error: 'Server not configured' });
   }
 
   try {
-    const prompt = `You are editing deeply personal writing—possibly grief, memory, or emotional pain. Follow these rules:
+    const prompt = `Fix spelling and grammar. Return only the edited text.
 
-1. Fix ONLY clear spelling errors: "exempel"→"example", "skul"→"school", "youn"→"young", "bay"→"boy", "rone"→"ran", "cut" in "kitchen cut"→"cat".
-2. Fix grammar: "fox jump" → "fox jumps".
-3. NEVER change emotional phrasing.
-4. Add quotes if text sounds like speech: e.g., “What is this?”
-5. Return ONLY the edited text.
+Text: "${input}"
+Instruction: "${instruction}"`;
 
-Instruction: "${instruction}"
-Text: "${input}"`;
-
-    const openRes = await fetch('https://openrouter.ai/api/v1/chat/completions', {
+    const response = await fetch('https://openrouter.ai/api/v1/chat/completions', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -52,29 +36,19 @@ Text: "${input}"`;
         'HTTP-Referer': req.headers.origin || 'https://imissmylovedone.vercel.app',
         'X-Title': 'EditGPT'
       },
-      body: JSON.stringify({
-        model,
-        messages: [{ role: 'user', content: prompt }],
-        max_tokens: 600,
-        temperature: 0.3
-      })
+      body: JSON.stringify({ model, messages: [{ role: 'user', content: prompt }] })
     });
 
-    const data = await openRes.json();
+    const data = await response.json();
 
-    if (!openRes.ok) {
-      console.error('OpenRouter error:', data);
-      return res.status(openRes.status).json({
-        error: 'AI editing failed',
-        details: data.error?.message || 'Unknown error'
-      });
+    if (!response.ok) {
+      return res.status(500).json({ error: 'AI failed', details: data.error?.message });
     }
 
     const editedText = data.choices?.[0]?.message?.content?.trim() || input;
     return res.status(200).json({ editedText });
 
   } catch (err) {
-    console.error('Server error:', err);
-    return res.status(500).json({ error: 'Internal error' });
+    return res.status(500).json({ error: 'Server error' });
   }
 }
