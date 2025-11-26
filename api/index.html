@@ -1,0 +1,787 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>EditGPT</title>
+  <script src="https://unpkg.com/diff@5.1.0/dist/diff.min.js"></script>
+  <style>
+    :root {
+      --primary: #10a37f;
+      --secondary: #8a2be2;
+      --dark: #1e1f29;
+      --light: #f8f9ff;
+      --gray: #6c757d;
+      --success: #2e7d32;
+      --warning: #ed6c02;
+      --error: #d32f2f;
+      --added: #4caf50;
+      --removed: #f44336;
+      --added-bg: #e8f5e9;
+      --removed-bg: #ffebee;
+    }
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      line-height: 1.6;
+      color: var(--dark);
+      background: linear-gradient(135deg, #f5f7fa 0%, #e4edf5 100%);
+      min-height: 100vh;
+      padding: 20px;
+    }
+    .container {
+      max-width: 900px;
+      margin: 0 auto;
+    }
+    header {
+      text-align: center;
+      padding: 2rem 0;
+    }
+    h1 {
+      font-size: 2.5rem;
+      background: linear-gradient(45deg, var(--primary), var(--secondary));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      margin-bottom: 0.5rem;
+    }
+    .subtitle {
+      color: var(--gray);
+      margin-bottom: 2rem;
+    }
+    .editor-container {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 2rem;
+      margin-bottom: 2rem;
+    }
+    @media (max-width: 768px) {
+      .editor-container {
+        grid-template-columns: 1fr;
+      }
+    }
+    .card {
+      background: white;
+      border-radius: 16px;
+      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+      padding: 1.5rem;
+      transition: transform 0.3s ease;
+      position: relative;
+    }
+    .card:hover {
+      transform: translateY(-5px);
+    }
+    .card-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 1rem;
+      padding-bottom: 0.75rem;
+      border-bottom: 1px solid #eee;
+    }
+    .level-badge {
+      background: linear-gradient(45deg, var(--primary), var(--secondary));
+      color: white;
+      padding: 0.25rem 0.75rem;
+      border-radius: 20px;
+      font-size: 0.85rem;
+      font-weight: 600;
+    }
+    textarea,
+    input[type="text"],
+    select {
+      width: 100%;
+      padding: 1rem;
+      border: 2px solid #e2e8f0;
+      border-radius: 12px;
+      font-family: inherit;
+      font-size: 1rem;
+    }
+    textarea {
+      height: 280px;
+      resize: vertical;
+      min-height: 200px;
+    }
+    textarea:focus,
+    input[type="text"]:focus,
+    select:focus {
+      outline: none;
+      border-color: var(--primary);
+      box-shadow: 0 0 0 3px rgba(16, 163, 127, 0.2);
+    }
+    .btn {
+      background: linear-gradient(45deg, var(--primary), var(--secondary));
+      color: white;
+      border: none;
+      padding: 0.75rem 1.5rem;
+      font-size: 1rem;
+      border-radius: 12px;
+      cursor: pointer;
+      font-weight: 600;
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      transition: all 0.3s ease;
+    }
+    .btn:hover:not(:disabled) {
+      transform: translateY(-2px);
+      box-shadow: 0 4px 12px rgba(16, 163, 127, 0.3);
+    }
+    .btn:disabled {
+      opacity: 0.7;
+      cursor: not-allowed;
+      transform: none;
+      box-shadow: none;
+    }
+    .status {
+      padding: 0.75rem;
+      border-radius: 8px;
+      margin-top: 0.75rem;
+      font-size: 0.95rem;
+      display: none;
+      position: relative;
+      padding-left: 2rem;
+    }
+    .status:before {
+      position: absolute;
+      left: 0.75rem;
+      top: 50%;
+      transform: translateY(-50%);
+      font-weight: bold;
+    }
+    .status.error {
+      background-color: var(--removed-bg);
+      color: var(--removed);
+      border: 1px solid #ffcdd2;
+      display: block;
+    }
+    .status.error:before {
+      content: "!";
+      color: var(--removed);
+    }
+    .status.success {
+      background-color: var(--added-bg);
+      color: var(--added);
+      border: 1px solid #c8e6c9;
+      display: block;
+    }
+    .status.success:before {
+      content: "✓";
+      color: var(--added);
+    }
+    .status.warning {
+      background-color: #fff8e1;
+      color: var(--warning);
+      border: 1px solid #ffecb3;
+      display: block;
+    }
+    .status.warning:before {
+      content: "!";
+      color: var(--warning);
+    }
+    footer {
+      text-align: center;
+      padding: 2rem 0;
+      color: var(--gray);
+      font-size: 0.9rem;
+    }
+    .model-select-container {
+      margin: 0.75rem 0 1rem;
+    }
+    .model-select-container label {
+      display: block;
+      margin-bottom: 0.5rem;
+      font-weight: 600;
+      color: var(--dark);
+    }
+    .edit-levels {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 0.75rem;
+      margin: 1rem 0;
+    }
+    .level-option {
+      border: 2px solid #e2e8f0;
+      border-radius: 12px;
+      padding: 1rem;
+      text-align: center;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      background: #f8fafc;
+    }
+    .level-option:hover {
+      border-color: var(--primary);
+      transform: translateY(-2px);
+    }
+    .level-option.active {
+      border-color: var(--primary);
+      background: rgba(16, 163, 127, 0.05);
+      box-shadow: 0 0 0 3px rgba(16, 163, 127, 0.2);
+    }
+    .level-option h3 {
+      margin-bottom: 0.5rem;
+      color: var(--dark);
+    }
+    .level-option p {
+      font-size: 0.85rem;
+      color: var(--gray);
+    }
+    .level-proofread {
+      border-top: 3px solid var(--added);
+    }
+    .level-rewrite {
+      border-top: 3px solid #1976d2;
+    }
+    .level-formal {
+      border-top: 3px solid #9c27b0;
+    }
+    #custom-instruction {
+      margin-top: 1rem;
+      display: none;
+    }
+    .reasoning-section {
+      background: #f8fafc;
+      border-left: 3px solid var(--primary);
+      padding: 1rem;
+      margin-top: 1rem;
+      border-radius: 0 8px 8px 0;
+      font-size: 0.9rem;
+      line-height: 1.5;
+    }
+    .reasoning-section h4 {
+      color: var(--primary);
+      margin-bottom: 0.5rem;
+    }
+    .reasoning-list {
+      padding-left: 1.5rem;
+      margin-top: 0.5rem;
+    }
+    .reasoning-list li {
+      margin-bottom: 0.25rem;
+      position: relative;
+      padding-left: 1.2rem;
+    }
+    .reasoning-list li:before {
+      content: "•";
+      position: absolute;
+      left: 0;
+      color: var(--primary);
+    }
+    
+    /* Tracked changes styles */
+    .tracked-changes {
+      margin-top: 1.5rem;
+      padding: 1.2rem;
+      border-radius: 12px;
+      background: #f8fafc;
+      border: 1px solid #e2e8f0;
+    }
+    .tracked-changes h4 {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-bottom: 1rem;
+      color: var(--dark);
+    }
+    .tracked-changes h4:before {
+      content: "";
+      display: inline-block;
+      width: 12px;
+      height: 12px;
+      background: var(--added);
+      border-radius: 50%;
+    }
+    .diff-container {
+      background: white;
+      border-radius: 8px;
+      padding: 1.2rem;
+      font-family: 'SFMono-Regular', Consolas, 'Liberation Mono', Menlo, monospace;
+      font-size: 0.95rem;
+      line-height: 1.6;
+      border: 1px solid #e2e8f0;
+      overflow-x: auto;
+    }
+    del {
+      background-color: var(--removed-bg);
+      color: var(--removed);
+      text-decoration: line-through;
+      padding: 0.1em 0.2em;
+      border-radius: 3px;
+    }
+    ins {
+      background-color: var(--added-bg);
+      color: var(--added);
+      text-decoration: none;
+      padding: 0.1em 0.2em;
+      border-radius: 3px;
+    }
+    .toggle-view {
+      background: white;
+      border: 1px solid #e2e8f0;
+      color: var(--gray);
+      padding: 0.4rem 0.8rem;
+      border-radius: 8px;
+      font-size: 0.85rem;
+      cursor: pointer;
+      margin-left: 0.5rem;
+      transition: all 0.2s;
+    }
+    .toggle-view.active {
+      background: var(--primary);
+      color: white;
+      border-color: var(--primary);
+    }
+    .view-controls {
+      display: flex;
+      justify-content: space-between;
+      margin-bottom: 1rem;
+      padding-bottom: 0.75rem;
+      border-bottom: 1px solid #eee;
+    }
+    .edits-summary {
+      background: white;
+      border-radius: 12px;
+      padding: 1rem;
+      margin-top: 1rem;
+      border: 1px solid #e2e8f0;
+    }
+    .edits-summary h4 {
+      margin-bottom: 0.75rem;
+      color: var(--dark);
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .edits-summary h4:before {
+      content: "";
+      display: inline-block;
+      width: 10px;
+      height: 10px;
+      background: var(--primary);
+      border-radius: 2px;
+    }
+    .change-item {
+      display: flex;
+      gap: 1rem;
+      padding: 0.5rem 0;
+      border-bottom: 1px solid #f1f5f9;
+    }
+    .change-item:last-child {
+      border-bottom: none;
+    }
+    .original-change {
+      flex: 1;
+      color: var(--removed);
+    }
+    .edited-change {
+      flex: 1;
+      color: var(--added);
+    }
+    .justification {
+      flex: 2;
+      color: var(--gray);
+      font-style: italic;
+    }
+    .change-count {
+      display: inline-block;
+      width: 24px;
+      height: 24px;
+      border-radius: 50%;
+      background: var(--primary);
+      color: white;
+      text-align: center;
+      line-height: 24px;
+      font-size: 0.85rem;
+      margin-right: 0.5rem;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <header>
+      <h1>EditGPT</h1>
+      <p class="subtitle">Professional text editing with tracked changes</p>
+    </header>
+
+    <div class="editor-container">
+      <div class="card">
+        <div class="card-header">
+          <h2>Original Text</h2>
+          <div id="input-count">0 words</div>
+        </div>
+        <textarea id="input-text" placeholder="Paste your text here...">I kno whom I am not some joke who doent know the answer to the quiz what is hydrophobia john is not the best but not worse eithe so you have to deal with that</textarea>
+      </div>
+
+      <div class="card">
+        <div class="card-header">
+          <h2>Editing Level</h2>
+        </div>
+        
+        <div class="edit-levels">
+          <div class="level-option level-proofread active" data-level="proofread">
+            <h3>Proofread</h3>
+            <p>Spelling/grammar with tracked changes</p>
+          </div>
+          <div class="level-option level-rewrite" data-level="rewrite">
+            <h3>Rewrite</h3>
+            <p>Improve clarity & flow</p>
+          </div>
+          <div class="level-option level-formal" data-level="formal">
+            <h3>Formal</h3>
+            <p>Professional tone</p>
+          </div>
+        </div>
+
+        <input type="text" id="custom-instruction" placeholder="Enter custom instruction..." />
+        
+        <div class="model-select-container">
+          <label for="model-select">AI Model (Free):</label>
+          <select id="model-select"></select>
+        </div>
+
+        <button id="edit-btn" class="btn">✨ Apply Edit</button>
+        <div id="status" class="status"></div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-header">
+        <h2>Edited Result</h2>
+        <div>
+          <button id="copy-btn" class="btn" style="padding:0.5rem 1rem;font-size:0.9rem;">📋 Copy</button>
+        </div>
+      </div>
+      
+      <div class="view-controls">
+        <div>
+          <strong>Proofread View:</strong>
+          <button class="toggle-view active" data-view="clean">Clean Text</button>
+          <button class="toggle-view" data-view="tracked">Tracked Changes</button>
+        </div>
+        <div id="changes-summary">0 changes</div>
+      </div>
+      
+      <div id="result-clean" style="min-height:200px;padding:1rem;line-height:1.6;white-space:pre-wrap;">
+        The result will appear here after editing...
+      </div>
+      
+      <div id="result-tracked" class="tracked-changes" style="display:none;">
+        <h4>Tracked Changes</h4>
+        <div class="diff-container" id="diff-output">
+          Select "Tracked Changes" view to see edits
+        </div>
+      </div>
+      
+      <div class="edits-summary" id="edits-summary" style="display:none;">
+        <h4>Summary of Changes</h4>
+        <div id="changes-list"></div>
+      </div>
+    </div>
+
+    <footer>
+      <p>All models are free via OpenRouter • Hosted on Vercel</p>
+    </footer>
+  </div>
+
+  <script>
+    document.addEventListener('DOMContentLoaded', () => {
+      // Only Grok model available
+      const FREE_MODELS = [
+        { id: 'x-ai/grok-4.1-fast:free', name: 'Grok 4.1 (Fast & Accurate)' }
+      ];
+
+      const modelSelect = document.getElementById('model-select');
+      FREE_MODELS.forEach(model => {
+        const option = document.createElement('option');
+        option.value = model.id;
+        option.textContent = model.name;
+        modelSelect.appendChild(option);
+      });
+
+      // Editing level selection
+      const levelOptions = document.querySelectorAll('.level-option');
+      let currentLevel = 'proofread';
+      
+      levelOptions.forEach(option => {
+        option.addEventListener('click', () => {
+          levelOptions.forEach(opt => opt.classList.remove('active'));
+          option.classList.add('active');
+          currentLevel = option.dataset.level;
+          
+          // Update view controls visibility
+          document.querySelector('.view-controls').style.display = 
+            currentLevel === 'proofread' ? 'flex' : 'none';
+          
+          // Reset views
+          document.querySelectorAll('.toggle-view').forEach(btn => {
+            btn.classList.remove('active');
+          });
+          document.querySelector('.toggle-view[data-view="clean"]').classList.add('active');
+          document.getElementById('result-tracked').style.display = 'none';
+          document.getElementById('result-clean').style.display = 'block';
+        });
+      });
+
+      const inputText = document.getElementById('input-text');
+      const customInstructionInput = document.getElementById('custom-instruction');
+      const editBtn = document.getElementById('edit-btn');
+      const resultClean = document.getElementById('result-clean');
+      const resultTracked = document.getElementById('result-tracked');
+      const diffOutput = document.getElementById('diff-output');
+      const changesSummary = document.getElementById('changes-summary');
+      const changesList = document.getElementById('changes-list');
+      const editsSummary = document.getElementById('edits-summary');
+      const statusDiv = document.getElementById('status');
+      const copyBtn = document.getElementById('copy-btn');
+      const inputCount = document.getElementById('input-count');
+      const viewButtons = document.querySelectorAll('.toggle-view');
+
+      let lastRequestTime = 0;
+      const COOLDOWN_MS = 3000;
+      let originalTextAtRequest = '';
+
+      // View toggling
+      viewButtons.forEach(button => {
+        button.addEventListener('click', () => {
+          const view = button.dataset.view;
+          
+          // Update active button
+          viewButtons.forEach(btn => btn.classList.remove('active'));
+          button.classList.add('active');
+          
+          // Toggle views
+          if (view === 'clean') {
+            resultClean.style.display = 'block';
+            resultTracked.style.display = 'none';
+          } else {
+            resultClean.style.display = 'none';
+            resultTracked.style.display = 'block';
+          }
+        });
+      });
+
+      const updateWordCount = () => {
+        const words = inputText.value.trim() ? inputText.value.trim().split(/\s+/).filter(Boolean).length : 0;
+        inputCount.textContent = `${words} word${words !== 1 ? 's' : ''}`;
+      };
+      
+      inputText.addEventListener('input', updateWordCount);
+      updateWordCount();
+
+      copyBtn.addEventListener('click', async () => {
+        try {
+          const textToCopy = resultClean.style.display !== 'none' 
+            ? resultClean.textContent 
+            : diffOutput.textContent;
+          await navigator.clipboard.writeText(textToCopy.trim());
+          const original = copyBtn.innerHTML;
+          copyBtn.innerHTML = '✅ Copied!';
+          setTimeout(() => copyBtn.innerHTML = original, 2000);
+        } catch (err) {
+          showStatus('Copy failed. Please select text manually.', 'error');
+        }
+      });
+
+      const showStatus = (message, type) => {
+        statusDiv.textContent = message;
+        statusDiv.className = `status ${type}`;
+        setTimeout(() => {
+          if (statusDiv.textContent === message) {
+            statusDiv.style.display = 'none';
+          }
+        }, 5000);
+      };
+
+      const parseReasoning = (content) => {
+        const reasoningStart = content.indexOf('---\n**Edit Reasoning:**');
+        if (reasoningStart === -1) return { text: content, reasoning: [] };
+        
+        const editedText = content.substring(0, reasoningStart).trim();
+        const reasoningSection = content.substring(reasoningStart + 24).trim();
+        
+        // Extract bullet points
+        const reasoningItems = reasoningSection.split('\n')
+          .map(line => line.trim())
+          .filter(line => line.startsWith('-') || line.startsWith('*'))
+          .map(line => {
+            const match = line.match(/^[-*]\s*(.+?)\s*(?:\((.+?)\))?$/);
+            if (match) {
+              return {
+                change: match[1].trim(),
+                justification: match[2] ? match[2].trim() : 'Grammatical correction'
+              };
+            }
+            return { change: line.replace(/^[-*]\s*/, ''), justification: 'Grammatical correction' };
+          });
+        
+        return { text: editedText, reasoning: reasoningItems };
+      };
+
+      const renderTrackedChanges = (original, edited) => {
+        // Use jsdiff to compute character-level differences
+        const diff = JsDiff.diffChars(original, edited);
+        let output = '';
+        let changesCount = 0;
+        
+        diff.forEach(part => {
+          if (part.added) {
+            output += `<ins>${part.value}</ins>`;
+            changesCount++;
+          } else if (part.removed) {
+            output += `<del>${part.value}</del>`;
+            changesCount++;
+          } else {
+            output += part.value;
+          }
+        });
+        
+        diffOutput.innerHTML = output;
+        changesSummary.textContent = `${changesCount} change${changesCount !== 1 ? 's' : ''}`;
+        return changesCount;
+      };
+
+      const renderChangesSummary = (reasoningItems) => {
+        if (reasoningItems.length === 0) {
+          editsSummary.style.display = 'none';
+          return;
+        }
+        
+        changesList.innerHTML = '';
+        reasoningItems.forEach(item => {
+          // Split change into original and edited parts
+          const changeMatch = item.change.match(/"(.+?)" → "(.+?)"/);
+          if (changeMatch) {
+            const originalPart = changeMatch[1];
+            const editedPart = changeMatch[2];
+            
+            const changeItem = document.createElement('div');
+            changeItem.className = 'change-item';
+            changeItem.innerHTML = `
+              <div class="original-change">"${originalPart}"</div>
+              <div class="edited-change">→ "${editedPart}"</div>
+              <div class="justification">${item.justification}</div>
+            `;
+            changesList.appendChild(changeItem);
+          }
+        });
+        
+        editsSummary.style.display = 'block';
+      };
+
+      editBtn.addEventListener('click', async () => {
+        const now = Date.now();
+        if (now - lastRequestTime < COOLDOWN_MS) {
+          showStatus('Please wait a few seconds before trying again.', 'warning');
+          return;
+        }
+
+        const input = inputText.value.trim();
+        originalTextAtRequest = input; // Save for diffing later
+        const model = modelSelect.value;
+        let instruction = '';
+
+        if (!input || !model) {
+          showStatus('Please provide text and select a model.', 'error');
+          return;
+        }
+
+        // Get instruction based on level
+        switch(currentLevel) {
+          case 'proofread':
+            instruction = "Fix spelling and grammar errors. ONLY make minimal necessary changes. Preserve original tone, style, and phrasing exactly. NEVER change wording unless it's incorrect. Return edited text followed by detailed reasoning section listing each change with justification.";
+            break;
+          case 'rewrite':
+            instruction = "Improve clarity and flow while preserving the core meaning. Make text more engaging and readable without altering the fundamental message.";
+            break;
+          case 'formal':
+            instruction = "Convert to professional, formal tone. Remove slang, contractions, and colloquialisms. Use precise vocabulary and structured sentences appropriate for business/academic contexts.";
+            break;
+          default:
+            instruction = customInstructionInput.value.trim();
+            if (!instruction) {
+              showStatus('Please enter a custom instruction.', 'error');
+              return;
+            }
+        }
+
+        editBtn.disabled = true;
+        editBtn.innerHTML = '<span>✨ Editing...</span>';
+        resultClean.textContent = 'Processing...';
+        resultTracked.style.display = 'none';
+        editsSummary.style.display = 'none';
+        statusDiv.style.display = 'none';
+
+        try {
+          const response = await fetch('/api/edit', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ 
+              input, 
+              instruction, 
+              model,
+              editLevel: currentLevel
+            })
+          });
+
+          if (!response.ok) {
+            const errorText = await response.text();
+            throw new Error(`HTTP ${response.status}: ${errorText.substring(0, 120)}...`);
+          }
+
+          const data = await response.json();
+          
+          // Handle proofread special formatting
+          if (currentLevel === 'proofread' && data.editedText.includes('---\n**Edit Reasoning:**')) {
+            const { text: editedText, reasoning } = parseReasoning(data.editedText);
+            
+            // Clean view
+            resultClean.textContent = editedText;
+            
+            // Tracked changes view
+            const changesCount = renderTrackedChanges(originalTextAtRequest, editedText);
+            
+            // Changes summary
+            renderChangesSummary(reasoning);
+            
+            // Show/hide views based on current selection
+            if (document.querySelector('.toggle-view.active').dataset.view === 'tracked') {
+              resultClean.style.display = 'none';
+              resultTracked.style.display = 'block';
+            } else {
+              resultClean.style.display = 'block';
+              resultTracked.style.display = 'none';
+            }
+            
+            // Update view controls visibility
+            document.querySelector('.view-controls').style.display = 'flex';
+          } else {
+            // For non-proofread modes
+            resultClean.textContent = data.editedText || input;
+            resultTracked.style.display = 'none';
+            editsSummary.style.display = 'none';
+            document.querySelector('.view-controls').style.display = 'none';
+          }
+          
+          showStatus('Edit successful!', 'success');
+          lastRequestTime = now;
+        } catch (err) {
+          console.error('Edit failed:', err);
+          resultClean.textContent = 'Editing failed. Check console for details.';
+          showStatus(`Error: ${err.message || 'Unknown error'}`, 'error');
+          document.querySelector('.view-controls').style.display = 'none';
+        } finally {
+          editBtn.disabled = false;
+          editBtn.innerHTML = '✨ Apply Edit';
+        }
+      });
+      
+      // Initialize view controls visibility
+      document.querySelector('.view-controls').style.display = 
+        currentLevel === 'proofread' ? 'flex' : 'none';
+    });
+  </script>
+</body>
+</html>
