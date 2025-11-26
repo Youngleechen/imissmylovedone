@@ -1,4 +1,3 @@
-// /api/edit.js
 export default async function (req, res) {
   if (req.method !== 'POST') {
     return res.status(405).json({ error: 'Method not allowed' });
@@ -14,10 +13,9 @@ export default async function (req, res) {
   const allowedModels = [
     'mistralai/mistral-7b-instruct:free',
     'x-ai/grok-4.1-fast:free',
-    'meta-llama/llama-3-8b-instruct:free',
     'google/gemma-2-9b-it:free',
-    'meta-llama/llama-3.2-3b-instruct:free',
-    'meta-llama/llama-3.2-11b-vision-instruct:free',
+    'deepseek/deepseek-r1-0528-qwen3-8b:free',
+    'qwen/qwen3-coder-480b-a35b:free',
     'deepseek/deepseek-coder-1.3b-instruct:free',
     'quasar/quasar-alpha:free'
   ];
