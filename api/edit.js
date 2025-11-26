@@ -16,7 +16,8 @@ export default async function (req, res) {
     'google/gemma-2-9b-it:free',
     'deepseek/deepseek-r1-0528-qwen3-8b:free',
     'qwen/qwen3-coder-480b-a35b:free',
-    'deepseek/deepseek-coder-1.3b-instruct:free',
+    'qwen/qwen3-4b:free',
+    'qwen/qwen3-30b-a3b:free',
     'quasar/quasar-alpha:free'
   ];
 
