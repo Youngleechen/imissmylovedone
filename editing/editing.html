@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>EditGPT – Book Editing Tool</title>
+  <style>
+    body { font-family: system-ui; max-width: 800px; margin: 2rem auto; padding: 0 1rem; }
+    h1 { text-align: center; margin-bottom: 1.5rem; }
+    textarea, #output { width: 100%; min-height: 200px; padding: 1rem; margin: 0.5rem 0; border: 1px solid #ccc; border-radius: 6px; font-size: 1rem; }
+    button { background: #4a6cf7; color: white; border: none; padding: 0.75rem 1.5rem; font-size: 1rem; border-radius: 6px; cursor: pointer; transition: opacity 0.2s; }
+    button:hover { opacity: 0.9; }
+    button:disabled { opacity: 0.5; cursor: not-allowed; }
+    #output { background: #f9f9f9; }
+  </style>
+</head>
+<body>
+  <h1>📘 EditGPT – Book Editing (Test)</h1>
+  <p>Paste a paragraph from your book below:</p>
+  <textarea id="input" placeholder="e.g., 'He walked slow down the street, feeling sad and alone...'"></textarea>
+  <br />
+  <button id="editBtn">✨ Edit This Passage</button>
+  <h3>Edited Version:</h3>
+  <div id="output">Your edited text will appear here.</div>
+
+  <script>
+    document.getElementById('editBtn').addEventListener('click', async () => {
+      const input = document.getElementById('input').value.trim();
+      const outputEl = document.getElementById('output');
+      const button = document.getElementById('editBtn');
+      
+      if (!input) {
+        outputEl.textContent = 'Please enter some text to edit.';
+        return;
+      }
+
+      button.disabled = true;
+      button.textContent = 'Editing...';
+      outputEl.textContent = 'Processing...';
+
+      try {
+        // 💡 Replace this with your actual AI backend later
+        // For now, we simulate a smart edit (you can connect to your own API or proxy)
+        const edited = await simulateEdit(input);
+        outputEl.textContent = edited;
+      } catch (err) {
+        outputEl.textContent = '⚠️ Editing failed. Try again.';
+        console.error(err);
+      } finally {
+        button.disabled = false;
+        button.textContent = '✨ Edit This Passage';
+      }
+    });
+
+    // 🔧 Simulate AI editing (replace with real logic later)
+    function simulateEdit(text) {
+      return new Promise(resolve => {
+        // Simple improvements: fix adverbs, add flow, vary sentence structure
+        let edited = text
+          .replace(/\bslow\b/g, 'slowly')
+          .replace(/\bsad and alone\b/g, 'overwhelmed by grief and isolation')
+          .replace(/\bvery\b/g, 'deeply')
+          .replace(/\bthing\b/g, 'object')
+          .replace(/\band then\b/g, 'before');
+
+        // Add a slight enhancement (you’ll replace this with real AI)
+        if (!edited.endsWith('.')) edited += '.';
+        edited = edited.charAt(0).toUpperCase() + edited.slice(1);
+
+        setTimeout(() => resolve(edited), 800); // simulate network delay
+      });
+    }
+  </script>
+</body>
+</html>
