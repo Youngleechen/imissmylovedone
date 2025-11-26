@@ -12,32 +12,53 @@ export default async function (req, res) {
 
   const OPENROUTER_API_KEY = process.env.OPENROUTER_API_KEY;
   if (!OPENROUTER_API_KEY) {
-    console.error('❌ Missing OPENROUTER_API_KEY in environment variables!');
+    console.error('❌ Missing OPENROUTER_API_KEY in Vercel environment variables!');
     return res.status(500).json({
       error: 'Server misconfiguration',
-      details: 'OpenRouter API key is missing. Please contact the site administrator.'
+      details: 'OpenRouter API key is missing.'
     });
   }
 
   try {
-    const prompt = `You are a precise text editor. Edit the following text exactly as instructed. Return ONLY the final edited text — no explanations, no prefixes, no markdown.
+    // 🔥 Using Grok 4.1 Fast (free) — as requested
+    const model = 'x-ai/grok-4.1-fast:free';
 
-Text: "${input}"
-Instruction: "${instruction}"`;
+    // 🧠 Smarter prompt: guides Grok to be precise & empathetic
+    const prompt = `You are editing deeply personal writing—possibly grief, memory, or emotional pain. Follow these rules strictly:
+
+1. Fix ONLY clear spelling errors:
+   - "exempel" → "example"
+   - "skul" → "school"
+   - "youn" → "young"
+   - "bay" → "boy"
+   - "rone" → "ran"
+   - "cut" in "kitchen cut" → "cat"
+
+2. Fix subject-verb agreement: "fox jump" → "fox jumps"
+
+3. NEVER rewrite emotional phrasing. If someone writes "i miss him so bad", do NOT change it to "very much".
+
+4. Add minimal punctuation: commas, question marks, sentence caps.
+
+5. Return ONLY the final edited text—no explanations, no notes, no markdown.
+
+User instruction: "${instruction}"
+
+Text to edit: "${input}"`;
 
     const openRes = await fetch('https://openrouter.ai/api/v1/chat/completions', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
         'Authorization': `Bearer ${OPENROUTER_API_KEY}`,
-        'HTTP-Referer': req.headers.origin || 'https://your-app.vercel.app',
+        'HTTP-Referer': req.headers.origin || 'https://imissmylovedone.vercel.app',
         'X-Title': 'EditGPT'
       },
       body: JSON.stringify({
-        model: 'mistralai/mistral-7b-instruct:free', // ✅ Reliable free model
+        model,
         messages: [{ role: 'user', content: prompt }],
         max_tokens: 600,
-        temperature: 0.3
+        temperature: 0.2 // Grok is bold — lower temp keeps it focused
       })
     });
 
@@ -55,10 +76,10 @@ Instruction: "${instruction}"`;
     return res.status(200).json({ editedText });
 
   } catch (err) {
-    console.error('Unexpected server error:', err);
+    console.error('Unexpected error in /api/edit:', err);
     return res.status(500).json({
       error: 'Internal server error',
-      details: 'An unexpected error occurred during editing'
+      details: 'An unexpected error occurred.'
     });
   }
 }
