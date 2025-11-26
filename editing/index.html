@@ -1,32 +1,29 @@
+<!-- editing/index.html -->
 <!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>EditGPT – Book Editing (Test)</title>
+  <title>Edit Passage</title>
   <style>
     body { font-family: system-ui; max-width: 800px; margin: 2rem auto; padding: 0 1rem; }
-    h1 { text-align: center; margin-bottom: 1.5rem; }
-    textarea, #output { width: 100%; min-height: 200px; padding: 1rem; margin: 0.5rem 0; border: 1px solid #ccc; border-radius: 6px; font-size: 1rem; }
-    button { background: #4a6cf7; color: white; border: none; padding: 0.75rem 1.5rem; font-size: 1rem; border-radius: 6px; cursor: pointer; }
+    textarea { width: 100%; min-height: 200px; padding: 1rem; margin: 0.5rem 0; border: 1px solid #ccc; border-radius: 6px; font-size: 1rem; }
+    button { background: #0070f3; color: white; border: none; padding: 0.75rem 1.5rem; font-size: 1rem; border-radius: 6px; cursor: pointer; }
     button:hover { opacity: 0.9; }
     button:disabled { opacity: 0.5; cursor: not-allowed; }
-    #output { background: #f9f9f9; }
+    #output { background: #f9f9f9; padding: 1rem; margin-top: 1rem; min-height: 50px; }
   </style>
 </head>
 <body>
-  <h1>📘 Edit with Grok (Test)</h1>
+  <h1>📘 Edit Your Book Passage (Test)</h1>
   <p>Paste a paragraph from your book:</p>
-  <textarea id="input" placeholder="e.g., 'He walked slow down the street...'"></textarea>
+  <textarea id="input" placeholder="e.g., 'He walked slow down the street, feeling sad and alone...'"></textarea>
   <br />
   <button id="editBtn">✨ Edit This Passage</button>
   <h3>Edited Version:</h3>
   <div id="output">Your edited text will appear here.</div>
 
   <script>
-    // YOUR OPENROUTER API KEY (for testing only!)
-    const API_KEY = "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";
-
     document.getElementById('editBtn').addEventListener('click', async () => {
       const input = document.getElementById('input').value.trim();
       const outputEl = document.getElementById('output');
@@ -42,41 +39,22 @@
       outputEl.textContent = 'Processing...';
 
       try {
-        const response = await fetch("https://openrouter.ai/api/v1/chat/completions", {
-          method: "POST",
-          headers: {
-            "Authorization": `Bearer ${API_KEY}`,
-            "Content-Type": "application/json",
-            "HTTP-Referer": window.location.origin, // required by OpenRouter
-            "X-Title": "Book Editor Test"
-          },
-          body: JSON.stringify({
-            model: "xai/grok-4.1-fast",
-            messages: [
-              {
-                role: "system",
-                content: "You are a professional book editor. Improve clarity, flow, and emotional impact while preserving the author's voice. Return ONLY the edited text—no explanations."
-              },
-              {
-                role: "user",
-                content: input
-              }
-            ],
-            temperature: 0.4
-          })
+        // ✅ No key needed — calls my secure test endpoint
+        const res = await fetch('https://editgpt-test.dave-support.workers.dev', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ text: input })
         });
 
-        const data = await response.json();
+        const data = await res.json();
 
         if (data.error) {
-          outputEl.textContent = '⚠️ Error: ' + (data.error.message || 'Unknown error');
-          console.error(data);
+          outputEl.textContent = '⚠️ ' + data.error;
         } else {
-          const edited = data.choices?.[0]?.message?.content?.trim() || "No result.";
-          outputEl.textContent = edited;
+          outputEl.textContent = data.edited;
         }
       } catch (err) {
-        outputEl.textContent = '⚠️ Failed to connect. Check console.';
+        outputEl.textContent = '⚠️ Failed to connect. Try again.';
         console.error(err);
       } finally {
         button.disabled = false;
