@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>EditGPT</title>
+  <title>Before Publishing</title>
   <style>
     :root {
       --primary: #10a37f;
@@ -396,12 +396,35 @@
       font-size: 0.85rem;
       margin-right: 0.5rem;
     }
+    .word-diff {
+      display: inline;
+    }
+    .word-diff span {
+      display: inline;
+    }
+    .word-diff .removed {
+      background-color: var(--removed-bg);
+      color: var(--removed);
+      text-decoration: line-through;
+      padding: 0.1em 0.2em;
+      border-radius: 3px;
+    }
+    .word-diff .added {
+      background-color: var(--added-bg);
+      color: var(--added);
+      text-decoration: none;
+      padding: 0.1em 0.2em;
+      border-radius: 3px;
+    }
+    .word-diff .unchanged {
+      display: inline;
+    }
   </style>
 </head>
 <body>
   <div class="container">
     <header>
-      <h1>EditGPT</h1>
+      <h1>Before Publishing</h1>
       <p class="subtitle">Professional text editing with tracked changes</p>
     </header>
 
@@ -514,13 +537,11 @@
           document.querySelector('.view-controls').style.display = 
             currentLevel === 'proofread' ? 'flex' : 'none';
           
-          // Reset views
-          document.querySelectorAll('.toggle-view').forEach(btn => {
-            btn.classList.remove('active');
-          });
-          document.querySelector('.toggle-view[data-view="clean"]').classList.add('active');
-          document.getElementById('result-tracked').style.display = 'none';
-          document.getElementById('result-clean').style.display = 'block';
+          // Keep views visible even when switching levels
+          if (currentLevel !== 'proofread') {
+            document.getElementById('result-tracked').style.display = 'none';
+            document.getElementById('result-clean').style.display = 'block';
+          }
         });
       });
 
@@ -541,109 +562,186 @@
       let lastRequestTime = 0;
       const COOLDOWN_MS = 3000;
       let originalTextAtRequest = '';
+      let currentEditedText = '';
 
-      // Simple diff algorithm implementation
-      function createDiff(original, edited) {
-        // Split into characters for character-level diff
-        const origChars = original.split('');
-        const editedChars = edited.split('');
+      // Word-level diff algorithm
+      function createWordDiff(original, edited) {
+        // Split into words
+        const origWords = original.split(/\s+/).filter(word => word.length > 0);
+        const editedWords = edited.split(/\s+/).filter(word => word.length > 0);
         
+        // Create a simple word-by-word comparison
         const diff = [];
         let i = 0, j = 0;
         
-        while (i < origChars.length && j < editedChars.length) {
-          if (origChars[i] === editedChars[j]) {
-            diff.push({ type: 'equal', value: origChars[i] });
+        while (i < origWords.length && j < editedWords.length) {
+          if (origWords[i] === editedWords[j]) {
+            diff.push({ type: 'equal', value: origWords[i] });
             i++;
             j++;
           } else {
-            // Look ahead to find matching characters
-            let foundMatch = false;
+            // Look for matches in the next few words
+            let matchFound = false;
             let k = i + 1;
             let l = j + 1;
             
-            // Try to find next match
-            while (k < origChars.length && l < editedChars.length) {
-              if (origChars[k] === editedChars[l]) {
-                // Found a match, add removed and added parts
+            // Try to find matching words within a reasonable distance
+            while (k < origWords.length && l < editedWords.length && Math.abs(k - i) < 5 && Math.abs(l - j) < 5) {
+              if (origWords[k] === editedWords[l]) {
+                // Add removed words
                 for (let m = i; m < k; m++) {
-                  diff.push({ type: 'removed', value: origChars[m] });
+                  diff.push({ type: 'removed', value: origWords[m] });
                 }
+                // Add added words
                 for (let n = j; n < l; n++) {
-                  diff.push({ type: 'added', value: editedChars[n] });
+                  diff.push({ type: 'added', value: editedWords[n] });
                 }
-                diff.push({ type: 'equal', value: origChars[k] });
+                // Add matched word
+                diff.push({ type: 'equal', value: origWords[k] });
                 i = k + 1;
                 j = l + 1;
-                foundMatch = true;
+                matchFound = true;
                 break;
               }
               k++;
-              if (l < editedChars.length) l++;
+              if (l < editedWords.length) l++;
             }
             
-            if (!foundMatch) {
-              // No match found, handle remaining characters
-              if (i < origChars.length) {
-                diff.push({ type: 'removed', value: origChars[i] });
+            if (!matchFound) {
+              // If no match found, add the current word as removed or added
+              if (i < origWords.length) {
+                diff.push({ type: 'removed', value: origWords[i] });
                 i++;
               }
-              if (j < editedChars.length) {
-                diff.push({ type: 'added', value: editedChars[j] });
+              if (j < editedWords.length) {
+                diff.push({ type: 'added', value: editedWords[j] });
                 j++;
               }
             }
           }
         }
         
-        // Add remaining characters
-        while (i < origChars.length) {
-          diff.push({ type: 'removed', value: origChars[i] });
+        // Add remaining words
+        while (i < origWords.length) {
+          diff.push({ type: 'removed', value: origWords[i] });
           i++;
         }
-        while (j < editedChars.length) {
-          diff.push({ type: 'added', value: editedChars[j] });
+        while (j < editedWords.length) {
+          diff.push({ type: 'added', value: editedWords[j] });
           j++;
         }
         
         return diff;
       }
 
-      // Enhanced version that groups consecutive same-type changes
-      function createDiffGrouped(original, edited) {
-        const diff = createDiff(original, edited);
-        const grouped = [];
+      // Enhanced version for better word-level tracking
+      function createSmartWordDiff(original, edited) {
+        // Get the reasoning from the AI response
+        const reasoningStart = edited.indexOf('---\n**Edit Reasoning:**');
+        let editedText = edited;
+        let reasoning = [];
         
-        for (let i = 0; i < diff.length; i++) {
-          if (grouped.length === 0 || grouped[grouped.length - 1].type !== diff[i].type) {
-            grouped.push({
-              type: diff[i].type,
-              value: diff[i].value
+        if (reasoningStart !== -1) {
+          editedText = edited.substring(0, reasoningStart).trim();
+          const reasoningSection = edited.substring(reasoningStart + 24).trim();
+          
+          reasoning = reasoningSection.split('\n')
+            .map(line => line.trim())
+            .filter(line => line.startsWith('-') || line.startsWith('*'))
+            .map(line => {
+              const match = line.match(/^[-*]\s*(.+?)\s*(?:\((.+?)\))?$/);
+              if (match) {
+                return {
+                  change: match[1].trim(),
+                  justification: match[2] ? match[2].trim() : 'Grammatical correction'
+                };
+              }
+              return { change: line.replace(/^[-*]\s*/, ''), justification: 'Grammatical correction' };
             });
+        }
+        
+        // For word-level diff, we need to process the text
+        const origWords = original.split(/\s+/).filter(word => word.length > 0);
+        const editedWords = editedText.split(/\s+/).filter(word => word.length > 0);
+        
+        // Create a mapping of changes from reasoning
+        const changeMap = {};
+        reasoning.forEach(item => {
+          const changeMatch = item.change.match(/"(.+?)" → "(.+?)"/);
+          if (changeMatch) {
+            const originalPart = changeMatch[1];
+            const editedPart = changeMatch[2];
+            changeMap[originalPart] = editedPart;
+          }
+        });
+        
+        // Simple approach: compare word by word
+        const diff = [];
+        let i = 0, j = 0;
+        
+        while (i < origWords.length && j < editedWords.length) {
+          if (origWords[i] === editedWords[j]) {
+            diff.push({ type: 'equal', value: origWords[i] });
+            i++;
+            j++;
           } else {
-            grouped[grouped.length - 1].value += diff[i].value;
+            // Check if this is a known change from reasoning
+            let foundChange = false;
+            for (const [originalPart, editedPart] of Object.entries(changeMap)) {
+              if (origWords[i] === originalPart) {
+                diff.push({ type: 'removed', value: origWords[i] });
+                diff.push({ type: 'added', value: editedPart });
+                i++;
+                j++;
+                foundChange = true;
+                break;
+              }
+            }
+            
+            if (!foundChange) {
+              // Fallback: mark as removed and added
+              diff.push({ type: 'removed', value: origWords[i] });
+              diff.push({ type: 'added', value: editedWords[j] });
+              i++;
+              j++;
+            }
           }
         }
         
-        return grouped;
+        // Add remaining words
+        while (i < origWords.length) {
+          diff.push({ type: 'removed', value: origWords[i] });
+          i++;
+        }
+        while (j < editedWords.length) {
+          diff.push({ type: 'added', value: editedWords[j] });
+          j++;
+        }
+        
+        return { diff, editedText, reasoning };
       }
 
-      // Render diff with HTML tags
-      function renderDiffHtml(diff) {
+      // Render word-level diff
+      function renderWordDiff(diff) {
         let html = '';
         let changesCount = 0;
         
-        diff.forEach(part => {
-          if (part.type === 'added') {
-            html += `<ins>${part.value}</ins>`;
+        for (let i = 0; i < diff.length; i++) {
+          if (diff[i].type === 'added') {
+            html += `<span class="word-diff"><span class="added">${diff[i].value}</span></span>`;
             changesCount++;
-          } else if (part.type === 'removed') {
-            html += `<del>${part.value}</del>`;
+          } else if (diff[i].type === 'removed') {
+            html += `<span class="word-diff"><span class="removed">${diff[i].value}</span></span>`;
             changesCount++;
           } else {
-            html += part.value;
+            html += `<span class="word-diff"><span class="unchanged">${diff[i].value}</span></span>`;
           }
-        });
+          
+          // Add space between words
+          if (i < diff.length - 1) {
+            html += ' ';
+          }
+        }
         
         return { html, changesCount };
       }
@@ -726,13 +824,17 @@
       };
 
       const renderTrackedChanges = (original, edited) => {
-        // Use our simple diff algorithm
-        const diff = createDiffGrouped(original, edited);
-        const { html, changesCount } = renderDiffHtml(diff);
+        // Use our smart word diff algorithm
+        const { diff, editedText, reasoning } = createSmartWordDiff(original, edited);
+        const { html, changesCount } = renderWordDiff(diff);
         
         diffOutput.innerHTML = html;
         changesSummary.textContent = `${changesCount} change${changesCount !== 1 ? 's' : ''}`;
-        return changesCount;
+        
+        // Store the edited text for reference
+        currentEditedText = editedText;
+        
+        return { changesCount, reasoning };
       };
 
       const renderChangesSummary = (reasoningItems) => {
@@ -833,10 +935,10 @@
             resultClean.textContent = editedText;
             
             // Tracked changes view
-            const changesCount = renderTrackedChanges(originalTextAtRequest, editedText);
+            const { changesCount, reasoning: parsedReasoning } = renderTrackedChanges(originalTextAtRequest, data.editedText);
             
             // Changes summary
-            renderChangesSummary(reasoning);
+            renderChangesSummary(parsedReasoning);
             
             // Show/hide views based on current selection
             if (document.querySelector('.toggle-view.active').dataset.view === 'tracked') {
