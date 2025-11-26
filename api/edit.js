@@ -59,7 +59,7 @@ Text: "${input}"`;
         'Content-Type': 'application/json',
         'Authorization': `Bearer ${OPENROUTER_API_KEY}`,
         'HTTP-Referer': req.headers.origin || 'https://imissmylovedone.vercel.app',
-        'X-Title': 'EditGPT'
+        'X-Title': 'Before Publishing'
       },
       body: JSON.stringify({
         model: 'x-ai/grok-4.1-fast:free',
