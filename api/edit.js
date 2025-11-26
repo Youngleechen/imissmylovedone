@@ -1,13 +1,14 @@
-export default async function (req, res) {
+// pages/api/edit.js
+export default async function handler(req, res) {
   if (req.method !== 'POST') {
     return res.status(405).json({ error: 'Method not allowed' });
   }
 
-  const { input, instruction, model } = req.body || {};
+  const { input, style = 'fluent', model } = req.body || {};
 
   // Only allow Grok
-  if (!input || !instruction || model !== 'x-ai/grok-4.1-fast:free') {
-    return res.status(400).json({ error: 'Invalid input, instruction, or model. Only Grok is allowed.' });
+  if (!input || model !== 'x-ai/grok-4.1-fast:free') {
+    return res.status(400).json({ error: 'Invalid input or model. Only Grok is allowed.' });
   }
 
   const OPENROUTER_API_KEY = process.env.OPENROUTER_API_KEY;
@@ -16,28 +17,43 @@ export default async function (req, res) {
     return res.status(500).json({ error: 'Server misconfiguration' });
   }
 
-  try {
-    // Updated prompt: request edits + reasoning
-    const prompt = `You are editing deeply personal writing—possibly grief, memory, or emotional pain.
+  // Style-specific instructions
+  const STYLE_CONFIG = {
+    faithful: {
+      instruction: "Fix spelling, grammar, and punctuation errors. Do not change any wording, phrasing, or structure—even if awkward. Preserve every stylistic choice.",
+      guidelines: `- Fix ONLY spelling, grammar, and punctuation.
+- NEVER alter phrasing, rhythm, word choice, or sentence structure.
+- Preserve all original emphasis, repetition, and voice—even if imperfect.
+- Do not add words or contractions unless required for basic grammar.`
+    },
+    fluent: {
+      instruction: "Improve clarity, fluency, and natural rhythm while preserving the author’s voice and emotional tone.",
+      guidelines: `- Fix errors AND improve unnatural or clumsy phrasing to sound like natural human speech.
+- You may add contractions, adjust punctuation (e.g., em dashes, commas), clarify ambiguous pronouns, or slightly reorder words for flow.
+- Keep emotional tone, core meaning, and personal voice 100% intact.
+- Favor conversational, authentic narration.`
+    },
+    polished: {
+      instruction: "Polish for publication-quality prose: enhance flow, clarity, and word choice while honoring the author’s intent.",
+      guidelines: `- Fix all errors and refine for professional clarity.
+- Improve sentence variety, eliminate redundancy, and choose precise words.
+- Ensure consistent tense, POV, and tone.
+- Never distort the author’s voice or emotional truth—even if enhancing style.`
+    }
+  };
 
-Your task has TWO parts:
+  const config = STYLE_CONFIG[style] || STYLE_CONFIG.fluent;
 
-PART 1: Edit the text by:
-- Fixing clear spelling errors (e.g., "exempel" → "example", "skul" → "school", "youn" → "young", "bay" → "boy", "rone" → "ran", "kitchen cut" → "kitchen cat")
-- Correcting grammar (e.g., "fox jump" → "fox jumps")
-- Adding quotes if it's dialogue: e.g., “What is this?”
-- NEVER altering emotional tone, voice, or meaningful phrasing
+  const prompt = `You are an expert editor working with deeply personal or literary writing.
 
-Return ONLY the edited text first.
+${config.guidelines}
 
-PART 2: After the edited text, add exactly:
----
-**Edit Reasoning:**  
-Then list each change with a brief grammatical or orthographic justification (e.g., "‘jump’ → ‘jumps’: subject-verb agreement for third-person singular").
+Return ONLY the edited text—no explanations, no markdown, no extra text.
 
-Instruction: "${instruction}"
+Instruction: "${config.instruction}"
 Text: "${input}"`;
 
+  try {
     const openRes = await fetch('https://openrouter.ai/api/v1/chat/completions', {
       method: 'POST',
       headers: {
@@ -49,8 +65,8 @@ Text: "${input}"`;
       body: JSON.stringify({
         model: 'x-ai/grok-4.1-fast:free',
         messages: [{ role: 'user', content: prompt }],
-        max_tokens: 800, // increased to accommodate reasoning
-        temperature: 0.3
+        max_tokens: 1200, // enough for most paragraphs
+        temperature: style === 'polished' ? 0.4 : 0.2
       })
     });
 
