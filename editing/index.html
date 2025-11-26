@@ -23,44 +23,44 @@
   <h3>Edited Version:</h3>
   <div id="output">Your edited text will appear here.</div>
 
-  <script>
-    document.getElementById('editBtn').addEventListener('click', async () => {
-      const input = document.getElementById('input').value.trim();
-      const outputEl = document.getElementById('output');
-      const button = document.getElementById('editBtn');
+ <script>
+  document.getElementById('editBtn').addEventListener('click', async () => {
+    const input = document.getElementById('input').value.trim();
+    const outputEl = document.getElementById('output');
+    const button = document.getElementById('editBtn');
 
-      if (!input) {
-        outputEl.textContent = 'Please enter some text to edit.';
-        return;
+    if (!input) {
+      outputEl.textContent = 'Please enter some text to edit.';
+      return;
+    }
+
+    button.disabled = true;
+    button.textContent = 'Editing...';
+    outputEl.textContent = 'Processing...';
+
+    try {
+      // ✅ NEW WORKING ENDPOINT
+      const res = await fetch('https://editgpt-live.dave-support.workers.dev', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ text: input })
+      });
+
+      const data = await res.json();
+
+      if (data.error) {
+        outputEl.textContent = '⚠️ ' + data.error;
+      } else {
+        outputEl.textContent = data.edited;
       }
-
-      button.disabled = true;
-      button.textContent = 'Editing...';
-      outputEl.textContent = 'Processing...';
-
-      try {
-        // ✅ No key needed — calls my secure test endpoint
-        const res = await fetch('https://editgpt-test.dave-support.workers.dev', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ text: input })
-        });
-
-        const data = await res.json();
-
-        if (data.error) {
-          outputEl.textContent = '⚠️ ' + data.error;
-        } else {
-          outputEl.textContent = data.edited;
-        }
-      } catch (err) {
-        outputEl.textContent = '⚠️ Failed to connect. Try again.';
-        console.error(err);
-      } finally {
-        button.disabled = false;
-        button.textContent = '✨ Edit This Passage';
-      }
-    });
-  </script>
+    } catch (err) {
+      outputEl.textContent = '⚠️ Failed to connect. Try again.';
+      console.error(err);
+    } finally {
+      button.disabled = false;
+      button.textContent = '✨ Edit This Passage';
+    }
+  });
+</script>
 </body>
 </html>
