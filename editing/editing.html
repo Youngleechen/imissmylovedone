@@ -199,19 +199,18 @@
 
   <script>
     document.addEventListener('DOMContentLoaded', () => {
-      // ✅ Single source of truth for models
-     const FREE_MODELS = [
-  { id: 'mistralai/mistral-7b-instruct:free', name: 'Mistral 7B (Precise & Safe)' },
-  { id: 'x-ai/grok-4.1-fast:free', name: 'Grok 4.1 (Fast & Accurate)' },
-  { id: 'meta-llama/llama-3-8b-instruct:free', name: 'Llama 3 8B (Best for Emotional Text)' },
-  { id: 'google/gemma-2-9b-it:free', name: 'Gemma 2 9B (Clean & Clear)' },
-  { id: 'meta-llama/llama-3.2-3b-instruct:free', name: 'Llama 3.2 3B (Lightweight & Responsive)' },
-  { id: 'meta-llama/llama-3.2-11b-vision-instruct:free', name: 'Llama 3.2 11B (Multimodal & Empathetic)' },
-  { id: 'deepseek/deepseek-coder-1.3b-instruct:free', name: 'DeepSeek Coder 1.3B (Great for Logic & Structure)' },
-  { id: 'quasar/quasar-alpha:free', name: 'Quasar Alpha (Balanced & Adaptive)' }
-];
+      // ✅ FREE MODELS — Keep this list in sync with /api/edit.js
+      const FREE_MODELS = [
+        { id: 'mistralai/mistral-7b-instruct:free', name: 'Mistral 7B (Precise & Safe)' },
+        { id: 'x-ai/grok-4.1-fast:free', name: 'Grok 4.1 (Fast & Accurate)' },
+        { id: 'meta-llama/llama-3-8b-instruct:free', name: 'Llama 3 8B (Best for Emotional Text)' },
+        { id: 'google/gemma-2-9b-it:free', name: 'Gemma 2 9B (Clean & Clear)' },
+        { id: 'meta-llama/llama-3.2-3b-instruct:free', name: 'Llama 3.2 3B (Lightweight & Responsive)' },
+        { id: 'meta-llama/llama-3.2-11b-vision-instruct:free', name: 'Llama 3.2 11B (Multimodal & Empathetic)' },
+        { id: 'deepseek/deepseek-coder-1.3b-instruct:free', name: 'DeepSeek Coder 1.3B (Great for Logic & Structure)' },
+        { id: 'quasar/quasar-alpha:free', name: 'Quasar Alpha (Balanced & Adaptive)' }
+      ];
 
-      // Dynamically build model dropdown
       const modelSelect = document.getElementById('model-select');
       FREE_MODELS.forEach(model => {
         const option = document.createElement('option');
@@ -221,7 +220,6 @@
         modelSelect.appendChild(option);
       });
 
-      // DOM elements
       const inputText = document.getElementById('input-text');
       const instructionInput = document.getElementById('instruction');
       const editBtn = document.getElementById('edit-btn');
@@ -230,11 +228,9 @@
       const copyBtn = document.getElementById('copy-btn');
       const inputCount = document.getElementById('input-count');
 
-      // Cooldown to prevent 429 errors
       let lastRequestTime = 0;
-      const COOLDOWN_MS = 3000; // 3 seconds
+      const COOLDOWN_MS = 3000;
 
-      // Word counter
       const updateWordCount = () => {
         const words = inputText.value.trim() ? inputText.value.trim().split(/\s+/).filter(Boolean).length : 0;
         inputCount.textContent = `${words} word${words !== 1 ? 's' : ''}`;
@@ -242,7 +238,6 @@
       inputText.addEventListener('input', updateWordCount);
       updateWordCount();
 
-      // Copy result
       copyBtn.addEventListener('click', async () => {
         try {
           await navigator.clipboard.writeText(resultDiv.textContent);
@@ -255,7 +250,6 @@
         }
       });
 
-      // Handle edit
       editBtn.addEventListener('click', async () => {
         const now = Date.now();
         if (now - lastRequestTime < COOLDOWN_MS) {
@@ -274,7 +268,6 @@
           return;
         }
 
-        // Reset UI
         editBtn.disabled = true;
         editBtn.innerHTML = '<span>✨ Editing...</span>';
         resultDiv.textContent = 'Processing...';
