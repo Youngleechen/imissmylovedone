@@ -5,24 +5,9 @@ export default async function (req, res) {
 
   const { input, instruction, model } = req.body || {};
 
-  if (!input || !instruction || !model) {
-    return res.status(400).json({ error: 'Missing input, instruction, or model' });
-  }
-
-  // ✅ ALLOWED MODELS — Must match IDs in index.html's FREE_MODELS
-  const allowedModels = [
-    'mistralai/mistral-7b-instruct:free',
-    'x-ai/grok-4.1-fast:free',
-    'google/gemma-2-9b-it:free',
-    'deepseek/deepseek-r1-0528-qwen3-8b:free',
-    'qwen/qwen3-coder-480b-a35b:free',
-    'qwen/qwen3-4b:free',
-    'qwen/qwen3-30b-a3b:free',
-    'quasar/quasar-alpha:free'
-  ];
-
-  if (!allowedModels.includes(model)) {
-    return res.status(400).json({ error: 'Model not allowed' });
+  // Only allow Grok
+  if (!input || !instruction || model !== 'x-ai/grok-4.1-fast:free') {
+    return res.status(400).json({ error: 'Invalid input, instruction, or model. Only Grok is allowed.' });
   }
 
   const OPENROUTER_API_KEY = process.env.OPENROUTER_API_KEY;
@@ -32,13 +17,23 @@ export default async function (req, res) {
   }
 
   try {
-    const prompt = `You are editing deeply personal writing—possibly grief, memory, or emotional pain. Follow these rules:
+    // Updated prompt: request edits + reasoning
+    const prompt = `You are editing deeply personal writing—possibly grief, memory, or emotional pain.
 
-1. Fix ONLY clear spelling errors: "exempel"→"example", "skul"→"school", "youn"→"young", "bay"→"boy", "rone"→"ran", "cut" in "kitchen cut"→"cat".
-2. Fix grammar: "fox jump" → "fox jumps".
-3. NEVER change emotional phrasing.
-4. Add quotes if text sounds like speech: e.g., “What is this?”
-5. Return ONLY the edited text.
+Your task has TWO parts:
+
+PART 1: Edit the text by:
+- Fixing clear spelling errors (e.g., "exempel" → "example", "skul" → "school", "youn" → "young", "bay" → "boy", "rone" → "ran", "kitchen cut" → "kitchen cat")
+- Correcting grammar (e.g., "fox jump" → "fox jumps")
+- Adding quotes if it's dialogue: e.g., “What is this?”
+- NEVER altering emotional tone, voice, or meaningful phrasing
+
+Return ONLY the edited text first.
+
+PART 2: After the edited text, add exactly:
+---
+**Edit Reasoning:**  
+Then list each change with a brief grammatical or orthographic justification (e.g., "‘jump’ → ‘jumps’: subject-verb agreement for third-person singular").
 
 Instruction: "${instruction}"
 Text: "${input}"`;
@@ -52,9 +47,9 @@ Text: "${input}"`;
         'X-Title': 'EditGPT'
       },
       body: JSON.stringify({
-        model,
+        model: 'x-ai/grok-4.1-fast:free',
         messages: [{ role: 'user', content: prompt }],
-        max_tokens: 600,
+        max_tokens: 800, // increased to accommodate reasoning
         temperature: 0.3
       })
     });
