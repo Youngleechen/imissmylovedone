@@ -10,13 +10,17 @@ export default async function (req, res) {
     return res.status(400).json({ error: 'Missing input, instruction, or model' });
   }
 
-  // List of allowed free models (security)
-  const allowedModels = [
-    'mistralai/mistral-7b-instruct:free',
-    'qwen/qwen3-14b:free',
-    'x-ai/grok-4.1-fast:free',
-    'google/gemini-pro:free'
-  ];
+ const allowedModels = [
+  'mistralai/mistral-7b-instruct:free',
+  'qwen/qwen3-14b:free',
+  'x-ai/grok-4.1-fast:free',
+  'google/gemini-pro:free',
+  'meta-llama/llama-3.2-11b-vision-instruct:free',
+  'meta-llama/llama-3.2-3b-instruct:free',
+  'deepseek/deepseek-coder-1.3b-instruct:free',
+  'neversleep/noromaid-mixtral-8x7b-instruct:free',
+  'quasar/quasar-alpha:free'  // undisclosed provider, but capable [[1]]
+];
 
   if (!allowedModels.includes(model)) {
     return res.status(400).json({ error: 'Model not allowed' });
