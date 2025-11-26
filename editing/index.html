@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>EditGPT</title>
+  <title>EditGPT — The Best Book Editor</title>
   <style>
     :root {
       --primary: #10a37f;
@@ -11,6 +11,9 @@
       --dark: #1e1f29;
       --light: #f8f9ff;
       --gray: #6c757d;
+      --faithful: #4a6fa5;
+      --fluent: #10a37f;
+      --polished: #c62828;
     }
     * {
       box-sizing: border-box;
@@ -42,7 +45,7 @@
     }
     .subtitle {
       color: var(--gray);
-      margin-bottom: 2rem;
+      margin-bottom: 1.5rem;
     }
     .editor-container {
       display: grid;
@@ -142,14 +145,29 @@
       color: var(--gray);
       font-size: 0.9rem;
     }
+    .style-select-container,
     .model-select-container {
       margin: 0.75rem 0 1rem;
     }
+    .style-select-container label,
     .model-select-container label {
       display: block;
       margin-bottom: 0.5rem;
       font-weight: 600;
       color: var(--dark);
+    }
+    .file-upload {
+      margin-top: 0.5rem;
+      font-size: 0.9rem;
+    }
+    .file-upload label {
+      display: inline-block;
+      color: var(--primary);
+      cursor: pointer;
+      text-decoration: underline;
+    }
+    #file-input {
+      display: none;
     }
   </style>
 </head>
@@ -157,7 +175,7 @@
   <div class="container">
     <header>
       <h1>EditGPT</h1>
-      <p class="subtitle">AI-powered text editing — choose your model</p>
+      <p class="subtitle">The most powerful book editor — up to 100,000 words. Faithful, Fluent, or Polished.</p>
     </header>
 
     <div class="editor-container">
@@ -166,19 +184,32 @@
           <h2>Original Text</h2>
           <div id="input-count">0 words</div>
         </div>
-        <textarea id="input-text" placeholder="Paste your text here...">The quick brown fox jump over the lazy dog. It's a classic exempel of a sentence containing all the letters of the alphabet. I rone like a kitchen cut mama what is this he asked the youn bay to skul</textarea>
+        <textarea id="input-text" placeholder="Paste your text or upload a .txt file...">I kno whom I am not some joke who doent know the answer to the quiz what is hydrophobia john is not the best but not worse eithe so you have to deal with that</textarea>
+        <div class="file-upload">
+          <input type="file" id="file-input" accept=".txt">
+          <label for="file-input">📎 Upload .txt file</label>
+        </div>
       </div>
 
       <div class="card">
         <div class="card-header">
-          <h2>Instruction</h2>
-          <span>Be specific</span>
+          <h2>Edit Settings</h2>
         </div>
-        <input type="text" id="instruction" class="instruction-input" value="Fix spelling and grammar errors" />
         
+        <div class="style-select-container">
+          <label for="edit-style">Editing Style:</label>
+          <select id="edit-style">
+            <option value="faithful">Faithful — minimal changes, preserve every word</option>
+            <option value="fluent" selected>Fluent — natural rhythm, like Qwen</option>
+            <option value="polished">Polished — elevated clarity and flow</option>
+          </select>
+        </div>
+
         <div class="model-select-container">
           <label for="model-select">AI Model (Free):</label>
-          <select id="model-select"></select>
+          <select id="model-select">
+            <option value="x-ai/grok-4.1-fast:free">Grok 4.1 (Fast & Accurate)</option>
+          </select>
         </div>
 
         <button id="edit-btn" class="btn">✨ Apply Edit</button>
@@ -189,7 +220,10 @@
     <div class="card">
       <div class="card-header">
         <h2>Edited Result</h2>
-        <button id="copy-btn" class="btn" style="padding:0.5rem 1rem;font-size:0.9rem;">📋 Copy</button>
+        <div>
+          <button id="copy-btn" class="btn" style="padding:0.5rem 1rem;font-size:0.9rem;">📋 Copy</button>
+          <button id="download-btn" class="btn" style="padding:0.5rem 1rem;font-size:0.9rem;background:#4a6fa5;">📥 Download</button>
+        </div>
       </div>
       <div id="result" style="min-height:200px;padding:1rem;line-height:1.6;white-space:pre-wrap;">
         The result will appear here after editing...
@@ -197,39 +231,47 @@
     </div>
 
     <footer>
-      <p>All models are free via OpenRouter • Hosted on Vercel</p>
+      <p>All edits are private • Powered by Grok via OpenRouter • Hosted on Vercel</p>
     </footer>
   </div>
 
   <script>
     document.addEventListener('DOMContentLoaded', () => {
-      // ✅ ONLY GROK MODEL REMAINS
-      const FREE_MODELS = [
-        { id: 'x-ai/grok-4.1-fast:free', name: 'Grok 4.1 (Fast & Accurate)' }
-      ];
-
-      const modelSelect = document.getElementById('model-select');
-      FREE_MODELS.forEach(model => {
-        const option = document.createElement('option');
-        option.value = model.id;
-        option.textContent = model.name;
-        modelSelect.appendChild(option);
-      });
-
       const inputText = document.getElementById('input-text');
-      const instructionInput = document.getElementById('instruction');
+      const fileInput = document.getElementById('file-input');
+      const instructionInput = document.getElementById('instruction') || { value: '' };
+      const editStyle = document.getElementById('edit-style');
+      const modelSelect = document.getElementById('model-select');
       const editBtn = document.getElementById('edit-btn');
       const resultDiv = document.getElementById('result');
       const statusDiv = document.getElementById('status');
       const copyBtn = document.getElementById('copy-btn');
+      const downloadBtn = document.getElementById('download-btn');
       const inputCount = document.getElementById('input-count');
 
       let lastRequestTime = 0;
       const COOLDOWN_MS = 3000;
 
+      // Load file
+      fileInput.addEventListener('change', (e) => {
+        const file = e.target.files[0];
+        if (!file || !file.name.endsWith('.txt')) {
+          statusDiv.textContent = 'Please upload a .txt file.';
+          statusDiv.className = 'status error';
+          return;
+        }
+        const reader = new FileReader();
+        reader.onload = (event) => {
+          inputText.value = event.target.result;
+          updateWordCount();
+          statusDiv.style.display = 'none';
+        };
+        reader.readAsText(file);
+      });
+
       const updateWordCount = () => {
         const words = inputText.value.trim() ? inputText.value.trim().split(/\s+/).filter(Boolean).length : 0;
-        inputCount.textContent = `${words} word${words !== 1 ? 's' : ''}`;
+        inputCount.textContent = `${words.toLocaleString()} word${words !== 1 ? 's' : ''}`;
       };
       inputText.addEventListener('input', updateWordCount);
       updateWordCount();
@@ -246,6 +288,18 @@
         }
       });
 
+      downloadBtn.addEventListener('click', () => {
+        const blob = new Blob([resultDiv.textContent], { type: 'text/plain' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = 'edited-text.txt';
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+      });
+
       editBtn.addEventListener('click', async () => {
         const now = Date.now();
         if (now - lastRequestTime < COOLDOWN_MS) {
@@ -255,11 +309,11 @@
         }
 
         const input = inputText.value.trim();
-        const instruction = instructionInput.value.trim();
+        const style = editStyle.value;
         const model = modelSelect.value;
 
-        if (!input || !instruction || !model) {
-          statusDiv.textContent = 'Please provide text, instruction, and select a model.';
+        if (!input) {
+          statusDiv.textContent = 'Please provide text to edit.';
           statusDiv.className = 'status error';
           return;
         }
@@ -273,7 +327,7 @@
           const response = await fetch('/api/edit', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ input, instruction, model })
+            body: JSON.stringify({ input, style, model })
           });
 
           if (!response.ok) {
