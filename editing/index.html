@@ -197,109 +197,110 @@
     </footer>
   </div>
 
- <script>
-  document.addEventListener('DOMContentLoaded', () => {
-    // ✅ FREE MODELS — Keep this list in sync with /api/edit.js
-    const FREE_MODELS = [
-      { id: 'mistralai/mistral-7b-instruct:free', name: 'Mistral 7B (Precise & Safe)' },
-      { id: 'x-ai/grok-4.1-fast:free', name: 'Grok 4.1 (Fast & Accurate)' },
-      { id: 'google/gemma-2-9b-it:free', name: 'Gemma 2 9B (Clean & Clear)' },
-      { id: 'deepseek/deepseek-r1-0528-qwen3-8b:free', name: 'DeepSeek R1 0528 Qwen3 8B (Smart Reasoning)' },
-      { id: 'qwen/qwen3-coder-480b-a35b:free', name: 'Qwen3 Coder 480B A35B (Code & Agent Tasks)' },
-      { id: 'deepseek/deepseek-coder-1.3b-instruct:free', name: 'DeepSeek Coder 1.3B (Great for Logic & Structure)' },
-      { id: 'quasar/quasar-alpha:free', name: 'Quasar Alpha (Balanced & Adaptive)' }
-    ];
+  <script>
+    document.addEventListener('DOMContentLoaded', () => {
+      // ✅ FREE MODELS — Keep this list in sync with /api/edit.js
+      const FREE_MODELS = [
+        { id: 'mistralai/mistral-7b-instruct:free', name: 'Mistral 7B (Precise & Safe)' },
+        { id: 'x-ai/grok-4.1-fast:free', name: 'Grok 4.1 (Fast & Accurate)' },
+        { id: 'google/gemma-2-9b-it:free', name: 'Gemma 2 9B (Clean & Clear)' },
+        { id: 'deepseek/deepseek-r1-0528-qwen3-8b:free', name: 'DeepSeek R1 0528 Qwen3 8B (Smart Reasoning)' },
+        { id: 'qwen/qwen3-coder-480b-a35b:free', name: 'Qwen3 Coder 480B A35B (Code & Agent Tasks)' },
+        { id: 'qwen/qwen3-4b:free', name: 'Qwen3 4B (General & Reasoning)' },
+        { id: 'qwen/qwen3-30b-a3b:free', name: 'Qwen3 30B A3B (Advanced Reasoning)' },
+        { id: 'quasar/quasar-alpha:free', name: 'Quasar Alpha (Balanced & Adaptive)' }
+      ];
 
-    const modelSelect = document.getElementById('model-select');
-    FREE_MODELS.forEach(model => {
-      const option = document.createElement('option');
-      option.value = model.id;
-      option.textContent = model.name;
-      if (model.id === 'x-ai/grok-4.1-fast:free') option.selected = true; // Keep Grok as default
-      modelSelect.appendChild(option);
-    });
+      const modelSelect = document.getElementById('model-select');
+      FREE_MODELS.forEach(model => {
+        const option = document.createElement('option');
+        option.value = model.id;
+        option.textContent = model.name;
+        if (model.id === 'x-ai/grok-4.1-fast:free') option.selected = true;
+        modelSelect.appendChild(option);
+      });
 
-    const inputText = document.getElementById('input-text');
-    const instructionInput = document.getElementById('instruction');
-    const editBtn = document.getElementById('edit-btn');
-    const resultDiv = document.getElementById('result');
-    const statusDiv = document.getElementById('status');
-    const copyBtn = document.getElementById('copy-btn');
-    const inputCount = document.getElementById('input-count');
+      const inputText = document.getElementById('input-text');
+      const instructionInput = document.getElementById('instruction');
+      const editBtn = document.getElementById('edit-btn');
+      const resultDiv = document.getElementById('result');
+      const statusDiv = document.getElementById('status');
+      const copyBtn = document.getElementById('copy-btn');
+      const inputCount = document.getElementById('input-count');
 
-    let lastRequestTime = 0;
-    const COOLDOWN_MS = 3000;
+      let lastRequestTime = 0;
+      const COOLDOWN_MS = 3000;
 
-    const updateWordCount = () => {
-      const words = inputText.value.trim() ? inputText.value.trim().split(/\s+/).filter(Boolean).length : 0;
-      inputCount.textContent = `${words} word${words !== 1 ? 's' : ''}`;
-    };
-    inputText.addEventListener('input', updateWordCount);
-    updateWordCount();
+      const updateWordCount = () => {
+        const words = inputText.value.trim() ? inputText.value.trim().split(/\s+/).filter(Boolean).length : 0;
+        inputCount.textContent = `${words} word${words !== 1 ? 's' : ''}`;
+      };
+      inputText.addEventListener('input', updateWordCount);
+      updateWordCount();
 
-    copyBtn.addEventListener('click', async () => {
-      try {
-        await navigator.clipboard.writeText(resultDiv.textContent);
-        const original = copyBtn.innerHTML;
-        copyBtn.innerHTML = '✅ Copied!';
-        setTimeout(() => copyBtn.innerHTML = original, 2000);
-      } catch (err) {
-        statusDiv.textContent = 'Copy failed. Please select text manually.';
-        statusDiv.className = 'status error';
-      }
-    });
+      copyBtn.addEventListener('click', async () => {
+        try {
+          await navigator.clipboard.writeText(resultDiv.textContent);
+          const original = copyBtn.innerHTML;
+          copyBtn.innerHTML = '✅ Copied!';
+          setTimeout(() => copyBtn.innerHTML = original, 2000);
+        } catch (err) {
+          statusDiv.textContent = 'Copy failed. Please select text manually.';
+          statusDiv.className = 'status error';
+        }
+      });
 
-    editBtn.addEventListener('click', async () => {
-      const now = Date.now();
-      if (now - lastRequestTime < COOLDOWN_MS) {
-        statusDiv.textContent = 'Please wait a few seconds before trying again.';
-        statusDiv.className = 'status error';
-        return;
-      }
-
-      const input = inputText.value.trim();
-      const instruction = instructionInput.value.trim();
-      const model = modelSelect.value;
-
-      if (!input || !instruction || !model) {
-        statusDiv.textContent = 'Please provide text, instruction, and select a model.';
-        statusDiv.className = 'status error';
-        return;
-      }
-
-      editBtn.disabled = true;
-      editBtn.innerHTML = '<span>✨ Editing...</span>';
-      resultDiv.textContent = 'Processing...';
-      statusDiv.style.display = 'none';
-
-      try {
-        const response = await fetch('/api/edit', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ input, instruction, model })
-        });
-
-        if (!response.ok) {
-          const errorText = await response.text();
-          throw new Error(`HTTP ${response.status}: ${errorText.substring(0, 120)}...`);
+      editBtn.addEventListener('click', async () => {
+        const now = Date.now();
+        if (now - lastRequestTime < COOLDOWN_MS) {
+          statusDiv.textContent = 'Please wait a few seconds before trying again.';
+          statusDiv.className = 'status error';
+          return;
         }
 
-        const data = await response.json();
-        resultDiv.textContent = data.editedText || '';
-        statusDiv.textContent = 'Edit successful!';
-        statusDiv.className = 'status success';
-        lastRequestTime = now;
-      } catch (err) {
-        console.error('Edit failed:', err);
-        resultDiv.textContent = 'Editing failed. Check console for details.';
-        statusDiv.textContent = `Error: ${err.message}`;
-        statusDiv.className = 'status error';
-      } finally {
-        editBtn.disabled = false;
-        editBtn.innerHTML = '✨ Apply Edit';
-      }
+        const input = inputText.value.trim();
+        const instruction = instructionInput.value.trim();
+        const model = modelSelect.value;
+
+        if (!input || !instruction || !model) {
+          statusDiv.textContent = 'Please provide text, instruction, and select a model.';
+          statusDiv.className = 'status error';
+          return;
+        }
+
+        editBtn.disabled = true;
+        editBtn.innerHTML = '<span>✨ Editing...</span>';
+        resultDiv.textContent = 'Processing...';
+        statusDiv.style.display = 'none';
+
+        try {
+          const response = await fetch('/api/edit', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ input, instruction, model })
+          });
+
+          if (!response.ok) {
+            const errorText = await response.text();
+            throw new Error(`HTTP ${response.status}: ${errorText.substring(0, 120)}...`);
+          }
+
+          const data = await response.json();
+          resultDiv.textContent = data.editedText || '';
+          statusDiv.textContent = 'Edit successful!';
+          statusDiv.className = 'status success';
+          lastRequestTime = now;
+        } catch (err) {
+          console.error('Edit failed:', err);
+          resultDiv.textContent = 'Editing failed. Check console for details.';
+          statusDiv.textContent = `Error: ${err.message}`;
+          statusDiv.className = 'status error';
+        } finally {
+          editBtn.disabled = false;
+          editBtn.innerHTML = '✨ Apply Edit';
+        }
+      });
     });
-  });
-</script>
+  </script>
 </body>
 </html>
